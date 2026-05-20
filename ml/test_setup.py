@@ -8,4 +8,4 @@ print("FAISS: OK")
 print("SymPy:", sympy.__version__)
 
 model = SentenceTransformer("all-MiniLM-L6-v2")
-print("SBERT loaded:", model)
+print("SBERT loaded:", model
