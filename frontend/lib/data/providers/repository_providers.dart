@@ -1,0 +1,20 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mathiva/data/repositories/interfaces/auth_repository.dart';
+import 'package:mathiva/data/repositories/interfaces/progress_repository.dart';
+import 'package:mathiva/data/repositories/interfaces/quiz_repository.dart';
+import 'package:mathiva/data/repositories/interfaces/review_repository.dart';
+import 'package:mathiva/data/repositories/interfaces/subject_repository.dart';
+import 'package:mathiva/data/repositories/interfaces/tutor_repository.dart';
+import 'package:mathiva/data/repositories/mock/mock_auth_repository.dart';
+import 'package:mathiva/data/repositories/mock/mock_progress_repository.dart';
+import 'package:mathiva/data/repositories/mock/mock_quiz_repository.dart';
+import 'package:mathiva/data/repositories/mock/mock_review_repository.dart';
+import 'package:mathiva/data/repositories/mock/mock_subject_repository.dart';
+import 'package:mathiva/data/repositories/mock/mock_tutor_repository.dart';
+
+final authRepositoryProvider = Provider<AuthRepository>((ref) => MockAuthRepository());
+final subjectRepositoryProvider = Provider<SubjectRepository>((ref) => MockSubjectRepository());
+final tutorRepositoryProvider = Provider<TutorRepository>((ref) => MockTutorRepository());
+final quizRepositoryProvider = Provider<QuizRepository>((ref) => MockQuizRepository());
+final reviewRepositoryProvider = Provider<ReviewRepository>((ref) => MockReviewRepository());
+final progressRepositoryProvider = Provider<ProgressRepository>((ref) => MockProgressRepository());

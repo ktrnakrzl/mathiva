@@ -1,0 +1,24 @@
+Mathiva patch notes
+
+Fixed/added UI items:
+1. Added a visible timer card on the Practice screen.
+   - Starts automatically when the practice screen opens.
+   - Shows elapsed time.
+   - Shows target time based on difficulty: Easy 2 minutes, Medium 3 minutes, Hard 5 minutes.
+   - Passes the elapsed time to the Result screen.
+
+2. Updated Result screen.
+   - Shows the actual time taken from the practice timer.
+   - Added "Generate Similar Practice" action to support the thesis feature for AI-generated/similar practice flow in the prototype.
+   - Kept "Next Concept" as a secondary action.
+
+3. Updated Image Solver prototype interactions.
+   - Upload Image button now shows a simulated OCR-ready status instead of doing nothing.
+   - Edit button now opens a dialog so the recognized problem can be corrected before solving.
+
+Important:
+- This zip contains the patched Flutter source project only.
+- The old build folder and APK were excluded because this environment cannot run Flutter/Android Studio to rebuild the APK.
+- To produce the fixed APK, open this project in Android Studio or VS Code with Flutter installed and run:
+  flutter pub get
+  flutter build apk --debug
