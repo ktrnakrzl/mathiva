@@ -7,12 +7,11 @@ from sentence_transformers import SentenceTransformer
 model = SentenceTransformer("all-MiniLM-L6-v2")
 
 # Load FAISS index
-index = faiss.read_index("../embeddings/faiss_index.bin")
+index = faiss.read_index("faiss_index.bin")
 
 # Load chunks
-with open("../embeddings/genmath_chunks.json", "r", encoding="utf-8") as f:
+with open("output_chunks.json", "r") as f:
     chunks = json.load(f)
-
 # Student query
 query = "how do I solve rational equations?"
 
