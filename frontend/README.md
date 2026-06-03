@@ -1,6 +1,6 @@
-# Mathiva Flutter Frontend Application
+# Mathiva Flutter Frontend Prototype
 
-Frontend-only Flutter application based on the Mathiva project design flow.
+Frontend-only Flutter prototype based on the Mathiva project design flow.
 
 Included screens:
 - Login and Register
@@ -14,8 +14,8 @@ Included screens:
 - Practice
 - Result
 - Concept Progress
-- Image Solver flow
-- Solution flow
+- Image Solver demo flow
+- Solution demo flow
 - Progress Overview
 - Subject Progress
 - Topic Analytics
