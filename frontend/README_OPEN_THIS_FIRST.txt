@@ -1,41 +1,38 @@
-MATHIVA FRONTEND STRUCTURE V2
+MATHIVIA - FIXED FRONTEND ZIP
 
-This version follows your new requested structure:
-lib/screens
-lib/widgets
-lib/models
-lib/services
-lib/data
-lib/theme
-lib/utils
+What was fixed in this ZIP:
+1. Added cupertino_icons to pubspec.yaml.
+2. Removed local.properties so every computer can generate its own Android SDK paths.
+3. Disabled Android release minify/R8 for easier APK builds while testing.
+4. Replaced deprecated Color.withOpacity(...) usages with Color.withValues(alpha: ...).
+5. Removed the unused app_theme import in mathiva_bottom_nav.dart.
+6. Turned off const-only style lint suggestions so flutter analyze focuses on real errors.
 
-Included screens:
-- Login
-- Register
-- Home
-- STEM Subjects
-- Topics
-- Lesson
-- Practice
-- Result
-- Progress
-
-Important:
-- Frontend only
-- Uses Navigator routes
-- No backend
-- No OCR
-- No AI/RAG yet
-- Lessons are local placeholder content based on STEM math topics while the AI dataset/training is not finished
-
-How to run:
-1. Open this mathivia folder in VS Code or Android Studio.
-2. Start your emulator.
-3. Run these commands:
+How to open:
+1. Extract this ZIP.
+2. Open the extracted mathivia folder in VS Code or Android Studio.
+3. Open Terminal in the same folder where pubspec.yaml is located.
+4. Run:
    flutter clean
    flutter pub get
-   flutter run -d emulator-5554
+   flutter analyze
 
-If emulator-5554 is not your device ID:
+How to run on tablet:
+1. Enable Developer Options and USB debugging on the tablet.
+2. Plug the tablet into your laptop with USB.
+3. On the tablet, tap Allow USB debugging if it appears.
+4. Run:
    flutter devices
-   flutter run -d YOUR_DEVICE_ID
+5. Copy the device ID and run:
+   flutter run -d DEVICE_ID
+
+How to build APK:
+   flutter clean
+   flutter pub get
+   flutter build apk --release
+
+APK location after build:
+   build/app/outputs/flutter-apk/app-release.apk
+
+Important:
+This ZIP is the frontend-only Flutter project. If your GitHub main branch has OCR/backend/ML Kit code that is not in this ZIP, upload that exact GitHub ZIP too because it may need separate fixing.
