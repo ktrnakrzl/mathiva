@@ -2,36 +2,53 @@ import faiss
 import json
 import numpy as np
 from sentence_transformers import SentenceTransformer
+import os
 
-# Load SBERT model
-model = SentenceTransformer("all-MiniLM-L6-v2")
+def load_index_and_chunks():
+    """Load FAISS index and chunks"""
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    index_path = os.path.join(current_dir, "faiss_index.bin")
+    chunks_path = os.path.join(current_dir, "output_chunks.json")
+    
+    index = faiss.read_index(index_path)
+    with open(chunks_path, "r") as f:
+        chunks = json.load(f)
+    
+    return index, chunks
 
-# Load FAISS index
-index = faiss.read_index("faiss_index.bin")
+# Only run this if file is executed directly, not imported
+if __name__ == "__main__":
+    # Load SBERT model
+    model = SentenceTransformer("all-MiniLM-L6-v2")
 
-# Load chunks
-with open("output_chunks.json", "r") as f:
-    chunks = json.load(f)
-# Student query
-query = "how do I solve rational equations?"
+    # Load FAISS index
+    index = faiss.read_index("faiss_index.bin")
 
-# Convert query into embedding
-query_embedding = model.encode([query])
+    # Load chunks
+    with open("output_chunks.json", "r") as f:
+        chunks = json.load(f)
 
-# Convert to float32
-query_embedding = np.array(query_embedding).astype("float32")
+    # Student query
+    query = "how do I solve rational equations?"
 
-# Search top 5 nearest chunks
-k = 5
-distances, indices = index.search(query_embedding, k)
+    # Convert query into embedding
+    query_embedding = model.encode([query])
 
-print("\nQUERY:")
-print(query)
+    # Convert to float32
+    query_embedding = np.array(query_embedding).astype("float32")
 
-print("\nTOP RESULTS:\n")
+    # Search top 5 nearest chunks
+    k = 5
+    distances, indices = index.search(query_embedding, k)
 
-# Print retrieved chunks
-for i, idx in enumerate(indices[0]):
-    print(f"Result {i+1}:")
-    print(chunks[idx])
-    print("-" * 50)
+    print("\nQUERY:")
+    print(query)
+
+    print("\nTOP RESULTS:\n")
+
+    # Print retrieved chunks
+    for i, idx in enumerate(indices[0]):
+        print(f"Result {i+1}:")
+        print(chunks[idx])
+        print("-" * 50)
