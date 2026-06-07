@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import '../services/app_preferences.dart';
 
+import '../services/app_preferences.dart';
 import '../theme/app_theme.dart';
 import '../utils/route_names.dart';
-import '../widgets/gradient_button.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,232 +12,76 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  bool rememberMe = true;
+  bool rememberMe = false;
+  bool obscurePassword = true;
 
   @override
   Widget build(BuildContext context) {
     final palette = AppPreferences.palette.value;
+
     return Scaffold(
       body: Stack(
         children: [
           Positioned.fill(
-              child: CustomPaint(painter: _PurpleAtmospherePainter(palette))),
+            child: CustomPaint(painter: _PurpleAtmospherePainter(palette)),
+          ),
           SafeArea(
             child: LayoutBuilder(
               builder: (context, constraints) {
+                final compactHeight = constraints.maxHeight < 720;
+
                 return SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(24, 18, 24, 28),
+                  padding: const EdgeInsets.fromLTRB(26, 18, 26, 28),
                   child: ConstrainedBox(
                     constraints:
                         BoxConstraints(minHeight: constraints.maxHeight - 46),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Row(
-                          children: [
-                            _CircleIconButton(
-                                icon: Icons.menu_rounded, onTap: () {}),
-                            const SizedBox(width: 12),
-                            const Text(
-                              'Mathiva',
-                              style: TextStyle(
-                                color: AppColors.ink,
-                                fontSize: 18,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            const Spacer(),
-                            _CircleIconButton(
-                                icon: Icons.auto_awesome_rounded, onTap: () {}),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-                        _LoginHeroPanel(
-                            palette: palette,
-                            compact: constraints.maxWidth < 360),
-                        const SizedBox(height: 18),
-                        Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: .9),
-                            borderRadius: BorderRadius.circular(32),
-                            border: Border.all(
-                                color: Colors.white.withValues(alpha: .95),
-                                width: 1.2),
-                            boxShadow: [
-                              BoxShadow(
-                                color: palette.primary.withValues(alpha: .22),
-                                blurRadius: 42,
-                                offset: const Offset(0, 24),
-                              ),
-                            ],
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: _BackButton(
+                            onTap: () {
+                              if (Navigator.canPop(context)) {
+                                Navigator.pop(context);
+                              }
+                            },
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Row(
-                                children: [
-                                  Container(
-                                    height: 54,
-                                    width: 54,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      gradient: LinearGradient(colors: [
-                                        palette.secondary,
-                                        palette.primary
-                                      ]),
-                                    ),
-                                    child: const Icon(Icons.functions_rounded,
-                                        color: Colors.white, size: 28),
-                                  ),
-                                  const SizedBox(width: 14),
-                                  const Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'Welcome back',
-                                          style: TextStyle(
-                                            color: AppColors.ink,
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.w900,
-                                          ),
-                                        ),
-                                        SizedBox(height: 3),
-                                        Text(
-                                          'Continue your lesson flow',
-                                          style: TextStyle(
-                                              color: AppColors.muted,
-                                              fontSize: 12),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 22),
-                              const TextField(
-                                keyboardType: TextInputType.emailAddress,
-                                decoration: InputDecoration(
-                                  prefixIcon:
-                                      Icon(Icons.email_rounded, size: 19),
-                                  hintText: 'Email',
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              const TextField(
-                                obscureText: true,
-                                decoration: InputDecoration(
-                                  prefixIcon:
-                                      Icon(Icons.lock_rounded, size: 19),
-                                  hintText: 'Password',
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              Row(
-                                children: [
-                                  Transform.scale(
-                                    scale: .92,
-                                    child: Checkbox(
-                                      value: rememberMe,
-                                      onChanged: (value) => setState(
-                                          () => rememberMe = value ?? true),
-                                      activeColor:
-                                          Theme.of(context).colorScheme.primary,
-                                      shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(6)),
-                                    ),
-                                  ),
-                                  const Text('Remember me',
-                                      style: TextStyle(
-                                          fontSize: 12,
-                                          color: AppColors.muted)),
-                                  const Spacer(),
-                                  TextButton(
-                                    onPressed: () {},
-                                    child: const Text('Forgot password?',
-                                        style: TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w700)),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              GradientButton(
-                                label: 'Login',
-                                icon: Icons.arrow_forward_rounded,
-                                onPressed: () => Navigator.pushReplacementNamed(
-                                    context, RouteNames.home),
-                              ),
-                              const SizedBox(height: 16),
-                              Row(
-                                children: [
-                                  Expanded(
-                                      child: Divider(
-                                          color: palette.primary
-                                              .withValues(alpha: .14))),
-                                  const Padding(
-                                    padding:
-                                        EdgeInsets.symmetric(horizontal: 12),
-                                    child: Text('or continue with',
-                                        style: TextStyle(
-                                            color: AppColors.muted,
-                                            fontSize: 12)),
-                                  ),
-                                  Expanded(
-                                      child: Divider(
-                                          color: palette.primary
-                                              .withValues(alpha: .14))),
-                                ],
-                              ),
-                              const SizedBox(height: 14),
-                              OutlinedButton.icon(
-                                onPressed: () => Navigator.pushReplacementNamed(
-                                    context, RouteNames.home),
-                                icon: Text('G',
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.w900,
-                                        color: palette.secondary)),
-                                label: const Text('Google'),
-                                style: OutlinedButton.styleFrom(
-                                  minimumSize: const Size(double.infinity, 50),
-                                  foregroundColor: AppColors.ink,
-                                  side: BorderSide(
-                                      color: palette.primary
-                                          .withValues(alpha: .16)),
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(18)),
-                                  textStyle: const TextStyle(
-                                      fontWeight: FontWeight.w800),
-                                ),
-                              ),
-                            ],
+                        ),
+                        SizedBox(height: compactHeight ? 26 : 42),
+                        const _BrandLockup(),
+                        SizedBox(height: compactHeight ? 34 : 48),
+                        const Text(
+                          'Welcome back!',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: AppColors.ink,
+                            fontSize: 30,
+                            height: 1,
+                            fontWeight: FontWeight.w800,
                           ),
                         ),
                         const SizedBox(height: 18),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Flexible(
-                              child: Text(
-                                "Don't have an account yet?",
-                                style: TextStyle(
-                                    fontSize: 12, color: AppColors.muted),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            TextButton(
-                              onPressed: () => Navigator.pushNamed(
-                                  context, RouteNames.register),
-                              child: const Text('Sign up now',
-                                  style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w800)),
-                            ),
-                          ],
+                        const Text(
+                          'Log in to continue your learning',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: AppColors.muted,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        SizedBox(height: compactHeight ? 34 : 54),
+                        _LoginCard(
+                          palette: palette,
+                          rememberMe: rememberMe,
+                          obscurePassword: obscurePassword,
+                          onRememberChanged: (value) =>
+                              setState(() => rememberMe = value ?? false),
+                          onPasswordVisibilityChanged: () => setState(
+                            () => obscurePassword = !obscurePassword,
+                          ),
                         ),
                       ],
                     ),
@@ -253,108 +96,391 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
-class _LoginHeroPanel extends StatelessWidget {
-  final MathiviaPalette palette;
-  final bool compact;
+class _BrandLockup extends StatelessWidget {
+  const _BrandLockup();
 
-  const _LoginHeroPanel({required this.palette, required this.compact});
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Image.asset(
+          'assets/mathiva_logo.png',
+          height: 88,
+          fit: BoxFit.contain,
+          filterQuality: FilterQuality.high,
+        ),
+        const SizedBox(height: 10),
+        const Text(
+          'mathiva',
+          style: TextStyle(
+            color: AppColors.ink,
+            fontSize: 35,
+            height: 1,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _LoginCard extends StatelessWidget {
+  final MathiviaPalette palette;
+  final bool rememberMe;
+  final bool obscurePassword;
+  final ValueChanged<bool?> onRememberChanged;
+  final VoidCallback onPasswordVisibilityChanged;
+
+  const _LoginCard({
+    required this.palette,
+    required this.rememberMe,
+    required this.obscurePassword,
+    required this.onRememberChanged,
+    required this.onPasswordVisibilityChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: compact ? 188 : 210,
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.fromLTRB(24, 34, 24, 28),
       decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: .92),
         borderRadius: BorderRadius.circular(36),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            palette.secondary.withValues(alpha: .96),
-            palette.primary,
-            const Color(0xFF6B3DEB),
-          ],
+        border: Border.all(
+          color: Colors.white.withValues(alpha: .95),
+          width: 1.4,
         ),
         boxShadow: [
           BoxShadow(
-            color: palette.primary.withValues(alpha: .35),
-            blurRadius: 46,
-            offset: const Offset(0, 24),
+            color: palette.primary.withValues(alpha: .14),
+            blurRadius: 54,
+            offset: const Offset(0, 26),
           ),
         ],
       ),
-      child: Stack(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Positioned(
-            right: -18,
-            top: -18,
-            child: Container(
-              height: 112,
-              width: 112,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                    color: Colors.white.withValues(alpha: .22), width: 18),
-              ),
-            ),
+          const _LoginTextField(
+            icon: Icons.mail_outline_rounded,
+            hintText: 'Email or username',
+            keyboardType: TextInputType.emailAddress,
           ),
-          Positioned(
-            right: 8,
-            bottom: 2,
-            child: Container(
-              height: 72,
-              width: 72,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: .16),
-              ),
-              child: const Icon(Icons.psychology_alt_rounded,
-                  color: Colors.white, size: 38),
-            ),
+          const SizedBox(height: 20),
+          _LoginTextField(
+            icon: Icons.lock_outline_rounded,
+            hintText: 'Password',
+            obscureText: obscurePassword,
+            suffixIcon: obscurePassword
+                ? Icons.visibility_off_outlined
+                : Icons.visibility_outlined,
+            onSuffixPressed: onPasswordVisibilityChanged,
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(height: 22),
+          Row(
             children: [
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: .18),
-                  borderRadius: BorderRadius.circular(999),
+              SizedBox(
+                height: 28,
+                width: 28,
+                child: Checkbox(
+                  value: rememberMe,
+                  onChanged: onRememberChanged,
+                  activeColor: palette.primary,
+                  side: BorderSide(
+                    color: AppColors.muted.withValues(alpha: .52),
+                    width: 1.5,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(6),
+                  ),
                 ),
-                child: const Text(
-                  'AI Math Tutor',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'Remember me',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.ink,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
               const Spacer(),
-              Text(
-                'Learn Math\nwith AI.',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: compact ? 31 : 36,
-                  height: 1.02,
-                  fontWeight: FontWeight.w900,
+              TextButton(
+                onPressed: () {},
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: const Size(0, 36),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: Text(
+                  'Forgot password?',
+                  style: TextStyle(
+                    color: palette.primary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
-              const SizedBox(height: 10),
-              const SizedBox(
-                width: 230,
+            ],
+          ),
+          const SizedBox(height: 28),
+          _PrimaryLoginButton(
+            palette: palette,
+            onPressed: () =>
+                Navigator.pushReplacementNamed(context, RouteNames.home),
+          ),
+          const SizedBox(height: 28),
+          Row(
+            children: [
+              Expanded(
+                child: Divider(
+                  color: palette.primary.withValues(alpha: .14),
+                  thickness: 1,
+                ),
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 22),
                 child: Text(
-                  'Practice, solve, and review lessons in one soft purple workspace.',
+                  'or',
                   style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 13,
-                      height: 1.35,
-                      fontWeight: FontWeight.w600),
+                    color: AppColors.muted,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Divider(
+                  color: palette.primary.withValues(alpha: .14),
+                  thickness: 1,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          OutlinedButton(
+            onPressed: () => Navigator.pushReplacementNamed(
+              context,
+              RouteNames.home,
+            ),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size(double.infinity, 62),
+              foregroundColor: AppColors.ink,
+              side: BorderSide(color: palette.primary.withValues(alpha: .14)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(22),
+              ),
+              textStyle: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _GoogleGlyph(),
+                SizedBox(width: 18),
+                Flexible(child: Text('Continue with Google')),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          Wrap(
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 4,
+            children: [
+              const Text(
+                "Don't have an account?",
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.muted,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pushNamed(
+                  context,
+                  RouteNames.register,
+                ),
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: const Size(0, 34),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: Text(
+                  'Sign up',
+                  style: TextStyle(
+                    color: palette.primary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _LoginTextField extends StatelessWidget {
+  final IconData icon;
+  final String hintText;
+  final bool obscureText;
+  final TextInputType? keyboardType;
+  final IconData? suffixIcon;
+  final VoidCallback? onSuffixPressed;
+
+  const _LoginTextField({
+    required this.icon,
+    required this.hintText,
+    this.obscureText = false,
+    this.keyboardType,
+    this.suffixIcon,
+    this.onSuffixPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = AppPreferences.palette.value;
+
+    return TextField(
+      obscureText: obscureText,
+      keyboardType: keyboardType,
+      style: const TextStyle(
+        color: AppColors.ink,
+        fontSize: 17,
+        fontWeight: FontWeight.w600,
+      ),
+      decoration: InputDecoration(
+        hintText: hintText,
+        hintStyle: const TextStyle(
+          color: AppColors.muted,
+          fontSize: 17,
+          fontWeight: FontWeight.w500,
+        ),
+        filled: true,
+        fillColor: Colors.white,
+        prefixIcon: Icon(icon, color: palette.primary, size: 28),
+        suffixIcon: suffixIcon == null
+            ? null
+            : IconButton(
+                onPressed: onSuffixPressed,
+                icon: Icon(suffixIcon, color: AppColors.muted, size: 27),
+              ),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 22, vertical: 23),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(22),
+          borderSide: BorderSide(
+            color: palette.primary.withValues(alpha: .12),
+            width: 1.2,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(22),
+          borderSide: BorderSide(
+            color: palette.primary.withValues(alpha: .42),
+            width: 1.4,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PrimaryLoginButton extends StatelessWidget {
+  final MathiviaPalette palette;
+  final VoidCallback onPressed;
+
+  const _PrimaryLoginButton({required this.palette, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: onPressed,
+        child: Ink(
+          height: 66,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: LinearGradient(
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+              colors: [
+                palette.primary,
+                palette.secondary,
+                const Color(0xFFC02BDD),
+              ],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: palette.primary.withValues(alpha: .26),
+                blurRadius: 22,
+                offset: const Offset(0, 12),
+              ),
+            ],
+          ),
+          child: const Center(
+            child: Text(
+              'Log In',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GoogleGlyph extends StatelessWidget {
+  const _GoogleGlyph();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Text(
+      'G',
+      style: TextStyle(
+        color: Color(0xFF4285F4),
+        fontSize: 24,
+        fontWeight: FontWeight.w800,
+        fontFamily: 'Inter',
+      ),
+    );
+  }
+}
+
+class _BackButton extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _BackButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: const SizedBox(
+          height: 44,
+          width: 44,
+          child: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppColors.ink,
+            size: 24,
+          ),
+        ),
       ),
     );
   }
@@ -371,55 +497,72 @@ class _PurpleAtmospherePainter extends CustomPainter {
       ..shader = const LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: [Color(0xFFF8F5FF), Color(0xFFEDE5FF), Color(0xFFFFFFFF)],
+        colors: [Color(0xFFFBF9FF), Color(0xFFF3ECFF), Color(0xFFFFFDFF)],
       ).createShader(Offset.zero & size);
     canvas.drawRect(Offset.zero & size, base);
 
     final topWash = Paint()
-      ..color = palette.secondary.withValues(alpha: .34)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 72);
-    canvas.drawOval(Rect.fromLTWH(-70, 48, size.width * .95, 220), topWash);
+      ..color = palette.secondary.withValues(alpha: .24)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 92);
+    canvas.drawOval(Rect.fromLTWH(-50, 40, size.width * 1.1, 260), topWash);
 
     final rightWash = Paint()
-      ..color = palette.primary.withValues(alpha: .28)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 86);
+      ..color = palette.primary.withValues(alpha: .2)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 96);
     canvas.drawOval(
-        Rect.fromLTWH(size.width * .45, 120, size.width * .82, 300), rightWash);
+      Rect.fromLTWH(size.width * .5, 118, size.width * .76, 300),
+      rightWash,
+    );
 
     final lowerWash = Paint()
-      ..color = const Color(0xFFC7B6FF).withValues(alpha: .24)
+      ..color = const Color(0xFFC7B6FF).withValues(alpha: .2)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 90);
     canvas.drawOval(
-        Rect.fromLTWH(-90, size.height * .58, size.width * .92, 260),
-        lowerWash);
+      Rect.fromLTWH(-90, size.height * .62, size.width * 1.04, 260),
+      lowerWash,
+    );
+
+    _drawOrb(
+      canvas,
+      center: Offset(size.width * .1, size.height * .28),
+      radius: 32,
+      color: palette.secondary,
+    );
+    _drawOrb(
+      canvas,
+      center: Offset(size.width * .88, size.height * .14),
+      radius: 34,
+      color: const Color(0xFFC5A5FF),
+    );
+  }
+
+  void _drawOrb(
+    Canvas canvas, {
+    required Offset center,
+    required double radius,
+    required Color color,
+  }) {
+    final orb = Paint()
+      ..shader = RadialGradient(
+        center: const Alignment(-.35, -.55),
+        radius: .95,
+        colors: [
+          Colors.white.withValues(alpha: .96),
+          color.withValues(alpha: .5),
+          palette.primary.withValues(alpha: .2),
+        ],
+        stops: const [.02, .48, 1],
+      ).createShader(Rect.fromCircle(center: center, radius: radius));
+
+    final shadow = Paint()
+      ..color = palette.primary.withValues(alpha: .12)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 22);
+    canvas.drawCircle(center.translate(0, 10), radius * .95, shadow);
+    canvas.drawCircle(center, radius, orb);
   }
 
   @override
   bool shouldRepaint(covariant _PurpleAtmospherePainter oldDelegate) {
     return oldDelegate.palette != palette;
-  }
-}
-
-class _CircleIconButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-
-  const _CircleIconButton({required this.icon, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white.withValues(alpha: .82),
-      shape: const CircleBorder(),
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: onTap,
-        child: SizedBox(
-          height: 44,
-          width: 44,
-          child: Icon(icon, color: AppColors.ink, size: 22),
-        ),
-      ),
-    );
   }
 }

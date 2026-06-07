@@ -23,7 +23,7 @@ class AppTheme {
     final active = palette ?? AppPreferences.palette.value;
     return ThemeData(
       useMaterial3: true,
-      fontFamily: 'Roboto',
+      fontFamily: 'Poppins',
       scaffoldBackgroundColor: active.background.last,
       colorScheme: ColorScheme.fromSeed(
         seedColor: active.primary,

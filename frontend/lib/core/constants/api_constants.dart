@@ -1,1 +1,1 @@
-const String kBaseUrl = 'http://YOUR_EC2_IP_OR_DOMAIN:8000';
+const String kBaseUrl = 'http://127.0.0.1:8000';

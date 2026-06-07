@@ -12,10 +12,11 @@ import 'screens/onboarding_screen.dart';
 import 'screens/practice_screen.dart';
 import 'screens/progress_overview_screen.dart';
 import 'screens/profile_settings_screen.dart';
+import 'screens/chat_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/result_screen.dart';
-import 'screens/search_screen.dart';
 import 'screens/solution_screen.dart';
+import 'screens/search_screen.dart';
 import 'screens/subject_progress_screen.dart';
 import 'screens/topic_analytics_screen.dart';
 import 'theme/app_theme.dart';
@@ -45,6 +46,7 @@ class MathivaApp extends StatelessWidget {
             RouteNames.imageSolver: (_) => const ImageSolverScreen(),
             RouteNames.progress: (_) => const ProgressOverviewScreen(),
             RouteNames.profile: (_) => const ProfileSettingsScreen(),
+            RouteNames.chat: (_) => const ChatScreen(),
           },
           onGenerateRoute: (settings) {
             final args =

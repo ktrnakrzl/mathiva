@@ -11,6 +11,10 @@ class OnboardingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
+    final compactHeight = screenHeight < 720;
+    final logoStageHeight = compactHeight ? 142.0 : 164.0;
+    final logoSize = compactHeight ? 146.0 : 182.0;
+    final cubeSize = compactHeight ? 218.0 : 246.0;
 
     return Scaffold(
       body: Stack(
@@ -84,8 +88,7 @@ class OnboardingScreen extends StatelessWidget {
                           RouteNames.login,
                         ),
                         style: TextButton.styleFrom(
-                          backgroundColor:
-                              Colors.white.withValues(alpha: 0.65),
+                          backgroundColor: Colors.white.withValues(alpha: 0.65),
                           foregroundColor: AppColors.purple,
                           padding: const EdgeInsets.symmetric(
                             horizontal: 26,
@@ -106,11 +109,11 @@ class OnboardingScreen extends StatelessWidget {
                       ),
                     ),
 
-                    const SizedBox(height: 12),
+                    SizedBox(height: compactHeight ? 16 : 22),
 
                     // Hero Image with Glow
                     SizedBox(
-                      height: screenHeight * 0.30,
+                      height: logoStageHeight,
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
@@ -128,16 +131,17 @@ class OnboardingScreen extends StatelessWidget {
                               ),
                             ),
                           ),
-
                           Image.asset(
-                            'assets/slide1_hero.png',
+                            'assets/mathiva_logo.png',
+                            height: logoSize,
                             fit: BoxFit.contain,
+                            filterQuality: FilterQuality.high,
                           ),
                         ],
                       ),
                     ),
 
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
 
                     const Text(
                       'mathiva',
@@ -149,7 +153,16 @@ class OnboardingScreen extends StatelessWidget {
                       ),
                     ),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 12),
+
+                    Image.asset(
+                      'assets/math_cube.png',
+                      height: cubeSize,
+                      fit: BoxFit.contain,
+                      filterQuality: FilterQuality.high,
+                    ),
+
+                    const SizedBox(height: 18),
 
                     RichText(
                       textAlign: TextAlign.center,
@@ -275,9 +288,8 @@ class _IndicatorDot extends StatelessWidget {
       height: 12,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: active
-            ? AppColors.purple
-            : AppColors.purple.withValues(alpha: 0.2),
+        color:
+            active ? AppColors.purple : AppColors.purple.withValues(alpha: 0.2),
       ),
     );
   }

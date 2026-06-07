@@ -15,6 +15,7 @@ class RouteNames {
   static const solution = '/solution';
   static const progress = '/progress';
   static const profile = '/profile';
+  static const chat = '/chat';
   static const subjectProgress = '/subject-progress';
   static const topicAnalytics = '/topic-analytics';
 }
