@@ -20,6 +20,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final palette = AppPreferences.palette.value;
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       body: Stack(
         children: [
           Positioned.fill(
@@ -28,65 +29,90 @@ class _LoginScreenState extends State<LoginScreen> {
           SafeArea(
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final compactHeight = constraints.maxHeight < 720;
+                final screenHeight = constraints.maxHeight;
+                final compactHeight = screenHeight < 720;
+                final tinyHeight = screenHeight < 660;
+                final horizontalPadding = tinyHeight ? 16.0 : compactHeight ? 20.0 : 26.0;
+                final topPadding = tinyHeight ? 12.0 : compactHeight ? 14.0 : 18.0;
+                final titleSize = tinyHeight ? 24.0 : compactHeight ? 26.0 : 30.0;
+                final subtitleSize = tinyHeight ? 15.0 : compactHeight ? 16.0 : 18.0;
+                final smallGap = tinyHeight ? 12.0 : compactHeight ? 14.0 : 18.0;
+                final mediumGap = tinyHeight ? 20.0 : compactHeight ? 26.0 : 42.0;
+                final cardGap = tinyHeight ? 22.0 : compactHeight ? 26.0 : 36.0;
+                final bottomPadding = tinyHeight ? 16.0 : 20.0;
+                final viewInsetBottom = MediaQuery.of(context).viewInsets.bottom;
+                final extraScroll = screenHeight < 700 || viewInsetBottom > 0;
 
-                return SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(26, 18, 26, 28),
-                  child: ConstrainedBox(
-                    constraints:
-                        BoxConstraints(minHeight: constraints.maxHeight - 46),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: _BackButton(
-                            onTap: () {
-                              if (Navigator.canPop(context)) {
-                                Navigator.pop(context);
-                              }
-                            },
-                          ),
-                        ),
-                        SizedBox(height: compactHeight ? 26 : 42),
-                        const _BrandLockup(),
-                        SizedBox(height: compactHeight ? 34 : 48),
-                        const Text(
-                          'Welcome back!',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: AppColors.ink,
-                            fontSize: 30,
-                            height: 1,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        const SizedBox(height: 18),
-                        const Text(
-                          'Log in to continue your learning',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: AppColors.muted,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        SizedBox(height: compactHeight ? 34 : 54),
-                        _LoginCard(
-                          palette: palette,
-                          rememberMe: rememberMe,
-                          obscurePassword: obscurePassword,
-                          onRememberChanged: (value) =>
-                              setState(() => rememberMe = value ?? false),
-                          onPasswordVisibilityChanged: () => setState(
-                            () => obscurePassword = !obscurePassword,
-                          ),
-                        ),
-                      ],
-                    ),
+                final loginCard = _LoginCard(
+                  palette: palette,
+                  rememberMe: rememberMe,
+                  obscurePassword: obscurePassword,
+                  onRememberChanged: (value) =>
+                      setState(() => rememberMe = value ?? false),
+                  onPasswordVisibilityChanged: () => setState(
+                    () => obscurePassword = !obscurePassword,
                   ),
                 );
+
+                final content = Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    horizontalPadding,
+                    topPadding,
+                    horizontalPadding,
+                    bottomPadding,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: _BackButton(
+                          onTap: () {
+                            if (Navigator.canPop(context)) {
+                              Navigator.pop(context);
+                            }
+                          },
+                        ),
+                      ),
+                      SizedBox(height: mediumGap),
+                      const _BrandLockup(),
+                      SizedBox(height: tinyHeight ? 22 : compactHeight ? 28 : 38),
+                      Text(
+                        'Welcome back!',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: AppColors.ink,
+                          fontSize: titleSize,
+                          height: 1,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      SizedBox(height: smallGap),
+                      Text(
+                        'Log in to continue your learning',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: AppColors.muted,
+                          fontSize: subtitleSize,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      SizedBox(height: cardGap),
+                      if (extraScroll) loginCard else Expanded(child: loginCard),
+                    ],
+                  ),
+                );
+
+                // If the keyboard is open or the screen is very short, allow scrolling
+                return extraScroll
+                    ? SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(minHeight: screenHeight),
+                          child: content,
+                        ),
+                      )
+                    : content;
               },
             ),
           ),
@@ -101,20 +127,22 @@ class _BrandLockup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final compactHeight = MediaQuery.of(context).size.height < 720;
+    final tinyHeight = MediaQuery.of(context).size.height < 660;
     return Column(
       children: [
         Image.asset(
           'assets/mathiva_logo.png',
-          height: 88,
+          height: tinyHeight ? 68 : compactHeight ? 76 : 88,
           fit: BoxFit.contain,
           filterQuality: FilterQuality.high,
         ),
-        const SizedBox(height: 10),
-        const Text(
+        SizedBox(height: tinyHeight ? 8 : 10),
+        Text(
           'mathiva',
           style: TextStyle(
             color: AppColors.ink,
-            fontSize: 35,
+            fontSize: tinyHeight ? 30 : compactHeight ? 32 : 35,
             height: 1,
             fontWeight: FontWeight.w800,
           ),
@@ -141,22 +169,23 @@ class _LoginCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(24, 34, 24, 28),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: .92),
-        borderRadius: BorderRadius.circular(36),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: .95),
-          width: 1.4,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: palette.primary.withValues(alpha: .14),
-            blurRadius: 54,
-            offset: const Offset(0, 26),
-          ),
-        ],
+    final compactHeight = MediaQuery.of(context).size.height < 720;
+    final horizontalPadding = compactHeight ? 20.0 : 24.0;
+    final topPadding = compactHeight ? 28.0 : 34.0;
+    final bottomPadding = compactHeight ? 20.0 : 28.0;
+    final gap = compactHeight ? 18.0 : 22.0;
+    final sectionGap = compactHeight ? 22.0 : 28.0;
+    final bottomGap = compactHeight ? 18.0 : 24.0;
+    final iconSize = compactHeight ? 26.0 : 28.0;
+    final buttonHeight = compactHeight ? 54.0 : 66.0;
+    final googleButtonHeight = compactHeight ? 54.0 : 62.0;
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        horizontalPadding,
+        topPadding,
+        horizontalPadding,
+        bottomPadding,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -166,7 +195,7 @@ class _LoginCard extends StatelessWidget {
             hintText: 'Email or username',
             keyboardType: TextInputType.emailAddress,
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: gap),
           _LoginTextField(
             icon: Icons.lock_outline_rounded,
             hintText: 'Password',
@@ -176,12 +205,12 @@ class _LoginCard extends StatelessWidget {
                 : Icons.visibility_outlined,
             onSuffixPressed: onPasswordVisibilityChanged,
           ),
-          const SizedBox(height: 22),
+          SizedBox(height: gap),
           Row(
             children: [
               SizedBox(
-                height: 28,
-                width: 28,
+                height: 26,
+                width: 26,
                 child: Checkbox(
                   value: rememberMe,
                   onChanged: onRememberChanged,
@@ -209,7 +238,7 @@ class _LoginCard extends StatelessWidget {
                 onPressed: () {},
                 style: TextButton.styleFrom(
                   padding: EdgeInsets.zero,
-                  minimumSize: const Size(0, 36),
+                  minimumSize: const Size(0, 34),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 child: Text(
@@ -223,13 +252,14 @@ class _LoginCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 28),
+          SizedBox(height: sectionGap),
           _PrimaryLoginButton(
             palette: palette,
             onPressed: () =>
                 Navigator.pushReplacementNamed(context, RouteNames.home),
+            height: buttonHeight,
           ),
-          const SizedBox(height: 28),
+          SizedBox(height: sectionGap),
           Row(
             children: [
               Expanded(
@@ -238,9 +268,9 @@ class _LoginCard extends StatelessWidget {
                   thickness: 1,
                 ),
               ),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 22),
-                child: Text(
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: compactHeight ? 18 : 22),
+                child: const Text(
                   'or',
                   style: TextStyle(
                     color: AppColors.muted,
@@ -257,14 +287,14 @@ class _LoginCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: bottomGap),
           OutlinedButton(
             onPressed: () => Navigator.pushReplacementNamed(
               context,
               RouteNames.home,
             ),
             style: OutlinedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 62),
+              minimumSize: Size(double.infinity, googleButtonHeight),
               foregroundColor: AppColors.ink,
               side: BorderSide(color: palette.primary.withValues(alpha: .14)),
               shape: RoundedRectangleBorder(
@@ -279,12 +309,12 @@ class _LoginCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _GoogleGlyph(),
-                SizedBox(width: 18),
+                SizedBox(width: 16),
                 Flexible(child: Text('Continue with Google')),
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: bottomGap),
           Wrap(
             alignment: WrapAlignment.center,
             crossAxisAlignment: WrapCrossAlignment.center,
@@ -345,33 +375,42 @@ class _LoginTextField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = AppPreferences.palette.value;
+    final compactHeight = MediaQuery.of(context).size.height < 720;
+    final tinyHeight = MediaQuery.of(context).size.height < 660;
+    final fontSize = tinyHeight ? 15.0 : compactHeight ? 16.0 : 17.0;
+    final hintFontSize = tinyHeight ? 15.0 : compactHeight ? 16.0 : 17.0;
+    final iconSize = tinyHeight ? 24.0 : compactHeight ? 26.0 : 28.0;
+    final contentPadding = tinyHeight
+        ? const EdgeInsets.symmetric(horizontal: 18, vertical: 16)
+        : compactHeight
+            ? const EdgeInsets.symmetric(horizontal: 20, vertical: 18)
+            : const EdgeInsets.symmetric(horizontal: 22, vertical: 23);
 
     return TextField(
       obscureText: obscureText,
       keyboardType: keyboardType,
-      style: const TextStyle(
+      style: TextStyle(
         color: AppColors.ink,
-        fontSize: 17,
+        fontSize: fontSize,
         fontWeight: FontWeight.w600,
       ),
       decoration: InputDecoration(
         hintText: hintText,
-        hintStyle: const TextStyle(
+        hintStyle: TextStyle(
           color: AppColors.muted,
-          fontSize: 17,
+          fontSize: hintFontSize,
           fontWeight: FontWeight.w500,
         ),
         filled: true,
         fillColor: Colors.white,
-        prefixIcon: Icon(icon, color: palette.primary, size: 28),
+        prefixIcon: Icon(icon, color: palette.primary, size: iconSize),
         suffixIcon: suffixIcon == null
             ? null
             : IconButton(
                 onPressed: onSuffixPressed,
-                icon: Icon(suffixIcon, color: AppColors.muted, size: 27),
+                icon: Icon(suffixIcon, color: AppColors.muted, size: iconSize - 1),
               ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 22, vertical: 23),
+        contentPadding: contentPadding,
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(22),
           borderSide: BorderSide(
@@ -394,8 +433,13 @@ class _LoginTextField extends StatelessWidget {
 class _PrimaryLoginButton extends StatelessWidget {
   final MathiviaPalette palette;
   final VoidCallback onPressed;
+  final double height;
 
-  const _PrimaryLoginButton({required this.palette, required this.onPressed});
+  const _PrimaryLoginButton({
+    required this.palette,
+    required this.onPressed,
+    this.height = 66,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -406,18 +450,10 @@ class _PrimaryLoginButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         onTap: onPressed,
         child: Ink(
-          height: 66,
+          height: height,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            gradient: LinearGradient(
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-              colors: [
-                palette.primary,
-                palette.secondary,
-                const Color(0xFFC02BDD),
-              ],
-            ),
+            color: palette.primary,
             boxShadow: [
               BoxShadow(
                 color: palette.primary.withValues(alpha: .26),
