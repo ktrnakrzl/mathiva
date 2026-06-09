@@ -23,8 +23,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _entranceController = AnimationController(vsync: this, duration: const Duration(milliseconds: 950))..forward();
-    _floatController = AnimationController(vsync: this, duration: const Duration(milliseconds: 2600))..repeat();
+    _entranceController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 950))
+      ..forward();
+    _floatController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 2600))
+      ..repeat();
   }
 
   @override
@@ -39,87 +43,22 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     return Scaffold(
       extendBody: true,
       body: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFF0F1728).withOpacity(0.88),
-        ),
+        color: Colors.white,
         child: SizedBox.expand(
           child: ClipRect(
             child: Stack(
               fit: StackFit.expand,
               children: [
-                // Soft white center glow
-                Positioned(
-                  left: -140,
-                  top: -120,
-                  child: IgnorePointer(
-                    child: Container(
-                      width: 520,
-                      height: 520,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: RadialGradient(
-                          center: const Alignment(-0.4, -0.3),
-                          radius: 0.75,
-                          colors: [
-                            const Color.fromRGBO(255, 255, 255, 0.22),
-                            const Color.fromRGBO(243, 232, 255, 0.14),
-                            const Color.fromRGBO(211, 189, 255, 0.08),
-                            Colors.transparent,
-                          ],
-                          stops: const [0.0, 0.32, 0.68, 1.0],
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppPreferences.palette.value.primary.withOpacity(0.12),
-                            blurRadius: 140,
-                            spreadRadius: 48,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Lavender-violet bloom
-                Positioned(
-                  right: -120,
-                  top: 40,
-                  child: IgnorePointer(
-                    child: Container(
-                      width: 420,
-                      height: 420,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: RadialGradient(
-                          center: const Alignment(0.4, 0.2),
-                          radius: 0.72,
-                          colors: [
-                            const Color.fromRGBO(212, 182, 255, 0.14),
-                            const Color.fromRGBO(173, 140, 255, 0.10),
-                            const Color.fromRGBO(138, 102, 255, 0.04),
-                            Colors.transparent,
-                          ],
-                          stops: const [0.0, 0.30, 0.68, 1.0],
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppPreferences.palette.value.primary.withOpacity(0.12),
-                            blurRadius: 140,
-                            spreadRadius: 48,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
                 // Existing UI
                 SafeArea(
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(24, 24, 24, 150),
                     physics: const BouncingScrollPhysics(),
                     children: [
-                      _AnimatedIn(animation: _entranceController, intervalStart: 0.00, child: const _Header()),
+                      _AnimatedIn(
+                          animation: _entranceController,
+                          intervalStart: 0.00,
+                          child: const _Header()),
                       const SizedBox(height: 18),
 
                       // Quick Actions section
@@ -127,18 +66,29 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         padding: const EdgeInsets.symmetric(horizontal: 2),
                         child: Row(
                           children: const [
-                            Text('Quick Actions', style: TextStyle(fontFamily: 'Poppins', fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.ink)),
+                            Text('Quick Actions',
+                                style: TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.ink)),
                             Spacer(),
                             SizedBox(width: 8),
                           ],
                         ),
                       ),
                       const SizedBox(height: 12),
-                      _AnimatedIn(animation: _entranceController, intervalStart: 0.06, child: _QuickActions()),
+                      _AnimatedIn(
+                          animation: _entranceController,
+                          intervalStart: 0.06,
+                          child: _QuickActions()),
                       const SizedBox(height: 20),
 
                       // Continue Learning (large pill)
-                      _AnimatedIn(animation: _entranceController, intervalStart: 0.14, child: const _ContinueLearningCard()),
+                      _AnimatedIn(
+                          animation: _entranceController,
+                          intervalStart: 0.14,
+                          child: const _ContinueLearningCard()),
                       const SizedBox(height: 20),
 
                       // Recent Scans header
@@ -146,24 +96,46 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         padding: const EdgeInsets.symmetric(horizontal: 2),
                         child: Row(
                           children: [
-                            const Text('Recent Scans', style: TextStyle(fontFamily: 'Poppins', fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.ink)),
+                            const Text('Recent Scans',
+                                style: TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.ink)),
                             const Spacer(),
                             GestureDetector(
                               onTap: () {},
-                              child: Text('See all', style: TextStyle(color: AppPreferences.palette.value.primary, fontWeight: FontWeight.w700)),
+                              child: Text('See all',
+                                  style: TextStyle(
+                                      color:
+                                          AppPreferences.palette.value.primary,
+                                      fontWeight: FontWeight.w700)),
                             ),
                           ],
                         ),
                       ),
                       const SizedBox(height: 12),
-                      _AnimatedIn(animation: _entranceController, intervalStart: 0.22, child: _RecentScanCard(problem: LocalMathivaData.quadraticProblem)),
+                      _AnimatedIn(
+                          animation: _entranceController,
+                          intervalStart: 0.22,
+                          child: _RecentScanCard(
+                              problem: LocalMathivaData.quadraticProblem)),
                       const SizedBox(height: 12),
-                      _AnimatedIn(animation: _entranceController, intervalStart: 0.26, child: _RecentScanCard(problem: LocalMathivaData.quadraticProblem)),
+                      _AnimatedIn(
+                          animation: _entranceController,
+                          intervalStart: 0.26,
+                          child: _RecentScanCard(
+                              problem: LocalMathivaData.quadraticProblem)),
 
                       const SizedBox(height: 22),
-                      _AnimatedIn(animation: _entranceController, intervalStart: 0.34, child: const _SectionTitle()),
+                      _AnimatedIn(
+                          animation: _entranceController,
+                          intervalStart: 0.34,
+                          child: const _SectionTitle()),
                       const SizedBox(height: 14),
-                      for (int index = 0; index < LocalMathivaData.subjects.length; index++) ...[
+                      for (int index = 0;
+                          index < LocalMathivaData.subjects.length;
+                          index++) ...[
                         _AnimatedIn(
                           animation: _entranceController,
                           intervalStart: 0.40 + (index * .06),
@@ -173,7 +145,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             onTap: () => Navigator.pushNamed(
                               context,
                               RouteNames.lessons,
-                              arguments: {'subjectId': LocalMathivaData.subjects[index].id},
+                              arguments: {
+                                'subjectId': LocalMathivaData.subjects[index].id
+                              },
                             ),
                           ),
                         ),
@@ -188,7 +162,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   child: _AnimatedIn(
                     animation: _entranceController,
                     intervalStart: 0.68,
-                    child: _ImageSolverButton(onTap: () => Navigator.pushNamed(context, RouteNames.imageSolver)),
+                    child: _ImageSolverButton(
+                        onTap: () => Navigator.pushNamed(
+                            context, RouteNames.imageSolver)),
                   ),
                 ),
               ],
@@ -216,7 +192,10 @@ class _Header extends StatelessWidget {
             color: Colors.white.withOpacity(.55),
             borderRadius: BorderRadius.circular(20),
           ),
-          child: const Center(child: Icon(Icons.emoji_emotions_outlined, size: 28, color: Color(0xFF4A465C))), // neutral icon instead of emoji
+          child: const Center(
+              child: Icon(Icons.emoji_emotions_outlined,
+                  size: 28,
+                  color: Color(0xFF4A465C))), // neutral icon instead of emoji
         ),
         const SizedBox(width: 14),
         Expanded(
@@ -226,7 +205,8 @@ class _Header extends StatelessWidget {
               ValueListenableBuilder<String>(
                 valueListenable: AppPreferences.studentName,
                 builder: (context, name, _) {
-                  final displayName = name.trim().isEmpty ? 'Learner' : name.trim();
+                  final displayName =
+                      name.trim().isEmpty ? 'Learner' : name.trim();
                   return Text(
                     'Hello, $displayName!',
                     maxLines: 2,
@@ -263,11 +243,17 @@ class _Header extends StatelessWidget {
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: LinearGradient(colors: [Colors.white, AppPreferences.palette.value.background.last]),
-                          ),
+              gradient: LinearGradient(colors: [
+                Colors.white,
+                AppPreferences.palette.value.background.last
+              ]),
+            ),
             child: Container(
-              decoration: BoxDecoration(shape: BoxShape.circle, color: AppPreferences.palette.value.primary.withOpacity(.12)),
-              child: Icon(Icons.person_rounded, color: AppPreferences.palette.value.primary, size: 34),
+              decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppPreferences.palette.value.primary.withOpacity(.12)),
+              child: Icon(Icons.person_rounded,
+                  color: AppPreferences.palette.value.primary, size: 34),
             ),
           ),
         ),
@@ -307,11 +293,17 @@ class _DailyMissionCard extends StatelessWidget {
                   value: .72,
                   strokeWidth: 8,
                   strokeCap: StrokeCap.round,
-                  backgroundColor: AppPreferences.palette.value.primary.withOpacity(.12),
-                  valueColor: AlwaysStoppedAnimation(AppPreferences.palette.value.primary),
+                  backgroundColor:
+                      AppPreferences.palette.value.primary.withOpacity(.12),
+                  valueColor: AlwaysStoppedAnimation(
+                      AppPreferences.palette.value.primary),
                 ),
               ),
-              const Text('72%', style: TextStyle(color: AppColors.ink, fontWeight: FontWeight.w900, fontSize: 18)),
+              const Text('72%',
+                  style: TextStyle(
+                      color: AppColors.ink,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 18)),
             ],
           ),
           const SizedBox(width: 16),
@@ -319,17 +311,29 @@ class _DailyMissionCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Daily mission', style: TextStyle(fontSize: 18, color: AppColors.ink, fontWeight: FontWeight.w900)),
+                Text('Daily mission',
+                    style: TextStyle(
+                        fontSize: 18,
+                        color: AppColors.ink,
+                        fontWeight: FontWeight.w900)),
                 SizedBox(height: 6),
-                Text('Finish one lesson and one short quiz today.', style: TextStyle(fontSize: 14, color: AppColors.muted, fontWeight: FontWeight.w600, height: 1.35)),
+                Text('Finish one lesson and one short quiz today.',
+                    style: TextStyle(
+                        fontSize: 14,
+                        color: AppColors.muted,
+                        fontWeight: FontWeight.w600,
+                        height: 1.35)),
               ],
             ),
           ),
           Container(
             width: 44,
             height: 44,
-            decoration: BoxDecoration(color: AppPreferences.palette.value.secondary.withOpacity(.14), borderRadius: BorderRadius.circular(16)),
-            child: Icon(Icons.bolt_rounded, color: AppPreferences.palette.value.secondary),
+            decoration: BoxDecoration(
+                color: AppPreferences.palette.value.secondary.withOpacity(.14),
+                borderRadius: BorderRadius.circular(16)),
+            child: Icon(Icons.bolt_rounded,
+                color: AppPreferences.palette.value.secondary),
           ),
         ],
       ),
@@ -347,8 +351,16 @@ class _ContinueLearningCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        gradient: LinearGradient(colors: [AppPreferences.palette.value.primary, AppPreferences.palette.value.secondary]),
-        boxShadow: [BoxShadow(color: AppPreferences.palette.value.primary.withOpacity(.18), blurRadius: 24, offset: const Offset(0, 10))],
+        gradient: LinearGradient(colors: [
+          AppPreferences.palette.value.primary,
+          AppPreferences.palette.value.secondary
+        ]),
+        boxShadow: [
+          BoxShadow(
+              color: AppPreferences.palette.value.primary.withOpacity(.18),
+              blurRadius: 24,
+              offset: const Offset(0, 10))
+        ],
       ),
       child: Row(
         children: [
@@ -357,13 +369,22 @@ class _ContinueLearningCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text('Linear Equations', style: TextStyle(fontFamily: 'Poppins', color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
+                const Text('Linear Equations',
+                    style: TextStyle(
+                        fontFamily: 'Poppins',
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900)),
                 const SizedBox(height: 6),
-                const Text('12 / 20 Lessons', style: TextStyle(color: Colors.white70, fontSize: 13)),
+                const Text('12 / 20 Lessons',
+                    style: TextStyle(color: Colors.white70, fontSize: 13)),
                 const SizedBox(height: 10),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: LinearProgressIndicator(value: 0.6, backgroundColor: Colors.white24, valueColor: AlwaysStoppedAnimation(Colors.white)),
+                  child: LinearProgressIndicator(
+                      value: 0.6,
+                      backgroundColor: Colors.white24,
+                      valueColor: AlwaysStoppedAnimation(Colors.white)),
                 ),
               ],
             ),
@@ -372,8 +393,10 @@ class _ContinueLearningCard extends StatelessWidget {
           Container(
             width: 48,
             height: 48,
-            decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white),
-            child: Icon(Icons.arrow_forward_rounded, color: AppPreferences.palette.value.primary),
+            decoration: const BoxDecoration(
+                shape: BoxShape.circle, color: Colors.white),
+            child: Icon(Icons.arrow_forward_rounded,
+                color: AppPreferences.palette.value.primary),
           ),
         ],
       ),
@@ -390,27 +413,45 @@ class _RecentScanCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: Colors.white.withOpacity(.95), borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withOpacity(.03), blurRadius: 12, offset: const Offset(0,6))]),
+      decoration: BoxDecoration(
+          color: Colors.white.withOpacity(.95),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withOpacity(.03),
+                blurRadius: 12,
+                offset: const Offset(0, 6))
+          ]),
       child: Row(
         children: [
           Container(
             width: 48,
             height: 48,
-            decoration: BoxDecoration(color: AppPreferences.palette.value.primary.withOpacity(.10), borderRadius: BorderRadius.circular(12)),
-            child: Icon(Icons.grid_on_rounded, color: AppPreferences.palette.value.primary),
+            decoration: BoxDecoration(
+                color: AppPreferences.palette.value.primary.withOpacity(.10),
+                borderRadius: BorderRadius.circular(12)),
+            child: Icon(Icons.grid_on_rounded,
+                color: AppPreferences.palette.value.primary),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(problem.question, style: const TextStyle(fontFamily: 'Poppins', fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.ink)),
+                Text(problem.question,
+                    style: const TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.ink)),
                 const SizedBox(height: 6),
-                const Text('Solved · Yesterday', style: TextStyle(color: AppColors.muted, fontSize: 12)),
+                const Text('Solved · Yesterday',
+                    style: TextStyle(color: AppColors.muted, fontSize: 12)),
               ],
             ),
           ),
-          Icon(Icons.chevron_right_rounded, color: AppPreferences.palette.value.primary),
+          Icon(Icons.chevron_right_rounded,
+              color: AppPreferences.palette.value.primary),
         ],
       ),
     );
@@ -429,7 +470,7 @@ class _SearchPill extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(28),
         onTap: onTap,
-          child: Ink(
+        child: Ink(
           height: 64,
           padding: const EdgeInsets.symmetric(horizontal: 22),
           decoration: BoxDecoration(
@@ -437,22 +478,31 @@ class _SearchPill extends StatelessWidget {
             borderRadius: BorderRadius.circular(28),
             border: Border.all(color: Colors.white.withOpacity(.90)),
             boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(.03), blurRadius: 12, offset: const Offset(0, 6)),
+              BoxShadow(
+                  color: Colors.black.withOpacity(.03),
+                  blurRadius: 12,
+                  offset: const Offset(0, 6)),
             ],
           ),
           child: Row(
             children: [
-              const Icon(Icons.search_rounded, color: Color(0xFF4A465C), size: 30),
+              const Icon(Icons.search_rounded,
+                  color: Color(0xFF4A465C), size: 30),
               SizedBox(width: 16),
               Expanded(
                 child: Text(
                   'Search topics, lessons, formulas...',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontFamily: 'Poppins', color: Color(0xFF9B96A8), fontWeight: FontWeight.w700, fontSize: 16),
+                  style: const TextStyle(
+                      fontFamily: 'Poppins',
+                      color: Color(0xFF9B96A8),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16),
                 ),
               ),
-              Icon(Icons.tune_rounded, color: AppPreferences.palette.value.primary, size: 26),
+              Icon(Icons.tune_rounded,
+                  color: AppPreferences.palette.value.primary, size: 26),
             ],
           ),
         ),
@@ -460,23 +510,40 @@ class _SearchPill extends StatelessWidget {
     );
   }
 }
+
 class _QuickActions extends StatelessWidget {
   const _QuickActions();
 
   @override
   Widget build(BuildContext context) {
     return GridView.count(
-      crossAxisCount: 4,             // 4 columns
-      crossAxisSpacing: 8,
-      mainAxisSpacing: 8,
+      crossAxisCount: 2,
+      crossAxisSpacing: 12,
+      mainAxisSpacing: 12,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      childAspectRatio: 1.0,        // square tiles
+      childAspectRatio: 1.35,
       children: [
-        _QuickAction(icon: Icons.document_scanner_rounded, label: 'Scan', color: AppPreferences.palette.value.primary, onTap: () => Navigator.pushNamed(context, RouteNames.imageSolver)),
-        _QuickAction(icon: Icons.menu_book_rounded, label: 'Practice', color: AppPreferences.palette.value.primary, onTap: () {}),
-        _QuickAction(icon: Icons.bar_chart_rounded, label: 'Progress', color: AppPreferences.palette.value.primary, onTap: () {}),
-        _QuickAction(icon: Icons.emoji_events_rounded, label: 'Awards', color: AppPreferences.palette.value.secondary, onTap: () {}),
+        _QuickAction(
+            icon: Icons.document_scanner_rounded,
+            label: 'Scan',
+            color: AppPreferences.palette.value.primary,
+            onTap: () => Navigator.pushNamed(context, RouteNames.imageSolver)),
+        _QuickAction(
+            icon: Icons.menu_book_rounded,
+            label: 'Practice',
+            color: AppPreferences.palette.value.primary,
+            onTap: () {}),
+        _QuickAction(
+            icon: Icons.bar_chart_rounded,
+            label: 'Progress',
+            color: AppPreferences.palette.value.primary,
+            onTap: () {}),
+        _QuickAction(
+            icon: Icons.emoji_events_rounded,
+            label: 'Awards',
+            color: AppPreferences.palette.value.secondary,
+            onTap: () {}),
       ],
     );
   }
@@ -488,20 +555,36 @@ class _QuickAction extends StatelessWidget {
   final Color color;
   final VoidCallback onTap;
 
-  const _QuickAction({required this.icon, required this.label, required this.color, required this.onTap});
+  const _QuickAction(
+      {required this.icon,
+      required this.label,
+      required this.color,
+      required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Ink(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(.97),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: Colors.white.withOpacity(.95),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(.08),
+            blurRadius: 30,
+            offset: const Offset(0, 12),
           ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(18),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(18),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -515,7 +598,12 @@ class _QuickAction extends StatelessWidget {
                 child: Icon(icon, color: color, size: 28),
               ),
               const SizedBox(height: 8),
-              Text(label, style: const TextStyle(fontFamily: 'Poppins', fontSize: 13, fontWeight: FontWeight.w400, color: AppColors.ink)),
+              Text(label,
+                  style: const TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.ink)),
             ],
           ),
         ),
@@ -531,9 +619,17 @@ class _SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Row(
       children: [
-        Text('Math Subjects', style: TextStyle(fontSize: 20, color: AppColors.ink, fontWeight: FontWeight.w900)),
+        Text('Math Subjects',
+            style: TextStyle(
+                fontSize: 20,
+                color: AppColors.ink,
+                fontWeight: FontWeight.w900)),
         Spacer(),
-        Text('4 courses', style: TextStyle(fontSize: 13, color: AppColors.muted, fontWeight: FontWeight.w800)),
+        Text('4 courses',
+            style: TextStyle(
+                fontSize: 13,
+                color: AppColors.muted,
+                fontWeight: FontWeight.w800)),
       ],
     );
   }
@@ -544,7 +640,8 @@ class _SubjectCard extends StatelessWidget {
   final _SubjectAccent accent;
   final VoidCallback onTap;
 
-  const _SubjectCard({required this.subject, required this.accent, required this.onTap});
+  const _SubjectCard(
+      {required this.subject, required this.accent, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -556,10 +653,10 @@ class _SubjectCard extends StatelessWidget {
         child: Ink(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity( .92),
+            color: Colors.white.withOpacity(.92),
             borderRadius: BorderRadius.circular(36),
-            border: Border.all(color: Colors.white.withOpacity( .96)),
-                      ),
+            border: Border.all(color: Colors.white.withOpacity(.96)),
+          ),
           child: Row(
             children: [
               _SubjectIcon(accent: accent),
@@ -572,28 +669,45 @@ class _SubjectCard extends StatelessWidget {
                       subject.title,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: AppColors.ink, fontSize: 18, height: 1.15, fontWeight: FontWeight.w900),
+                      style: const TextStyle(
+                          color: AppColors.ink,
+                          fontSize: 18,
+                          height: 1.15,
+                          fontWeight: FontWeight.w900),
                     ),
                     const SizedBox(height: 6),
                     Text(
                       accent.description,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: AppColors.muted, fontSize: 13, height: 1.35, fontWeight: FontWeight.w600),
+                      style: const TextStyle(
+                          color: AppColors.muted,
+                          fontSize: 13,
+                          height: 1.35,
+                          fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),
               ),
               const SizedBox(width: 10),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
-                decoration: BoxDecoration(color: AppPreferences.palette.value.primary.withOpacity(.10), borderRadius: BorderRadius.circular(99)),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
+                decoration: BoxDecoration(
+                    color:
+                        AppPreferences.palette.value.primary.withOpacity(.10),
+                    borderRadius: BorderRadius.circular(99)),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('Start', style: TextStyle(color: AppPreferences.palette.value.primary, fontSize: 13, fontWeight: FontWeight.w900)),
+                    Text('Start',
+                        style: TextStyle(
+                            color: AppPreferences.palette.value.primary,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w900)),
                     const SizedBox(width: 4),
-                    Icon(Icons.chevron_right_rounded, color: AppPreferences.palette.value.primary, size: 22),
+                    Icon(Icons.chevron_right_rounded,
+                        color: AppPreferences.palette.value.primary, size: 22),
                   ],
                 ),
               ),
@@ -616,13 +730,26 @@ class _SubjectIcon extends StatelessWidget {
       width: 76,
       height: 76,
       decoration: BoxDecoration(
-        gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [AppPreferences.palette.value.primary.withOpacity(.12), Colors.white.withOpacity( .8)]),
+        gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppPreferences.palette.value.primary.withOpacity(.12),
+              Colors.white.withOpacity(.8)
+            ]),
         borderRadius: BorderRadius.circular(24),
-              ),
+      ),
       child: Stack(
         children: [
-          Positioned(right: 9, top: 8, child: Icon(Icons.auto_awesome_rounded, color: AppPreferences.palette.value.primary.withOpacity( .18), size: 17)),
-          Center(child: Icon(accent.icon, color: AppPreferences.palette.value.primary, size: 38)),
+          Positioned(
+              right: 9,
+              top: 8,
+              child: Icon(Icons.auto_awesome_rounded,
+                  color: AppPreferences.palette.value.primary.withOpacity(.18),
+                  size: 17)),
+          Center(
+              child: Icon(accent.icon,
+                  color: AppPreferences.palette.value.primary, size: 38)),
         ],
       ),
     );
@@ -638,13 +765,16 @@ class _ImageSolverButton extends StatefulWidget {
   State<_ImageSolverButton> createState() => _ImageSolverButtonState();
 }
 
-class _ImageSolverButtonState extends State<_ImageSolverButton> with SingleTickerProviderStateMixin {
+class _ImageSolverButtonState extends State<_ImageSolverButton>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _floatController;
 
   @override
   void initState() {
     super.initState();
-    _floatController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1800))..repeat(reverse: true);
+    _floatController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 1800))
+      ..repeat(reverse: true);
   }
 
   @override
@@ -668,9 +798,16 @@ class _ImageSolverButtonState extends State<_ImageSolverButton> with SingleTicke
           height: 86,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [AppPreferences.palette.value.secondary, AppPreferences.palette.value.primary]),
-                      ),
-          child: const Icon(Icons.document_scanner_rounded, color: Colors.white, size: 42),
+            gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppPreferences.palette.value.secondary,
+                  AppPreferences.palette.value.primary
+                ]),
+          ),
+          child: const Icon(Icons.document_scanner_rounded,
+              color: Colors.white, size: 42),
         ),
       ),
     );
@@ -682,7 +819,10 @@ class _AnimatedIn extends StatelessWidget {
   final double intervalStart;
   final Widget child;
 
-  const _AnimatedIn({required this.animation, required this.intervalStart, required this.child});
+  const _AnimatedIn(
+      {required this.animation,
+      required this.intervalStart,
+      required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -708,7 +848,7 @@ class _GlowBlob extends StatelessWidget {
           height: size,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: color.withOpacity( .20),
+            color: color.withOpacity(.20),
           ),
         ),
       ),
@@ -731,7 +871,11 @@ class _DotPattern extends StatelessWidget {
             runSpacing: 10,
             children: List.generate(
               24,
-              (_) => Container(width: 4, height: 4, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle)),
+              (_) => Container(
+                  width: 4,
+                  height: 4,
+                  decoration: const BoxDecoration(
+                      color: Colors.white, shape: BoxShape.circle)),
             ),
           ),
         ),
@@ -749,8 +893,13 @@ class _OrbitDot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Transform.translate(
-      offset: Offset(math.cos(controller.value * math.pi * 2) * 12, math.sin(controller.value * math.pi * 2) * 12),
-      child: Container(width: 10, height: 10, decoration: BoxDecoration(color: color.withOpacity( .7), shape: BoxShape.circle)),
+      offset: Offset(math.cos(controller.value * math.pi * 2) * 12,
+          math.sin(controller.value * math.pi * 2) * 12),
+      child: Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(
+              color: color.withOpacity(.7), shape: BoxShape.circle)),
     );
   }
 }
@@ -763,7 +912,10 @@ class _Sparkle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scale = .75 + (math.sin(controller.value * math.pi * 2) + 1) * .18;
-    return Transform.scale(scale: scale, child: Icon(Icons.auto_awesome_rounded, color: AppPreferences.palette.value.secondary, size: 22));
+    return Transform.scale(
+        scale: scale,
+        child: Icon(Icons.auto_awesome_rounded,
+            color: AppPreferences.palette.value.secondary, size: 22));
   }
 }
 
@@ -773,12 +925,32 @@ class _SubjectAccent {
   final Color soft;
   final String description;
 
-  const _SubjectAccent({required this.icon, required this.primary, required this.soft, required this.description});
+  const _SubjectAccent(
+      {required this.icon,
+      required this.primary,
+      required this.soft,
+      required this.description});
 }
 
 final _subjectAccents = [
-  _SubjectAccent(icon: Icons.functions_rounded, primary: AppPreferences.palette.value.primary, soft: AppPreferences.palette.value.background.last, description: 'Build strong foundations in everyday math.'),
-  _SubjectAccent(icon: Icons.bar_chart_rounded, primary: AppPreferences.palette.value.primary, soft: AppPreferences.palette.value.background.last, description: 'Explore data, variability, and chance.'),
-  _SubjectAccent(icon: Icons.show_chart_rounded, primary: AppPreferences.palette.value.primary, soft: AppPreferences.palette.value.background.last, description: 'Prepare for advanced math concepts.'),
-  _SubjectAccent(icon: Icons.integration_instructions_rounded, primary: AppPreferences.palette.value.primary, soft: AppPreferences.palette.value.background.last, description: 'Differentiate, integrate, and understand change.'),
+  _SubjectAccent(
+      icon: Icons.functions_rounded,
+      primary: AppPreferences.palette.value.primary,
+      soft: AppPreferences.palette.value.background.last,
+      description: 'Build strong foundations in everyday math.'),
+  _SubjectAccent(
+      icon: Icons.bar_chart_rounded,
+      primary: AppPreferences.palette.value.primary,
+      soft: AppPreferences.palette.value.background.last,
+      description: 'Explore data, variability, and chance.'),
+  _SubjectAccent(
+      icon: Icons.show_chart_rounded,
+      primary: AppPreferences.palette.value.primary,
+      soft: AppPreferences.palette.value.background.last,
+      description: 'Prepare for advanced math concepts.'),
+  _SubjectAccent(
+      icon: Icons.integration_instructions_rounded,
+      primary: AppPreferences.palette.value.primary,
+      soft: AppPreferences.palette.value.background.last,
+      description: 'Differentiate, integrate, and understand change.'),
 ];
