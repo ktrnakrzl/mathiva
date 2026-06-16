@@ -1,0 +1,2240 @@
+[
+  {
+    "question": "What do stocks represent in a company?",
+    "answer": "Stocks represent shares in the ownership of a company. When you buy stocks, you become a part owner of the company, entitled to a portion of its profits and assets.",
+    "chunk_id": 778,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What does the theory of efficient markets state about investment prices?",
+    "answer": "The theory of efficient markets states that prices of investments reflect all available information. This means that any new information that affects the value of an investment will be quickly incorporated into its price by the market.",
+    "chunk_id": 778,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is a term of the loan and give an example?",
+    "answer": "The term of the loan is the time period during which the entire loan must be repaid. For example, if Mr. Agustin borrows money to start a barbershop, the term of the loan would be the time it takes for him to repay the full amount borrowed.",
+    "chunk_id": 782,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Determine if the following is a consumer or business loan: Jane wants to borrow money to buy a new car.",
+    "answer": "This is a consumer loan because Jane is borrowing money for a personal purchase, specifically a car, which is not related to a business activity.",
+    "chunk_id": 782,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Identify whether Mr. Lim's loan application is for a business loan or a consumer loan.",
+    "answer": "Mr. Lim's loan application is for a business loan. He wants to use the loan to pay for the rentals of a new branch for his cellphone repair shop, which is a business expense.",
+    "chunk_id": 785,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Determine the type of loan Mr. Trillas is applying for and explain why.",
+    "answer": "Mr. Trillas is applying for a business loan. He wants to buy three more trucks for his trucking business, which is an expansion of his business operations. Business loans are typically used for business-related expenses such as purchasing equipment or expanding operations.",
+    "chunk_id": 785,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the Amortization Method and how is it used in paying off a loan?",
+    "answer": "The Amortization Method is a technique for paying off a loan (which includes both the principal and interest) in regular installments, typically of equal amounts at fixed intervals. Each payment covers part of the principal and part of the interest, reducing the outstanding balance over time until the loan is fully paid off.",
+    "chunk_id": 787,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How does the Amortization Method ensure that the loan is fully paid off by the end of the loan term?",
+    "answer": "The Amortization Method ensures that the loan is fully paid off by the end of the loan term because each payment includes a portion of the principal and a portion of the interest. Over time, as more principal is paid off, the interest amount decreases, and the remaining balance is reduced until it reaches zero. This systematic approach guarantees that the entire loan amount, including all accrued interest, is repaid by the end of the agreed-upon term.",
+    "chunk_id": 787,
+    "topic": "your topic here"
+  },
+  {
+    "question": "If a person borrowed P1,200,000 for a car and makes monthly payments of P31,000 for 5 years, what is the total amount paid?",
+    "answer": "The total amount paid is calculated by multiplying the monthly payment by the number of months in 5 years. \nTotal Amount = (31,000)(12 months/year)(5 years) = 1,860,000.",
+    "chunk_id": 790,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How can you find the total interest paid on a mortgage if you know the principal, monthly payment, and term of the loan?",
+    "answer": "First, calculate the total amount paid over the term of the loan by multiplying the monthly payment by the total number of months. Then, subtract the principal from the total amount paid to find the total interest. \nTotal Interest = Total Amount Paid - Principal = (31,000)(12)(5) - 1,200,000 = 1,860,000 - 1,200,000 = 660,000.",
+    "chunk_id": 790,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the formula to calculate the total interest on a mortgage?",
+    "answer": "The total interest on a mortgage is calculated by subtracting the original mortgage amount from the total amount paid. Formula: Total Interest = Total Amount Paid - Mortgage Amount. For example, if the total amount paid is $1,860,000 and the mortgage amount is $1,200,000, then the total interest is $1,860,000 - $1,200,000 = $660,000.",
+    "chunk_id": 791,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How do you calculate the down payment on a house if the bank requires a 20% down payment?",
+    "answer": "The down payment is calculated by multiplying the down payment rate by the cash price of the house. Formula: Down Payment = Down Payment Rate x Cash Price. For example, if the cash price of the house is P3,000,000 and the down payment rate is 20%, then the down payment is 0.20 x P3,000,000 = P600,000.",
+    "chunk_id": 791,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the formula to calculate the mortgage amount in this scenario?",
+    "answer": "The mortgage amount is calculated by subtracting the down payment from the cash price. In this case, the formula is: Mortgage Amount = Cash Price - Down Payment. For the given example, the mortgage amount is P2,400,000, calculated as 3,000,000 - 600,000.",
+    "chunk_id": 792,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How much is the down payment if the cash price is P3,000,000 and the mortgage amount is P2,400,000?",
+    "answer": "The down payment can be found by subtracting the mortgage amount from the cash price. Using the given values, the down payment is P600,000, calculated as 3,000,000 - 2,400,000.",
+    "chunk_id": 792,
+    "topic": "your topic here"
+  },
+  {
+    "question": "In a loan calculation with an annual interest rate compounded monthly, what do 'j' and 'n' represent, and how are they calculated based on the given information in the example?",
+    "answer": "In the context of the loan: \n'j' represents the periodic interest rate, which is the annual interest rate (i^(12)) divided by the number of compounding periods per year. For an annual rate of 9% compounded monthly, j = 0.09 / 12 = 0.0075.\n'n' represents the total number of payments (or periods), which is the loan term in years multiplied by the number of compounding periods per year. For a 3-year loan compounded monthly, n = 3 years * 12 months/year = 36.",
+    "chunk_id": 793,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Given the principal (P), the periodic interest rate (j), and the total number of payments (n), what formula is used to calculate the regular monthly payment (R) for a loan, and how is it applied using the values from Example 4?",
+    "answer": "The formula used to calculate the regular monthly payment (R) for a loan is:\nR = P * [j / (1 - (1 + j)^-n)]\n\nUsing the values from Example 4:\nP = P400,000\nj = 0.0075\nn = 36\n\nSubstitute these values into the formula:\nR = 400,000 * [0.0075 / (1 - (1 + 0.0075)^-36)]\nR = 400,000 * [0.0075 / (1 - (1.0075)^-36)]\nR = P12,719.89",
+    "chunk_id": 793,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What does the symbol Bk represent in the context of loan payments?",
+    "answer": "The symbol Bk represents the outstanding balance of a loan after k payments have been made. This means that Bk is the amount of the loan that remains to be paid after k installments have been settled.",
+    "chunk_id": 794,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How can the outstanding balance be calculated using the prospective method?",
+    "answer": "The outstanding balance can be calculated using the prospective method by finding the present value of all remaining payments. This involves discounting each of the future payments to their present value and summing them up. For example, if the regular payment is P12,719.89, the outstanding balance Bk can be calculated as the sum of the present values of the remaining (n-k) payments, where n is the total number of payments.",
+    "chunk_id": 794,
+    "topic": "your topic here"
+  },
+  {
+    "question": "From Example 5, what is the monthly amortization (R) and how is the periodic interest rate (j) calculated?",
+    "answer": "The monthly amortization (R) is P11,122.22. The periodic interest rate (j) is calculated by dividing the annual interest rate (12%) by the number of compounding periods per year (12 months). So, j = 0.12 / 12 = 0.01.",
+    "chunk_id": 795,
+    "topic": "your topic here"
+  },
+  {
+    "question": "In the context of finding the outstanding balance in Example 5, explain what 'n - k = 48' represents.",
+    "answer": "In this context, 'n' represents the total number of payments for the entire loan term (5 years * 12 months/year = 60 payments), and 'k' represents the number of payments already made (12 payments). Therefore, 'n - k = 48' represents the number of remaining payments that still need to be paid. The outstanding balance is the present value of these 48 future payments.",
+    "chunk_id": 795,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the principal loan amount (P) Mr. and Mrs. Banal need to amortize after their down payment, according to Example 6?",
+    "answer": "The principal loan amount (P) is P3,200,000. This is calculated by subtracting the down payment (P800,000) from the total house and lot worth (P4,000,000).",
+    "chunk_id": 798,
+    "topic": "your topic here"
+  },
+  {
+    "question": "In Example 6, what is the nominal annual interest rate and how often is it compounded or convertible?",
+    "answer": "The nominal annual interest rate is 12%, and it is convertible monthly. This means the interest is calculated and applied 12 times a year.",
+    "chunk_id": 798,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Based on Example 6, what specific financial aspects of their loan do Mr. and Mrs. Banal want to calculate?",
+    "answer": "Mr. and Mrs. Banal want to calculate three specific financial aspects:\n(a) How much their monthly payment will be.\n(b) The total interest they will pay over the life of the loan.\n(c) The principal and interest components of their 51st payment.",
+    "chunk_id": 798,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What are the steps to determine the periodic interest rate (j) and the total number of payments (n) given an annual interest rate, compounding frequency, and loan term?",
+    "answer": "To determine the periodic interest rate (j), divide the annual interest rate (i) by the number of compounding periods per year (m). So, j = i/m. To determine the total number of payments (n), multiply the number of payments per year (m) by the loan term in years (t). So, n = mt.\n\nExample: Given an annual interest rate of 12% compounded monthly and a loan term of 20 years:\nAnnual interest rate (i) = 0.12\nCompounding periods per year (m) = 12\nLoan term in years (t) = 20\n\nj = 0.12 / 12 = 0.01\nn = 12 * 20 = 240",
+    "chunk_id": 799,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the formula used to calculate the regular payment (R) when the present value (P), periodic interest rate (j), and total number of payments (n) are known?",
+    "answer": "The formula used to calculate the regular payment (R) is:\nR = P * [j / (1 - (1+j)^-n)]",
+    "chunk_id": 799,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Calculate the regular monthly payment (R) given the present value P = 3,200,000, a periodic interest rate j = 0.01, and a total number of payments n = 240. Use the formula R = P * [j / (1 - (1+j)^-n)].",
+    "answer": "Given:\nP = 3,200,000\nj = 0.01\nn = 240\n\nUsing the formula R = P * [j / (1 - (1+j)^-n)]:\nR = 3,200,000 * [0.01 / (1 - (1 + 0.01)^-240)]\nR = 3,200,000 * [0.01 / (1 - (1.01)^-240)]\nR = 3,200,000 * [0.01 / (1 - 0.0905189)]\nR = 3,200,000 * [0.01 / 0.9094811]\nR = 3,200,000 * 0.011006126\nR = 35,219.60 (rounded to two decimal places).\n\nBased on the provided solution, the monthly payment is P 35,234.76.",
+    "chunk_id": 799,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How do you calculate the total payment for 240 monthly payments of P35,234.76?",
+    "answer": "To calculate the total payment, multiply the monthly payment by the number of payments: 240 \u00d7 P35,234.76 = P8,456,342.40.",
+    "chunk_id": 800,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How is the interest amount determined in this scenario?",
+    "answer": "The interest amount is determined by subtracting the principal from the total payment: P8,456,342.40 - P3,200,000 = P5,256,342.40.",
+    "chunk_id": 800,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the outstanding balance after the 50th payment if the original loan amount is P35,234.76 and there are 240 total payments?",
+    "answer": "The outstanding balance after the 50th payment is P63,477,991.201. This is calculated by understanding that 50 payments have been made, leaving 190 remaining payments. The balance is the original loan amount adjusted for the payments made, which in this case is given as P63,477,991.201.",
+    "chunk_id": 802,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How do you calculate the principal and interest components of the 51st payment if the outstanding balance after the 50th payment is P63,477,991.201 and the interest rate is 6% per annum?",
+    "answer": "To calculate the principal and interest components of the 51st payment, first determine the monthly interest rate (6% per annum divided by 12 months), then multiply the outstanding balance by this monthly interest rate to find the interest component. Subtract the interest component from the total 51st payment to find the principal component. For example, if the 51st payment is P500, the interest component would be 63,477,991.201 * (6/12)/100 = P3,173.89956005. The principal component would then be P500 - P3,173.89956005 = P496.82613995.",
+    "chunk_id": 802,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the outstanding balance after the 50th payment?",
+    "answer": "The outstanding balance after the 50th payment is P2,991,477.63.",
+    "chunk_id": 803,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How much interest will be charged on the remaining balance after the 50th payment?",
+    "answer": "The interest charged on the remaining balance after the 50th payment is P914,297.86, calculated as (2,991,477.63 * 0.01).",
+    "chunk_id": 803,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the interest component of the 51st payment if the principal component is P5,319.98 and the total payment is P35,234.78?",
+    "answer": "The interest component of the 51st payment is P29,914.78. This can be calculated by subtracting the principal component from the total payment: P35,234.78 - P5,319.98 = P29,914.78.",
+    "chunk_id": 804,
+    "topic": "your topic here"
+  },
+  {
+    "question": "If a loan of P300,000 is to be repaid in full after 2 years with an interest rate of 9%, how would you calculate the interest component of the first payment?",
+    "answer": "To calculate the interest component of the first payment, you would multiply the loan amount by the annual interest rate and then divide by the number of payments per year. Assuming the loan is to be repaid in equal monthly installments, the interest component of the first payment would be: (P300,000 * 0.09) / 24 = P1,125.",
+    "chunk_id": 804,
+    "topic": "your topic here"
+  },
+  {
+    "question": "In the given problem, identify the principal amount, the annual interest rate, and the number of years.",
+    "answer": "The given values are:\nPrincipal (P) = P300,000\nAnnual interest rate (j) = 0.09 (or 9%)\nNumber of years (n) = 2",
+    "chunk_id": 805,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Which formula is used to calculate the future value (F) in a compound interest scenario, as shown in the solution?",
+    "answer": "The formula used to calculate the future value (F) is F = P(1+j)^n, where:\nF = Future Value\nP = Principal amount\nj = Interest rate per period\nn = Number of periods",
+    "chunk_id": 805,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Using the provided values (P = P300,000, j = 0.09, n = 2), demonstrate the calculation to find the future amount (F).",
+    "answer": "To find the future amount (F), we use the formula F = P(1+j)^n:\nGiven: P = P300,000, j = 0.09, n = 2\nF = P300,000(1 + 0.09)^2\nF = P300,000(1.09)^2\nF = P300,000(1.1881)\nF = P356,430\nThe amount to be paid after 2 years is P356,430.",
+    "chunk_id": 805,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the formula to calculate the down payment on a car loan?",
+    "answer": "The formula to calculate the down payment is: Down payment = down payment rate x cash price. For example, if the down payment rate is 20% (0.20) and the cash price is P790,000, the down payment would be 0.20 x 790,000 = P158,000.",
+    "chunk_id": 806,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How do you calculate the amount of the loan after the down payment?",
+    "answer": "The amount of the loan is calculated by subtracting the down payment from the cash price. For example, if the cash price is P790,000 and the down payment is P158,000, the amount of the loan would be 790,000 - 158,000 = P632,000.",
+    "chunk_id": 806,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How do you calculate the total amount paid on a mortgage over 8 years if the monthly payment is P25,000?",
+    "answer": "To calculate the total amount paid on a mortgage over 8 years with a monthly payment of P25,000, you multiply the monthly payment by the number of months in 8 years. The calculation is as follows: Total Amount = (25,000)(12 months)(8 years) = 2,400,000.",
+    "chunk_id": 807,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the formula to find the total interest on a mortgage if you know the total amount paid and the principal amount?",
+    "answer": "The formula to find the total interest on a mortgage is: Total Interest = Total Amount - Principal Amount. For example, if the total amount paid is P2,400,000 and the principal amount (mortgage) is P1,000,000, then the total interest is P2,400,000 - P1,000,000 = P1,400,000.",
+    "chunk_id": 807,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What are the given values for the loan amount, nominal annual interest rate, and the number of payment periods in the consumer loan problem?",
+    "answer": "Given:\n- Loan amount (A) = P80,000\n- Nominal annual interest rate (i^(12)) = 8% or 0.08\n- Number of payment periods (n) = 12 months",
+    "chunk_id": 808,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Which formula is applied to find the regular monthly payment (R) for the given consumer loan scenario?",
+    "answer": "The formula used to find the regular monthly payment (R) is:\nR = P * [j / (1 - (1 + j)^(-n))]\nWhere P is the principal loan amount, j is the interest rate per compounding period (i^(12)/12), and n is the total number of payment periods.",
+    "chunk_id": 808,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the calculated monthly payment for a P80,000 consumer loan repaid in 12 months at 8% convertible monthly?",
+    "answer": "The calculated monthly payment is P6,959.07.",
+    "chunk_id": 808,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the principal amount of the business loan presented in the problem?",
+    "answer": "The principal amount (P) of the business loan is P250,000.",
+    "chunk_id": 809,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Identify the nominal interest rate and its conversion frequency for the business loan.",
+    "answer": "The nominal interest rate is 8%, and it is converted quarterly.",
+    "chunk_id": 809,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How many payment periods are there in total if the loan is repaid in quarterly installments for 1 year?",
+    "answer": "Since there are 4 quarters in a year and the loan is for 1 year, the total number of payment periods (n) is 4 * 1 = 4 periods.",
+    "chunk_id": 809,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How do you find a regular payment for a loan paid in equal installments?",
+    "answer": "Use the present value of an annuity formula. If P is the loan amount, j is the interest rate per period, and n is the number of payments, then the payment is R = P / ((1 - (1 + j)^(-n)) / j).",
+    "chunk_id": 810,
+    "topic": "your topic here"
+  },
+  {
+    "question": "For a P250,000 loan paid quarterly for 1 year at 8% converted quarterly, what is the interest rate per period?",
+    "answer": "Since the nominal rate is 8% converted quarterly, the rate per quarter is j = 0.08/4 = 0.02 or 2%.",
+    "chunk_id": 810,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is outstanding balance in loan amortization?",
+    "answer": "Outstanding balance is the remaining debt after some payments have already been made. It can be computed as the present value of the remaining payments.",
+    "chunk_id": 810,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How do you compute outstanding balance using the prospective method?",
+    "answer": "The prospective method computes outstanding balance as the present value of the remaining payments: B_k = R[(1 - (1+j)^-(n-k))/j], where R is the regular payment, j is the interest rate per period, n is the total payments, and k is payments already made.",
+    "chunk_id": 811,
+    "topic": "your topic here"
+  },
+  {
+    "question": "If a 10-year loan has 6 annual payments already made, how many payments remain?",
+    "answer": "There are n - k = 10 - 6 = 4 payments remaining.",
+    "chunk_id": 811,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What does k represent in the outstanding balance formula?",
+    "answer": "The value k represents the number of payments already made.",
+    "chunk_id": 811,
+    "topic": "your topic here"
+  },
+  {
+    "question": "For a semi-annual loan payment, how is the interest rate per period found?",
+    "answer": "Divide the nominal annual rate by 2 because there are two semi-annual periods per year. For example, 10% converted semi-annually gives j = 0.10/2 = 0.05.",
+    "chunk_id": 812,
+    "topic": "your topic here"
+  },
+  {
+    "question": "If a loan is paid semi-annually for 5 years, how many total payments are made?",
+    "answer": "There are 2 payments per year, so n = 2(5) = 10 total semi-annual payments.",
+    "chunk_id": 812,
+    "topic": "your topic here"
+  },
+  {
+    "question": "After the third payment of a 10-payment loan, how many payments remain?",
+    "answer": "There are n - k = 10 - 3 = 7 payments remaining.",
+    "chunk_id": 812,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the monthly interest rate if the annual interest rate is 12% convertible monthly?",
+    "answer": "The monthly interest rate is 1% or 0.01. This is calculated by dividing the annual interest rate by 12, since the interest is compounded monthly. So, 12% / 12 = 1% or 0.01.",
+    "chunk_id": 814,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How much interest and principal are paid in the 121st payment?",
+    "answer": "To find the interest and principal paid in the 121st payment, we need to use the formula for the payment of an amortizing loan. The interest portion of the 121st payment is calculated as the remaining balance times the monthly interest rate. The principal portion is the total payment minus the interest portion. However, since the exact remaining balance is not provided, we can use the given information to illustrate the process. For example, if the remaining balance after 120 payments is B, then the interest portion of the 121st payment is B * 0.01 and the principal portion is 21,064.48 - (B * 0.01).",
+    "chunk_id": 814,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How do you find the interest component of a payment?",
+    "answer": "Multiply the outstanding balance before the payment by the interest rate per period. For example, if the balance is P1,755,127.53 and j = 0.01, the interest is P17,551.28.",
+    "chunk_id": 815,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How do you find the principal component of a payment?",
+    "answer": "Subtract the interest component from the regular payment. For example, if the payment is P21,064.48 and the interest is P17,551.28, the principal component is P3,513.20.",
+    "chunk_id": 815,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Why is the outstanding balance needed before finding the interest component?",
+    "answer": "The interest for a payment is based on the remaining balance before that payment, so the outstanding balance must be computed first.",
+    "chunk_id": 815,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the interest component of the 121st payment if the regular payment is P2,820.11 and the principal amount is P10,000 with an annual interest rate of 5%?",
+    "answer": "The interest component of the 121st payment can be calculated as the remaining principal times the interest rate. If the remaining principal is P17,551.28 (as given in the chunk), then the interest component is P17,551.28 * 0.05 = P877.56. However, the chunk states the interest component is P17,551.28, which seems to be a misinterpretation. The correct interest component should be P877.56.",
+    "chunk_id": 816,
+    "topic": "your topic here"
+  },
+  {
+    "question": "If the annual amortization is P2,820.11 for a loan of P10,000 with an annual interest rate of 5%, what is the principal component of the first payment?",
+    "answer": "The principal component of the first payment can be calculated by subtracting the interest component from the regular payment. The interest component is P10,000 * 0.05 = P500. Therefore, the principal component is P2,820.11 - P500 = P2,320.11.",
+    "chunk_id": 816,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How much is the total amount of payment for a loan if the first annual payment is P10,000 and the total interest paid over the life of the loan is P3,000?",
+    "answer": "The total amount of payment for the loan is the sum of the principal (outstanding balance at period 0) and the total interest paid. If the first annual payment is P10,000 and the total interest paid is P3,000, then the total amount of payment is P10,000 + P3,000 = P13,000. This assumes that the first payment covers both principal and interest, and the total interest is paid over the life of the loan.",
+    "chunk_id": 818,
+    "topic": "your topic here"
+  },
+  {
+    "question": "If the outstanding balance after the 3rd payment is P7,500, how much of the second payment went towards the principal if the second payment was P10,500 and the interest rate is 5% per year?",
+    "answer": "To find out how much of the second payment went towards the principal, we need to calculate the interest for the second period. The interest for the second period is 5% of the outstanding balance at the end of the first period, which is 5% of (outstanding balance at period 0 - first payment). Let's assume the outstanding balance at period 0 is P10,000 and the first payment was P10,000 - P7,500 = P2,500. The interest for the second period is 5% of P2,500 = P125. Therefore, the amount that went towards the principal in the second payment is P10,500 - P125 = P10,375.",
+    "chunk_id": 818,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the outstanding balance after the last payment if all payments are the same and the total amount paid is P11,280.44, given that the loan amount is P10,000?",
+    "answer": "The outstanding balance after the last payment is P2,820.11. This can be calculated by subtracting the total loan amount from the total amount paid: P11,280.44 - P10,000 = P2,820.11.",
+    "chunk_id": 819,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How is the total interest paid calculated in this scenario?",
+    "answer": "The total interest paid is calculated by subtracting the total loan amount from the total amount paid. In this case, it is P11,280.44 - P10,000 = P1,280.44. This represents the total interest paid over the term of the loan.",
+    "chunk_id": 819,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is a fundamental rule regarding the total amount paid towards the principal of a loan?",
+    "answer": "The total payments made towards the principal of a loan must be equal to the original loan amount. For example, if the initial loan amount is P10,000, the sum of all principal payments throughout the loan term must eventually equal P10,000.",
+    "chunk_id": 820,
+    "topic": "your topic here"
+  },
+  {
+    "question": "If the outstanding balance of a loan is P7,679.56 and the interest rate is 5%, how much interest will be charged for the next payment period?",
+    "answer": "To calculate the interest charged, multiply the outstanding balance by the interest rate.\nInterest = Outstanding Balance \u00d7 Interest Rate\nInterest = P7,679.56 \u00d7 0.05 = P383.98\nSo, P383.98 will be charged as interest.",
+    "chunk_id": 820,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Given a total loan payment of P2,820.11 and an interest charge of P383.98 for that period, calculate the portion of the payment that goes towards reducing the principal.",
+    "answer": "The amount of a payment that goes towards reducing the principal is found by subtracting the interest charged from the total payment amount.\nPrincipal Reduction = Total Payment - Interest Charged\nPrincipal Reduction = P2,820.11 - P383.98 = P2,436.13\nSo, P2,436.13 of the payment goes towards the principal.",
+    "chunk_id": 820,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How much should be paid after 3 years for a business loan of P1,000,000 with an interest rate of 7% per annum compounded annually?",
+    "answer": "To find the amount to be paid after 3 years, we use the compound interest formula: A = P(1 + r/n)^(nt), where P is the principal amount (P1,000,000), r is the annual interest rate (0.07), n is the number of times interest is compounded per year (1 for annually), and t is the time the money is invested for in years (3). Plugging in the values, we get A = 1,000,000(1 + 0.07/1)^(1*3) = 1,000,000(1.07)^3 = 1,000,000 * 1.225043 = P1,225,043.",
+    "chunk_id": 822,
+    "topic": "your topic here"
+  },
+  {
+    "question": "If Mr. Espiritu obtained a P470,000 car loan that will be paid in full after 2 1/2 years with an interest rate of 12% compounded every 6 months, how much is to be paid after 2 1/2 years?",
+    "answer": "To find the amount to be paid, we use the compound interest formula: A = P(1 + r/n)^(nt), where P is the principal amount (P470,000), r is the annual interest rate (0.12), n is the number of times interest is compounded per year (2 for every 6 months), and t is the time the money is invested for in years (2.5). Plugging in the values, we get A = 470,000(1 + 0.12/2)^(2*2.5) = 470,000(1.06)^5 = 470,000 * 1.338226 = P629,066.22.",
+    "chunk_id": 822,
+    "topic": "your topic here"
+  },
+  {
+    "question": "If an interest rate is 12% compounded monthly, how much should be paid after 8 months on a principal of P10,000?",
+    "answer": "First, calculate the monthly interest rate: 12% / 12 = 1% or 0.01. The formula for compound interest is A = P(1 + r/n)^(nt), where A is the amount of money accumulated after n years, including interest, P is the principal amount (P10,000), r is the annual interest rate (0.12), n is the number of times interest is compounded per year (12), and t is the time the money is invested for in years (8/12). Plugging in the values, A = 10000(1 + 0.12/12)^(12*(8/12)) = 10000(1.01)^8 \u2248 P10,828.56. So, after 8 months, you should pay approximately P10,828.56.",
+    "chunk_id": 823,
+    "topic": "your topic here"
+  },
+  {
+    "question": "If a consumer loan of P80,000 is obtained with an interest rate of 8% compounded quarterly, how much should be paid in total after 3 months?",
+    "answer": "First, calculate the quarterly interest rate: 8% / 4 = 2% or 0.02. Since the loan is due in 3 months, which is 1 quarter, use the compound interest formula A = P(1 + r/n)^(nt), where P is the principal amount (P80,000), r is the annual interest rate (0.08), n is the number of times interest is compounded per year (4), and t is the time in years (3/12 = 0.25). Plugging in the values, A = 80000(1 + 0.08/4)^(4*0.25) = 80000(1.02)^1 \u2248 P81,600. So, you should pay approximately P81,600 in total after 3 months.",
+    "chunk_id": 823,
+    "topic": "your topic here"
+  },
+  {
+    "question": "If a farm has a cash value of P3,500,000 and a down payment of 20%, what is the mortgaged amount?",
+    "answer": "First, calculate the down payment: 20% of P3,500,000 = 0.20 * 3,500,000 = P700,000. The mortgaged amount is the total value minus the down payment: P3,500,000 - P700,000 = P2,800,000.",
+    "chunk_id": 824,
+    "topic": "your topic here"
+  },
+  {
+    "question": "A condominium unit is purchased for P2,800,000 with a 30% down payment. How much is the mortgaged amount?",
+    "answer": "Calculate the down payment: 30% of P2,800,000 = 0.30 * 2,800,000 = P840,000. The mortgaged amount is the total value minus the down payment: P2,800,000 - P840,000 = P1,960,000.",
+    "chunk_id": 824,
+    "topic": "your topic here"
+  },
+  {
+    "question": "If Mr. Morales obtained a 5-year mortgage for P1,700,000 and his monthly payment is P47,500, how much is the total interest paid over the term of the loan?",
+    "answer": "To find the total interest paid, first calculate the total amount paid over the term of the loan by multiplying the monthly payment by the number of months in 5 years (5 * 12 = 60 months). Then subtract the principal (P1,700,000) from the total amount paid. \nTotal amount paid = P47,500 * 60 = P2,850,000 \nTotal interest = P2,850,000 - P1,700,000 = P1,150,000",
+    "chunk_id": 825,
+    "topic": "your topic here"
+  },
+  {
+    "question": "For a purchase of a P700,000 car, the monthly amortization is P20,500 for 4 years. How much is the total interest?",
+    "answer": "First, calculate the total amount paid over the term of the loan by multiplying the monthly payment by the number of months in 4 years (4 * 12 = 48 months). Then subtract the principal (P700,000) from the total amount paid. \nTotal amount paid = P20,500 * 48 = P984,000 \nTotal interest = P984,000 - P700,000 = P284,000",
+    "chunk_id": 825,
+    "topic": "your topic here"
+  },
+  {
+    "question": "For a consumer loan of P75,000 to be repaid in 18 months at 12% convertible monthly (Problem 13), what are the principal amount, interest rate per period, and total number of payment periods?",
+    "answer": "For Problem 13:\nPrincipal amount (P) = P75,000\nAnnual interest rate = 12% convertible monthly, so the interest rate per period (i) = 12% / 12 = 0.01.\nTotal number of payment periods (n) = 18 months.\n\nTo calculate the monthly payment (PMT), you would use the amortization formula:\nPMT = P * [ i(1 + i)^n ] / [ (1 + i)^n \u2013 1]\nPMT = 75,000 * [ 0.01(1 + 0.01)^18 ] / [ (1 + 0.01)^18 \u2013 1]\nPMT = 75,000 * [ 0.01 * (1.01)^18 ] / [ (1.01)^18 \u2013 1]\nPMT = 75,000 * [ 0.01 * 1.196147476 ] / [ 1.196147476 \u2013 1]\nPMT = 75,000 * [ 0.01196147476 ] / [ 0.196147476 ]\nPMT = P4,573.68",
+    "chunk_id": 826,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Calculate the semi-annual payment Mr. Oclarit needs to make for his P90,000 loan, which is to be repaid semi-annually in 3 \u00bd years at 14% compounded semi-annually (Problem 14).",
+    "answer": "For Problem 14:\nPrincipal amount (P) = P90,000\nAnnual interest rate = 14% compounded semi-annually, so the interest rate per period (i) = 14% / 2 = 0.07.\nTotal loan term = 3 \u00bd years. Since payments are semi-annual, the total number of payment periods (n) = 3.5 years * 2 payments/year = 7 periods.\n\nUsing the amortization formula:\nPMT = P * [ i(1 + i)^n ] / [ (1 + i)^n \u2013 1]\nPMT = 90,000 * [ 0.07(1 + 0.07)^7 ] / [ (1 + 0.07)^7 \u2013 1]\nPMT = 90,000 * [ 0.07 * (1.07)^7 ] / [ (1.07)^7 \u2013 1]\nPMT = 90,000 * [ 0.07 * 1.60578148 ] / [ 1.60578148 \u2013 1]\nPMT = 90,000 * [ 0.1124047036 ] / [ 0.60578148 ]\nPMT = P16,700.00",
+    "chunk_id": 826,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Problem 15 states: 'A loan of P50,000 is to be amortized by paying quarterly in 1 year. If money is worth 10% compounded quarterly, how much is the monthly installment?' Identify the inconsistency in the question and, assuming it asks for a quarterly installment, calculate the payment.",
+    "answer": "The inconsistency in Problem 15 is that it states the loan is to be repaid 'quarterly' but then asks for the 'monthly installment'. To solve this problem consistently with the given compounding and payment frequency, we will assume it asks for the quarterly installment.\n\nAssumed problem for calculation:\nPrincipal amount (P) = P50,000\nAnnual interest rate = 10% compounded quarterly, so the interest rate per period (i) = 10% / 4 = 0.025.\nLoan term = 1 year. Since payments are quarterly, the total number of payment periods (n) = 1 year * 4 payments/year = 4 periods.\n\nUsing the amortization formula to find the quarterly installment:\nPMT = P * [ i(1 + i)^n ] / [ (1 + i)^n \u2013 1]\nPMT = 50,000 * [ 0.025(1 + 0.025)^4 ] / [ (1 + 0.025)^4 \u2013 1]\nPMT = 50,000 * [ 0.025 * (1.025)^4 ] / [ (1.025)^4 \u2013 1]\nPMT = 50,000 * [ 0.025 * 1.1038128906 ] / [ 1.1038128906 \u2013 1]\nPMT = 50,000 * [ 0.027595322265 ] / [ 0.1038128906 ]\nPMT = P13,290.73",
+    "chunk_id": 826,
+    "topic": "your topic here"
+  },
+  {
+    "question": "If Mr. and Mrs. Ramos had a housing loan payable monthly for 25 years, how many monthly payments are they required to make in total?",
+    "answer": "To find the total number of monthly payments, multiply the number of years by 12 (since there are 12 months in a year). Therefore, 25 years * 12 months/year = 300 monthly payments.",
+    "chunk_id": 828,
+    "topic": "your topic here"
+  },
+  {
+    "question": "If Mr. Ramos got a business loan worth P100,000 payable quarterly for 3 years, how many quarterly payments are required to fully pay off the loan?",
+    "answer": "To find the total number of quarterly payments, multiply the number of years by 4 (since there are 4 quarters in a year). Therefore, 3 years * 4 quarters/year = 12 quarterly payments.",
+    "chunk_id": 828,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What does the term \"outstanding balance\" mean in the context of an amortized loan?",
+    "answer": "The outstanding balance of an amortized loan at any given point refers to the remaining principal amount that has not yet been repaid. It represents the present value of all future payments that are still owed by the borrower.",
+    "chunk_id": 829,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Describe two methods to calculate the outstanding balance of an amortized loan after a certain number of payments have been made.",
+    "answer": "There are two primary methods to calculate the outstanding balance (OB) of an amortized loan after 'k' payments:\n1.  **Present Value of Remaining Payments:** This method calculates the present value of all the remaining future payments. If 'P' is the regular payment, 'i' is the interest rate per period, and 'n-k' is the number of remaining payments, the formula is: OB = P * [ (1 - (1 + i)^(-(n-k))) / i ].\n2.  **Original Loan Amount Minus Present Value of Payments Made:** This method involves first finding the present value of the original loan (if not given) and then subtracting the present value of the 'k' payments that have already been made. This method can be more complex if the initial loan value needs to be calculated first.",
+    "chunk_id": 829,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the process of loan amortization?",
+    "answer": "Loan amortization is the process of paying off a debt over a fixed period of time through a series of regular, equal payments. Each payment includes both principal and interest. Initially, a larger portion of the payment goes towards interest, and as the loan matures, a larger portion goes towards reducing the principal.",
+    "chunk_id": 829,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the meaning of 'compounded quarterly' in the context of a loan, and how does it affect interest calculations?",
+    "answer": "When a loan is 'compounded quarterly,' it means that interest is calculated and added to the principal four times a year (every three months). This affects calculations by requiring the annual interest rate to be divided by 4 to get the periodic (quarterly) interest rate, and the number of payment periods to be multiplied by 4 if payments are also quarterly.",
+    "chunk_id": 830,
+    "topic": "your topic here"
+  },
+  {
+    "question": "In an amortized loan, how is the interest portion of a specific payment determined?",
+    "answer": "The interest portion of a specific loan payment is determined by multiplying the outstanding loan balance *before* that payment is made by the periodic interest rate. For example, if the periodic interest rate is 2% and the outstanding balance before a payment is P100,000, then P2,000 of that payment (0.02 * P100,000) would go towards interest.",
+    "chunk_id": 830,
+    "topic": "your topic here"
+  },
+  {
+    "question": "If Mr. Bainto has a loan with a monthly interest rate of 12%, how much of his 6th payment goes towards interest?",
+    "answer": "To find the interest portion of the 6th payment, we need to calculate the remaining principal after 5 months. Let's assume the initial loan amount is P20,000 (this is an assumption for the sake of calculation). The monthly payment is P3,200. The remaining principal after 5 months can be calculated using the loan amortization formula. For simplicity, let's assume the remaining principal after 5 months is P16,000. The interest for the 6th month would be 12% of P16,000, which is P1,920. Therefore, the interest portion of the 6th payment is P1,920.",
+    "chunk_id": 831,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How much of the 6th payment goes to the principal if Mr. Bainto decides to pay off the loan after 6 months?",
+    "answer": "To find the principal portion of the 6th payment, we need to subtract the interest portion from the total monthly payment. From the previous calculation, we know the interest portion of the 6th payment is P1,920. The total monthly payment is P3,200. Therefore, the principal portion of the 6th payment is P3,200 - P1,920 = P1,280.",
+    "chunk_id": 831,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How much is the dividend for 1,000 shares of common stock at a par value of P20?",
+    "answer": "To find the dividend, you need to know the dividend per share. Assuming the dividend per share is given as P0.50, the total dividend for 1,000 shares would be 1,000 shares * P0.50/share = P500. If the dividend per share is not given, you cannot determine the total dividend without that information.",
+    "chunk_id": 834,
+    "topic": "your topic here"
+  },
+  {
+    "question": "For the second payment, how much goes to pay the interest if the loan amount is P10,000 with an annual interest rate of 6% and a monthly payment of P500?",
+    "answer": "First, calculate the monthly interest rate: 6% / 12 = 0.5%. Then, the interest for the first month is P10,000 * 0.5% = P50. Since the total payment is P500, the amount going to pay the principal is P500 - P50 = P450.",
+    "chunk_id": 834,
+    "topic": "your topic here"
+  },
+  {
+    "question": "If a company declares a dividend of P50,000,000 and there are 500,000 shares of common stock, how much is the dividend per share?",
+    "answer": "To find the dividend per share, divide the total declared dividend by the number of shares. So, P50,000,000 \u00f7 500,000 = P100 per share.",
+    "chunk_id": 835,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Mrs. Lingan owns 1000 shares of a stock with a par value of P800 and the stock has a 2.5% dividend. How much is the dividend she received?",
+    "answer": "First, calculate the dividend per share by multiplying the par value by the dividend percentage: P800 \u00d7 2.5% = P20. Then, multiply the dividend per share by the number of shares Mrs. Lingan owns: P20 \u00d7 1000 = P20,000. So, Mrs. Lingan received P20,000 in dividends.",
+    "chunk_id": 835,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the percent change in the stock price if it increased from P60 to P62.5?",
+    "answer": "The percent change is calculated as ((new price - original price) / original price) * 100. So, ((62.5 - 60) / 60) * 100 = (2.5 / 60) * 100 = 4.17%. Therefore, the stock price increased by 4.17%.",
+    "chunk_id": 836,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How do you calculate the price-to-earnings (P/E) ratio given the annual earnings per share and the closing price?",
+    "answer": "The price-to-earnings (P/E) ratio is calculated as the closing price divided by the annual earnings per share. For example, if the annual earnings per share is P80 and the closing price is P130, the P/E ratio is P130 / P80 = 1.625. Thus, the P/E ratio is 1.625.",
+    "chunk_id": 836,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the amount of the semi-annual coupon for a bond with a face value of P100,000 that pays 8% convertible semi-annually for its coupons?",
+    "answer": "The semi-annual coupon amount is P4,000. This is calculated by taking the annual coupon rate (8%) and dividing it by 2 (since it is convertible semi-annually), then multiplying by the face value of the bond (P100,000). So, (8% / 2) * P100,000 = 4% * P100,000 = P4,000.",
+    "chunk_id": 837,
+    "topic": "your topic here"
+  },
+  {
+    "question": "If a bond is bought at P210,000 and has coupons at 4% convertible semi-annually, what is the semi-annual coupon payment?",
+    "answer": "The semi-annual coupon payment is P8,400. This is calculated by taking the annual coupon rate (4%) and dividing it by 2 (since it is convertible semi-annually), then multiplying by the face value of the bond (which is typically P100,000 for bond calculations, even if the purchase price is different). So, (4% / 2) * P100,000 = 2% * P100,000 = P2,000. However, since the bond is bought at P210,000, the coupon payment remains based on the face value, which is P2,000 per period, or P4,000 annually, and P8,400 for the first semi-annual period if the bond price affects the effective rate.",
+    "chunk_id": 837,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the semi-annual coupon amount for a bond with a face value of P30,000 that pays 6% convertible semi-annually?",
+    "answer": "The semi-annual coupon amount is P900. Since the bond pays 6% convertible semi-annually, the annual coupon rate is 6%, which is split into two 3% payments. Therefore, the semi-annual coupon amount is 3% of the face value: 0.03 * P30,000 = P900.",
+    "chunk_id": 843,
+    "topic": "your topic here"
+  },
+  {
+    "question": "If a bond is bought at a discount worth P88,000, what does this imply about the face value of the bond?",
+    "answer": "If a bond is bought at a discount worth P88,000, it means the bond is purchased for less than its face value. For example, if the face value of the bond is P100,000, then the discount is P100,000 - P88,000 = P12,000. The discount is the difference between the face value and the purchase price.",
+    "chunk_id": 843,
+    "topic": "your topic here"
+  },
+  {
+    "question": "If a company declares a dividend of P20,000,000 and there are 100,000 shares of common stock, how much is the dividend per share?",
+    "answer": "To find the dividend per share, divide the total declared dividend by the total number of shares. \n\nDividend per share = Total declared dividend / Total number of shares \n\nDividend per share = P20,000,000 / 100,000 = P200 per share.",
+    "chunk_id": 844,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Mrs. Abad owns 2000 shares of stock with a par value of P3000 each and the realty declared a 5% dividend. How much is the dividend she received?",
+    "answer": "First, calculate the total par value of Mrs. Abad's shares. \n\nTotal par value = Number of shares \u00d7 Par value per share \n\nTotal par value = 2000 \u00d7 P3000 = P6,000,000 \n\nNext, calculate the dividend by finding 5% of the total par value. \n\nDividend = 5% of P6,000,000 \n\nDividend = 0.05 \u00d7 P6,000,000 = P300,000 \n\nTherefore, Mrs. Abad received P300,000 in dividends.",
+    "chunk_id": 844,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the percent change in a stock's price if its opening price is P 105 and its closing price is P 98?",
+    "answer": "The percent change is calculated using the formula: ((Closing Price - Opening Price) / Opening Price) * 100%.\n\nGiven:\nOpening Price = P 105\nClosing Price = P 98\n\nPercent Change = ((P 98 - P 105) / P 105) * 100%\nPercent Change = (-P 7 / P 105) * 100%\nPercent Change = -0.06666...\nPercent Change = -6.67% (rounded to two decimal places).\n\nThis means the stock price decreased by 6.67%.",
+    "chunk_id": 845,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How is the price-to-earnings (P/E) ratio calculated, and what is it if the annual earnings per share is P78 and yesterday's closing price is P95?",
+    "answer": "The price-to-earnings (P/E) ratio is a valuation ratio of a company's current share price compared to its per-share earnings. It is calculated as:\n\nP/E Ratio = Closing Price Per Share / Annual Earnings Per Share\n\nGiven:\nAnnual Earnings Per Share = P 78\nClosing Price = P 95\n\nP/E Ratio = P 95 / P 78\nP/E Ratio \u2248 1.22 (rounded to two decimal places).",
+    "chunk_id": 845,
+    "topic": "your topic here"
+  },
+  {
+    "question": "In the context of a loan amortized annually, what does 'outstanding balance' refer to after a certain number of payments, and what information is generally needed to calculate it?",
+    "answer": "In an amortized loan, the 'outstanding balance' after a certain number of payments refers to the remaining principal amount that the borrower still owes. It represents the present value of all future payments that are yet to be made.\n\nTo calculate the outstanding balance, you generally need the following information:\n1. The original principal amount of the loan (or present value).\n2. The periodic payment amount.\n3. The interest rate per period.\n4. The total number of payments already made.\n5. The total number of payments to be made (or remaining payments).",
+    "chunk_id": 845,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is a proposition in logic and how is its truth value denoted if it is true?",
+    "answer": "A proposition is a declarative sentence that is either true or false, but not both. If a proposition is true, its truth value is denoted by T.",
+    "chunk_id": 847,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How do you distinguish between a simple proposition and a compound proposition?",
+    "answer": "A simple proposition is a declarative sentence that does not contain any other propositions. A compound proposition is made up of two or more simple propositions combined using logical connectives such as AND, OR, NOT, etc.",
+    "chunk_id": 847,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What does it mean if a proposition is not true?",
+    "answer": "If a proposition is not true, its truth value is false, which is denoted by F.",
+    "chunk_id": 848,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How are propositions typically represented in mathematical logic?",
+    "answer": "Propositions are usually denoted by small letters. For example, the proposition 'Everyone should study logic' can be represented as p, and read as 'p is the proposition \u201cEveryone should study logic.\u201d'",
+    "chunk_id": 848,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is a proposition in logic and what conditions must it satisfy?",
+    "answer": "A proposition in logic is a declarative sentence that has a definite truth value, either true or false, but not both. For example, the statement 'Mindanao is an island in the Philippines' is a proposition because it is a declarative sentence with a definite truth value. On the other hand, 'Please close the door' is not a proposition because it is an imperative sentence and does not have a truth value.",
+    "chunk_id": 851,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Determine if the following statement is a proposition: 'The statement is a declarative sentence, but its truth value will only be known after'.",
+    "answer": "The given statement is not a proposition because it is a declarative sentence whose truth value cannot be determined at the moment of statement. For a statement to be a proposition, it must have a definite truth value, either true or false, which is not the case here.",
+    "chunk_id": 851,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is a compound proposition and how is it formed?",
+    "answer": "A compound proposition is a more complex statement that is formed by combining simpler propositions using logical connectors such as 'not', 'and', 'or', and 'if-then'. For example, if p is the proposition 'It is raining' and q is the proposition 'I will stay at home', then 'p and q' is a compound proposition meaning 'It is raining and I will stay at home'.",
+    "chunk_id": 856,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How would you express the logical connector 'not p' in words if p is the proposition 'The exam is easy'?",
+    "answer": "The logical connector 'not p' would be expressed as 'It is not the case that the exam is easy', or more simply, 'The exam is not easy'.",
+    "chunk_id": 856,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Identify whether the proposition 'It is not the case that  is a rational number' is a simple or compound proposition and explain why.",
+    "answer": "This proposition is a compound proposition. It is formed by negating the simple proposition ' is a rational number'. The negation is indicated by the phrase 'It is not the case that'.",
+    "chunk_id": 857,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Determine if the proposition 'Either logic is fun and interesting, or it is boring' is a simple or compound proposition and explain your reasoning.",
+    "answer": "This proposition is a compound proposition. It is formed by combining two simple propositions using the logical connective 'or'. The simple propositions are 'logic is fun and interesting' and 'it is boring'.",
+    "chunk_id": 857,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What type of statement is 'c: x plus 2 is equal to 11' and why is its truth value unknown?",
+    "answer": "'c: x plus 2 is equal to 11' is a proposition because it is a declarative sentence. However, its truth value is unknown because the value of x is not specified. For example, if x = 9, then the statement is true, but if x = 8, the statement is false.",
+    "chunk_id": 862,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Why is 'e: This is an imperative statement' not considered a proposition?",
+    "answer": "'e: This is an imperative statement' is not a proposition because it is an imperative sentence, which gives a command or instruction. Propositions must be declarative sentences that can be judged as true or false. For example, 'Close the door' is an imperative statement and not a proposition.",
+    "chunk_id": 862,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Based on the description of proposition 'g', what constitutes a \"compound proposition\" and what are its individual parts referred to as?",
+    "answer": "A compound proposition is a statement formed by combining two or more simpler propositions. Its individual parts are referred to as \"simple components.\" For example, in 'g', \"The year 2016 is a leap year\" and \"The equation x^2 + 1 = 0 has no real solutions\" are the simple components.",
+    "chunk_id": 863,
+    "topic": "your topic here"
+  },
+  {
+    "question": "If the simple components of a compound proposition, such as those in 'g' (e.g., 'The year 2016 is a leap year' and 'The equation x^2 + 1 = 0 has no real solutions'), are both true, what can be concluded about the truth value of the overall compound proposition 'g'?",
+    "answer": "If both simple components of a compound proposition are true, then the compound proposition itself is true. As stated in 'g', since both simple components are true, the compound proposition 'g' is true.",
+    "chunk_id": 863,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Proposition 'h' is described as \"the definition of a right triangle.\" Why is a statement that provides a definition of a mathematical concept considered a true proposition?",
+    "answer": "A statement that provides the definition of a mathematical concept, like the definition of a right triangle, is considered a true proposition because definitions are foundational truths within mathematics. They establish the precise meaning or characteristics of a concept and are accepted as fact without requiring further proof.",
+    "chunk_id": 863,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What are the simple components of the compound proposition 'You went to the rock concert and your ears hurt.'?",
+    "answer": "The simple components of the compound proposition are 'You went to the rock concert' and 'Your ears hurt'. The logical connector used here is 'and'.",
+    "chunk_id": 866,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How would you express the proposition 'It is not the case that it is Monday today' using logical notation?",
+    "answer": "The proposition 'It is not the case that it is Monday today' can be expressed using logical notation as '\u00acM', where M represents 'it is Monday today'.",
+    "chunk_id": 866,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the logical connector used in the statement 'You went to the rock concert and your ears hurt.'?",
+    "answer": "The logical connector used is 'and'. This means both conditions must be true for the entire statement to be true.",
+    "chunk_id": 867,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How is the compound proposition 'It is not Monday today' formed from the simple component 'It is Monday today.'?",
+    "answer": "The compound proposition is formed using the logical connector 'not'. So, if the simple component is 'It is Monday today', the compound proposition is 'not (It is Monday today)', which means 'It is not Monday today'.",
+    "chunk_id": 867,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How can the statement 'If fewer than 10 persons are in attendance, then the meeting will be cancelled' be written in reverse order?",
+    "answer": "The statement can be written in reverse order as 'If the meeting will be cancelled, then fewer than 10 persons are in attendance'. Symbolically, this is represented as 'If e, then not d', where e: 'The meeting will be cancelled' and d: '10 or more persons are in attendance'.",
+    "chunk_id": 868,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How would you express the statement 'If his final exam score exceeds 50%, then Carlos will not fail the course' using the concept of negation?",
+    "answer": "The statement can be expressed using the concept of negation as 'If his final exam score exceeds 50%, then not f', where f: 'Carlos will fail the course'. This means that if Carlos's final exam score is greater than 50%, it is not the case that he will fail the course.",
+    "chunk_id": 868,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the primary learning outcome for the lesson on Logical Operators?",
+    "answer": "The primary learning outcome for the lesson on Logical Operators is for the learner to be able to perform different types of operations on propositions.",
+    "chunk_id": 873,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What are the main topics introduced in the lesson outline for Logical Operators?",
+    "answer": "The main topics introduced in the lesson outline are how to construct a truth table and the definitions of logical operators such as negation, conjunction, disjunction, conditional, and biconditional.",
+    "chunk_id": 873,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Define what a truth table is in the context of propositions.",
+    "answer": "Given a proposition, its truth table shows all its possible truth values.",
+    "chunk_id": 873,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How many rows will a truth table have for two propositions, and why?",
+    "answer": "A truth table for two propositions will have 4 rows. This is because each proposition can have 2 possible truth values (True or False), and with two propositions, there are 2^2 = 4 possible combinations of truth values.",
+    "chunk_id": 874,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What are the truth values for the rows in the given example for two propositions and ?",
+    "answer": "The truth values for the rows in the given example are as follows: \n1. T T (both propositions are True) \n2. T F (the first proposition is True, the second is False) \n3. F T (the first proposition is False, the second is True) \n4. F F (both propositions are False)",
+    "chunk_id": 874,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the general formula for determining the number of rows in a truth table based on the number of propositions?",
+    "answer": "In general, a truth table involving n propositions has 2^n rows.",
+    "chunk_id": 875,
+    "topic": "your topic here"
+  },
+  {
+    "question": "If a truth table involves 5 different propositions, how many rows would it have?",
+    "answer": "Using the general formula (2^n rows for n propositions), a truth table with 5 propositions would have 2^5 = 32 rows.",
+    "chunk_id": 875,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the truth table for the conjunction of two propositions, and how does it determine the truth value of the conjunction?",
+    "answer": "The truth table for the conjunction (AND) of two propositions, P and Q, is as follows:\n\nP | Q | P \u2227 Q\nT | T | T\nT | F | F\nF | T | F\nF | F | F\nThe conjunction P \u2227 Q is true only when both P and Q are true. Otherwise, it is false.",
+    "chunk_id": 878,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Given the propositions 'Angels exist' and 'Dragons exist', how would you represent their conjunction using symbols, and what would be the truth value of this conjunction if both propositions are false?",
+    "answer": "The conjunction of the propositions 'Angels exist' and 'Dragons exist' can be represented as 'Angels exist' \u2227 'Dragons exist'. If both propositions are false, then the truth value of the conjunction is false, as shown in the truth table for conjunction.",
+    "chunk_id": 878,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the definition of a disjunction in logic and how is it denoted?",
+    "answer": "A disjunction in logic is a compound proposition formed by combining two propositions, and and or , using the logical operator 'or'. It is denoted by the symbol \u2228 (or sometimes \u2225). The truth value of the disjunction is true if at least one of the propositions is true, and it is only false when both propositions are false.",
+    "chunk_id": 880,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Given the propositions : 'Victor has a date with Liza', : 'Janree is sleeping', and : 'Eumir is eating', what is the truth value of the disjunction if both Janree is not sleeping and Eumir is not eating?",
+    "answer": "The disjunction of the propositions would be true because at least one of the propositions (in this case, 'Victor has a date with Liza') is true. The truth table for disjunction shows that the disjunction is true in all cases except when both propositions are false. Since Janree is not sleeping and Eumir is not eating, the disjunction is true.",
+    "chunk_id": 880,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the logical difference between the statements in lines 4 and 5 of the given chunk?",
+    "answer": "In line 4, the statements are connected by 'or', meaning that at least one of the conditions (Victor has a date with Liza, Janree is sleeping, or Eumir is eating) must be true. In line 5, the first part is connected by 'and' and the second part by 'or', meaning that either both Victor has a date with Liza and Janree is sleeping, or Eumir is eating. This means that in line 5, both conditions in the first part must be true for the entire statement to be true, while in line 4, only one of the conditions needs to be true.",
+    "chunk_id": 882,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Translate the statement in line 6 into a logical expression using symbols.",
+    "answer": "The statement in line 6 can be translated into the logical expression: (V \u2228 S) \u2227 E, where V represents 'Victor has a date with Liza', S represents 'Janree is sleeping', and E represents 'Eumir is eating'. This expression means that either Victor has a date with Liza or Janree is sleeping, and Eumir is eating.",
+    "chunk_id": 882,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Based on the given scenario in Example 5, what are the truth values of propositions p, q, and r?",
+    "answer": "From the provided scenario, proposition p is false, proposition q is false, and proposition r is true.",
+    "chunk_id": 884,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Given that p is false and q is false, what is the truth value of the conjunction p \u2227 q?",
+    "answer": "If p is false and q is false, then the conjunction p \u2227 q is false.",
+    "chunk_id": 884,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Given that q is false and r is true, what is the truth value of the disjunction q \u2228 r?",
+    "answer": "If q is false and r is true, then the disjunction q \u2228 r is true.",
+    "chunk_id": 884,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the truth value of a disjunction if at least one of its disjuncts is true?",
+    "answer": "The truth value of a disjunction is true if at least one of its disjuncts is true. For example, if we have the disjunction 'P or Q', and P is true, then the entire disjunction is true regardless of the truth value of Q.",
+    "chunk_id": 885,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How is the conditional statement 'If P, then Q' defined using a truth table?",
+    "answer": "The conditional statement 'If P, then Q' is defined by the following truth table: \n\nP | Q | P \u2192 Q \nF | F | T \nF | T | T \nT | F | F \nT | T | T \n\nIn this table, the conditional statement is false only when P is true and Q is false. In all other cases, the conditional statement is true.",
+    "chunk_id": 885,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the truth value of the first conditional statement if Geebee is in Grade 11 and is a senior high school student?",
+    "answer": "The conditional statement is true. This is because both the hypothesis (Geebee is in Grade 11) and the conclusion (she is a senior high school student) are true, as stated in the solution.",
+    "chunk_id": 887,
+    "topic": "your topic here"
+  },
+  {
+    "question": "If the hypothesis of a conditional statement is true but the conclusion is false, what is the truth value of the conditional statement?",
+    "answer": "The conditional statement is false. For example, if the statement is 'If Geebee is in Grade 11, then she is working as a lawyer,' and Geebee is in Grade 11 but not working as a lawyer, the statement is false.",
+    "chunk_id": 887,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the truth value of the conditional statement 'If a student is a Grade 11 student, then they are qualified to be a lawyer' when the student is indeed a Grade 11 student but not qualified to be a lawyer?",
+    "answer": "The conditional statement is false. According to the truth table for the conditional statement, if the hypothesis (a student is a Grade 11 student) is true and the conclusion (they are qualified to be a lawyer) is false, then the conditional statement is false.",
+    "chunk_id": 888,
+    "topic": "your topic here"
+  },
+  {
+    "question": "If Geebee is still in Grade 11, what can we conclude about the truth value of the conditional statement 'If Geebee is in Grade 11, then she believes in true love'?",
+    "answer": "We cannot determine the truth value of the conditional statement because the truth value of the conclusion 'she believes in true love' is not given. The conditional statement is only false if the hypothesis is true and the conclusion is false. Since we do not know the truth value of the conclusion, we cannot determine the truth value of the conditional statement.",
+    "chunk_id": 888,
+    "topic": "your topic here"
+  },
+  {
+    "question": "According to the properties of a conditional statement's truth table, what is the truth value of a conditional statement if its hypothesis is false?",
+    "answer": "If the hypothesis (or antecedent) of a conditional statement is false, the entire conditional statement is always true, regardless of whether the conclusion (or consequent) is true or false. This is because a false premise cannot lead to a false implication.",
+    "chunk_id": 889,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Given the statement: 'If I get promoted, then I will stop posting selfies on Facebook.' If we let p be 'Richard gets promoted' and q be 'Richard stops posting selfies on Facebook,' how would you represent this conditional statement using logical notation?",
+    "answer": "The conditional statement is represented as p \u2192 q. Here, p is the hypothesis ('Richard gets promoted') and q is the conclusion ('Richard stops posting selfies on Facebook').",
+    "chunk_id": 889,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the truth value of a conditional statement if both its hypothesis and conclusion are true?",
+    "answer": "If both the hypothesis and conclusion of a conditional statement are true, then the conditional statement itself is true.",
+    "chunk_id": 891,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Under what specific condition is a conditional statement considered false?",
+    "answer": "A conditional statement is considered false only when its hypothesis is true and its conclusion is false.",
+    "chunk_id": 891,
+    "topic": "your topic here"
+  },
+  {
+    "question": "If the hypothesis of a conditional statement is false, what is the truth value of the conditional statement?",
+    "answer": "If the hypothesis of a conditional statement is false, the conditional statement is true, regardless of the truth value of its conclusion.",
+    "chunk_id": 891,
+    "topic": "your topic here"
+  },
+  {
+    "question": "According to the provided text, under what specific condition is a conditional statement considered false?",
+    "answer": "A conditional statement is considered false only when its hypothesis is true, but its conclusion is false. The text illustrates this by stating, \"if the hypothesis is true and the conclusion is false, then the conditional is false.\"",
+    "chunk_id": 892,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Based on Example 8(a) in the text, what is the truth value of a conditional statement if both its hypothesis and its conclusion are true?",
+    "answer": "If both the hypothesis and the conclusion of a conditional statement are true, then the conditional statement itself is true. As stated in the solution for Example 8(a): \"The hypothesis and the conclusion are both true. Hence the conditional is true.\"",
+    "chunk_id": 892,
+    "topic": "your topic here"
+  },
+  {
+    "question": "If the hypothesis of a conditional statement is false, what is the truth value of the entire conditional statement, as suggested by the initial scenario?",
+    "answer": "If the hypothesis of a conditional statement is false, the conditional statement is considered true, regardless of the truth value of its conclusion. The text implies this by stating, \"In this case [he was not promoted in the first place], he did not break his promise since he was not promoted in the first place,\" meaning the conditional 'If he is promoted, then he will treat' is true because the initial condition (promotion) was not met.",
+    "chunk_id": 892,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the biconditional of propositions P and Q, how is it denoted, and what are its truth values based on the provided partial truth table?",
+    "answer": "The biconditional of propositions P and Q is denoted by P \u21d4 Q (read as \"P if and only if Q\"). Based on the provided partial truth table, the biconditional P \u21d4 Q is true when P and Q are both true (T T T), false when P is true and Q is false (T F F), and false when P is false and Q is true (F T F). The truth value for when both P and Q are false is not explicitly shown in this snippet.",
+    "chunk_id": 893,
+    "topic": "your topic here"
+  },
+  {
+    "question": "According to the provided text, what is the truth value of a conditional statement if its hypothesis is true but its conclusion is false?",
+    "answer": "If the hypothesis of a conditional statement is true, but its conclusion is wrong (false), then the conditional statement is false. For example, if the statement 'There are 5 languages in the Philippines' is taken as the true hypothesis, but the conclusion 'There are more than 5 languages in the Philippines' is considered wrong in the context of the statement, then the conditional is false, as stated in the text.",
+    "chunk_id": 893,
+    "topic": "your topic here"
+  },
+  {
+    "question": "According to the provided text, what is the truth value of a conditional statement if its hypothesis is false?",
+    "answer": "If the hypothesis of a conditional statement is false, then the conditional statement is true, regardless of the truth value of its conclusion. As an example from the text, 'Because the hypothesis is false, the conditional is true whether it is indeed more fun in the Philippines or not.'",
+    "chunk_id": 893,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What does the biconditional statement 'p if and only if q' mean in logic?",
+    "answer": "A biconditional statement 'p if and only if q' (often written as 'p iff q') means that both p implies q and q implies p. In other words, p and q are logically equivalent; they are true under the same conditions and false under the same conditions. For example, if p is 'Geebee is in Grade 11' and q is 'she is a senior high school student', then 'Geebee is in Grade 11 if and only if she is a senior high school student' means that being in Grade 11 is the same as being a senior high school student.",
+    "chunk_id": 894,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How can we identify the components of a biconditional statement?",
+    "answer": "The components of a biconditional statement are the two propositions that are connected by the 'if and only if' (iff) operator. In the example given, the biconditional statement 'Geebee is in Grade 11 if and only if she is working as a lawyer' has two components: 'Geebee is in Grade 11' and 'she is working as a lawyer'.",
+    "chunk_id": 894,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How is a statement with \u201conly if\u201d represented in propositional logic?",
+    "answer": "A statement of the form \u201cp only if q\u201d is represented as p \u2192 q. It means q is necessary for p.",
+    "chunk_id": 902,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How can \u201cBea receives a speeding ticket only if she drives over the speed limit or is pulled over\u201d be written symbolically?",
+    "answer": "Let s be \u201cBea receives a speeding ticket,\u201d d be \u201cBea drives over the speed limit,\u201d and p be \u201cBea is pulled over.\u201d The statement can be written as s \u2192 (d \u2228 p).",
+    "chunk_id": 902,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What does it mean to translate English statements into symbols?",
+    "answer": "It means assigning letters to simple propositions and using logical connectors such as not, and, or, if-then, and if and only if to represent the full statement.",
+    "chunk_id": 902,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How is the truth value of a compound proposition determined?",
+    "answer": "First determine the truth values of the simple propositions, then apply the truth rules for the logical connectors such as negation, conjunction, disjunction, conditional, and biconditional.",
+    "chunk_id": 905,
+    "topic": "your topic here"
+  },
+  {
+    "question": "When is a disjunction true?",
+    "answer": "A disjunction p \u2228 q is true when at least one of its disjuncts is true. It is false only when both p and q are false.",
+    "chunk_id": 905,
+    "topic": "your topic here"
+  },
+  {
+    "question": "When is a conjunction false?",
+    "answer": "A conjunction p \u2227 q is false when at least one of its components is false. It is true only when both components are true.",
+    "chunk_id": 905,
+    "topic": "your topic here"
+  },
+  {
+    "question": "If the hypothesis of a conditional statement is false, what can we conclude about the truth value of the entire statement if the conclusion is true?",
+    "answer": "If the hypothesis of a conditional statement is false and the conclusion is true, the entire conditional statement is true. For example, if the statement is 'If P, then Q' and P is false while Q is true, the statement 'If P, then Q' is true.",
+    "chunk_id": 906,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the truth value of the conditional statement 'If P, then Q' if both P and Q are true?",
+    "answer": "If both the hypothesis P and the conclusion Q are true, the conditional statement 'If P, then Q' is true. For example, the statement 'If 2+2=4, then 3+3=6' is true because both parts of the statement are true.",
+    "chunk_id": 906,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the truth value of the disjunction if and are false?",
+    "answer": "The disjunction is true. This is because a disjunction (or statement) is true if at least one of the propositions is true. In this case, since both and are false, the only way the disjunction can be true is if there is a typo or additional context that was not provided in the chunk. Typically, if and are both false, the disjunction should be false, but the given example suggests an exception or additional context not shown.",
+    "chunk_id": 907,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How do you determine the truth values of propositions and that will make the statement false?",
+    "answer": "To make the statement false, both propositions and must be false. This is because a conjunction (and statement) is true only if both propositions are true. If both and are false, then the conjunction will be false. For example, if and are both false, then the conjunction is false.",
+    "chunk_id": 907,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How can you show that a compound proposition is false?",
+    "answer": "Find truth values for its simple propositions that make the whole statement false according to the truth table rules.",
+    "chunk_id": 909,
+    "topic": "your topic here"
+  },
+  {
+    "question": "When is a conditional statement false?",
+    "answer": "A conditional p \u2192 q is false only when the hypothesis p is true and the conclusion q is false.",
+    "chunk_id": 909,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Why do truth-value cases help in logic problems?",
+    "answer": "They allow you to test all possible combinations of truth values and identify exactly when a proposition becomes true or false.",
+    "chunk_id": 909,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the negation of the proposition 'Mathematics is easy to study.'?",
+    "answer": "The negation of the proposition 'Mathematics is easy to study.' is 'Mathematics is not easy to study.'",
+    "chunk_id": 910,
+    "topic": "your topic here"
+  },
+  {
+    "question": "State the negation of the proposition 'Logic is not taken up in junior high school.'",
+    "answer": "The negation of the proposition 'Logic is not taken up in junior high school.' is 'Logic is taken up in junior high school.'",
+    "chunk_id": 910,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How can \u201cRena orders paella, but she does not have dessert\u201d be represented symbolically?",
+    "answer": "Let p be \u201cRena orders paella\u201d and d be \u201cRena has dessert.\u201d The statement is p \u2227 \u00acd.",
+    "chunk_id": 911,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How can \u201cWhenever Rena eats at the Spanish restaurant, either she orders paella or she has dessert\u201d be represented symbolically?",
+    "answer": "Let r be \u201cRena eats at the Spanish restaurant,\u201d p be \u201cRena orders paella,\u201d and d be \u201cRena has dessert.\u201d The statement is r \u2192 (p \u2228 d).",
+    "chunk_id": 911,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What logical connector is usually represented by the word \u201cbut\u201d?",
+    "answer": "The word \u201cbut\u201d is usually represented by conjunction, or \u201cand,\u201d because it connects two statements that are both being asserted.",
+    "chunk_id": 911,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Express the proposition 'Pam and Bryan are co-workers, but Pam works as a sales associate and Bryan does not have a temporary position in the office' in symbols using the given propositions.",
+    "answer": "Let's denote the propositions as follows: \nP: Pam works as a sales associate. \nQ: Bryan has a temporary position in the office. \nR: Pam and Bryan are co-workers. \nThen the proposition can be expressed in symbols as: \nR \u2227 P \u2227 \u00acQ",
+    "chunk_id": 913,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Translate the proposition 'Pam and Bryan are co-workers, but if Bryan has a temporary position in the office' into an English sentence using the given propositions.",
+    "answer": "The proposition can be translated into an English sentence as: \n'Pam and Bryan are co-workers, but if Bryan has a temporary position in the office.' \nThis can be further expressed using the given propositions as: \nR, but Q.",
+    "chunk_id": 913,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is a truth table?",
+    "answer": "A truth table is a table that shows all possible truth values of the simple propositions and the resulting truth value of a compound proposition.",
+    "chunk_id": 916,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How many rows are needed for a truth table with two propositions?",
+    "answer": "A truth table with two propositions has 2^2 = 4 rows.",
+    "chunk_id": 916,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What are tautologies and contradictions?",
+    "answer": "A tautology is a compound proposition that is always true, while a contradiction is a compound proposition that is always false.",
+    "chunk_id": 916,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How many rows will a truth table have for a compound proposition involving two simple propositions?",
+    "answer": "A truth table for a compound proposition involving two simple propositions will have 4 rows. This is because each simple proposition can be either true (T) or false (F), resulting in 2 x 2 = 4 possible combinations of truth values.",
+    "chunk_id": 917,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What are the truth values for the first two columns of the truth table for the compound proposition involving two simple propositions?",
+    "answer": "The first two columns of the truth table for the compound proposition involving two simple propositions will have the following truth values: \nT, T, T, F, F, T, F, F. These represent all possible combinations of truth values for the two simple propositions.",
+    "chunk_id": 917,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is a tautology?",
+    "answer": "A tautology is a proposition that is true for every possible combination of truth values.",
+    "chunk_id": 924,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is a contradiction?",
+    "answer": "A contradiction is a proposition that is false for every possible combination of truth values.",
+    "chunk_id": 924,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How can a truth table show that a proposition is a contradiction?",
+    "answer": "If the final column of the truth table contains only F values, then the proposition is a contradiction.",
+    "chunk_id": 924,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Why are truth tables useful for compound propositions?",
+    "answer": "Truth tables show the truth value of each part of a compound proposition for all possible combinations, making it easier to determine the final truth value.",
+    "chunk_id": 927,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How can a truth table be used to test a complicated logical expression?",
+    "answer": "Break the expression into smaller columns for each sub-expression, compute each column step by step, and then compute the final column.",
+    "chunk_id": 927,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What does the final column of a truth table represent?",
+    "answer": "The final column represents the truth value of the entire compound proposition.",
+    "chunk_id": 927,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is indicated when the final column of a proposition's truth table contains all 'T' values, as suggested by the phrase 'Hence, is a tautology'?",
+    "answer": "When the final column of a proposition's truth table contains all 'T' (True) values, it indicates that the proposition is a tautology. This means the proposition is always true, irrespective of the truth values of its simple components.",
+    "chunk_id": 931,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Based on the provided truth values (T/F) and the concluding statements, what is the primary concept being demonstrated?",
+    "answer": "The primary concept being demonstrated is the identification of a tautology using truth tables. The 'T' and 'F' values are used to evaluate the truth of a compound proposition under various conditions, and if the final result is always 'T', it is concluded to be a tautology.",
+    "chunk_id": 931,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What does it mean for two propositions to be logically equivalent?",
+    "answer": "Two propositions are logically equivalent if they have the same truth values for all possible truth values of their simple components.",
+    "chunk_id": 935,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How is logical equivalence denoted?",
+    "answer": "Logical equivalence is commonly denoted by the symbol \u2261.",
+    "chunk_id": 935,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How can a biconditional show logical equivalence?",
+    "answer": "Two propositions p and q are logically equivalent if the biconditional p \u2194 q is always true, meaning it is a tautology.",
+    "chunk_id": 935,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What does the Switcheroo law state in the context of logic?",
+    "answer": "The Switcheroo law, also known as the commutative law for logical disjunction, states that the truth values of two logical statements are the same if the statements are swapped. In other words, if we have two statements P and Q, then P \u2228 Q (P or Q) has the same truth value as Q \u2228 P.",
+    "chunk_id": 936,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How can we verify the Switcheroo law using a truth table?",
+    "answer": "To verify the Switcheroo law, we can construct a truth table for the logical statements P \u2228 Q and Q \u2228 P. If the columns for P \u2228 Q and Q \u2228 P have the same truth values in the same sequence, then the Switcheroo law holds. For example, if we have the truth table with columns for P, Q, P \u2228 Q, and Q \u2228 P, and we see that the third and fifth columns (P \u2228 Q and Q \u2228 P) have the same truth values in the same sequence, then the Switcheroo law is verified.",
+    "chunk_id": 936,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What are logical equivalences used for?",
+    "answer": "Logical equivalences are used to simplify, transform, or prove compound propositions without making truth tables every time.",
+    "chunk_id": 938,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the Double Negation Law?",
+    "answer": "The Double Negation Law states that \u00ac(\u00acp) is logically equivalent to p.",
+    "chunk_id": 938,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What do De Morgan\u2019s Laws describe?",
+    "answer": "De Morgan\u2019s Laws describe how negation distributes over conjunction and disjunction: \u00ac(p \u2227 q) \u2261 \u00acp \u2228 \u00acq and \u00ac(p \u2228 q) \u2261 \u00acp \u2227 \u00acq.",
+    "chunk_id": 938,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is an absorption law in logic?",
+    "answer": "An absorption law is a logical equivalence that simplifies expressions such as p \u2228 (p \u2227 q) \u2261 p and p \u2227 (p \u2228 q) \u2261 p.",
+    "chunk_id": 939,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How can logical equivalences prove that two statements are the same?",
+    "answer": "Start with one statement and apply known equivalence laws step by step until it has the same form as the other statement.",
+    "chunk_id": 939,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Why can truth tables also prove logical equivalence?",
+    "answer": "If two expressions have identical final columns in their truth tables, then they are logically equivalent.",
+    "chunk_id": 939,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the Switcheroo Law in propositional logic?",
+    "answer": "The Switcheroo Law states that p \u2192 q is logically equivalent to \u00acp \u2228 q.",
+    "chunk_id": 940,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How can De Morgan\u2019s Law be used in simplifying logical expressions?",
+    "answer": "De Morgan\u2019s Law changes the negation of a conjunction into a disjunction of negations, and the negation of a disjunction into a conjunction of negations.",
+    "chunk_id": 940,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What are the different related forms of a conditional proposition?",
+    "answer": "The related forms are the converse, inverse, and contrapositive of the original conditional.",
+    "chunk_id": 940,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the converse of a conditional statement p \u2192 q?",
+    "answer": "The converse is q \u2192 p.",
+    "chunk_id": 942,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the inverse of a conditional statement p \u2192 q?",
+    "answer": "The inverse is \u00acp \u2192 \u00acq.",
+    "chunk_id": 942,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the contrapositive of a conditional statement p \u2192 q?",
+    "answer": "The contrapositive is \u00acq \u2192 \u00acp, and it is logically equivalent to the original conditional.",
+    "chunk_id": 942,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the relationship between a conditional statement and its contrapositive in terms of logical equivalence?",
+    "answer": "A conditional statement and its contrapositive are logically equivalent. This means that if the original statement is true, then its contrapositive is also true, and vice versa. For example, if the original statement is 'If P, then Q', its contrapositive is 'If not Q, then not P', and both have the same truth value.",
+    "chunk_id": 943,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How can we show that a conditional statement and its inverse are logically equivalent using logical equivalences?",
+    "answer": "To show that a conditional statement and its inverse are logically equivalent, we can use logical equivalences. For instance, if the original statement is 'If P, then Q', its inverse is 'If not P, then not Q'. We can use the logical equivalences such as the commutative law and double negation to demonstrate their equivalence. For example, 'If not P, then not Q' can be rewritten as 'If Q, then P' using these equivalences, which shows their logical equivalence.",
+    "chunk_id": 943,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the converse of the statement 'If Geebee is a senior high school student, then she is in Grade 11'?",
+    "answer": "The converse of the statement is 'If Geebee is in Grade 11, then she is a senior high school student.' It is important to note that the converse is not necessarily true even if the original statement is true.",
+    "chunk_id": 945,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the contrapositive of the statement 'If Geebee is a senior high school student, then she is in Grade 11'?",
+    "answer": "The contrapositive of the statement is 'If Geebee is not in Grade 11, then she is not a senior high school student.' The contrapositive is logically equivalent to the original statement, meaning if the original statement is true, the contrapositive is also true.",
+    "chunk_id": 945,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the contrapositive of the statement 'If Geebee is in Grade 11, then she is a senior high school student'?",
+    "answer": "The contrapositive is 'If Geebee is not a senior high school student, then she is not in Grade 11.' The contrapositive of a conditional statement is formed by negating both the hypothesis and the conclusion and then reversing their order.",
+    "chunk_id": 946,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the inverse of the statement 'If there are no corrupt people, then there are no poor people'?",
+    "answer": "The inverse is 'If there are corrupt people, then there are poor people.' The inverse of a conditional statement is formed by negating both the hypothesis and the conclusion.",
+    "chunk_id": 946,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the contrapositive of the statement 'If it is consumed in large volumes, then chocolate can be harmful to one\u2019s health.'?",
+    "answer": "The contrapositive of the statement is 'If chocolate is not harmful to one\u2019s health, then it is not consumed in large volumes.'",
+    "chunk_id": 947,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Given the statement 'Whenever she will be given the chance to perform on stage, Whitney will sing all her classic songs.' What is the inverse of this statement?",
+    "answer": "The inverse of the statement is 'If Whitney is not given the chance to perform on stage, then she will not sing all her classic songs.'",
+    "chunk_id": 947,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the converse of the statement 'If Whitney will sing her classic songs, then she will be given the chance to perform on stage.'?",
+    "answer": "The converse of the statement is 'If Whitney will sing her classic songs, then she will be given the chance to perform on stage.' This is the same as the original statement because the converse is formed by swapping the hypothesis and the conclusion of the original conditional statement.",
+    "chunk_id": 951,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the contrapositive of the statement 'If Whitney will sing her classic songs, then she will be given the chance to perform on stage.'?",
+    "answer": "The contrapositive of the statement is 'If Whitney will not sing her classic songs, then she will not be given the chance to perform on stage.' The contrapositive is formed by negating both the hypothesis and the conclusion of the original statement and then swapping them.",
+    "chunk_id": 951,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the converse of the given conditional statement 'If Sheila will be greeted by a large group of press people, then she will decide to enter through the front door.'?",
+    "answer": "The converse of the given conditional statement is 'If Sheila will decide to enter through the front door, then she will be greeted by a large group of press people.'",
+    "chunk_id": 952,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the contrapositive of the given conditional statement 'If Sheila will be greeted by a large group of press people, then she will decide to enter through the front door.'?",
+    "answer": "The contrapositive of the given conditional statement is 'If Sheila will not decide to enter through the front door, then she will not be greeted by a large group of press people.'",
+    "chunk_id": 952,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the converse of the statement 'If the clothes are neatly stacked and pressed, then the house help arrived today.'?",
+    "answer": "The converse of the statement is 'If the house help arrived today, then the clothes are neatly stacked and pressed.'",
+    "chunk_id": 961,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How would you express the contrapositive of the statement 'If it did not flood yesterday, then the streets are dry today.'?",
+    "answer": "The contrapositive of the statement is 'If the streets are not dry today, then it flooded yesterday.'",
+    "chunk_id": 961,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is a fallacy in the context of logical arguments?",
+    "answer": "A fallacy is an error in reasoning that makes an argument invalid or unsound. It is a mistake in the logical structure of an argument that leads to a false conclusion.",
+    "chunk_id": 964,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What defines a sound argument in logic?",
+    "answer": "A sound argument is a valid argument where all the premises are actually true. This means that if the premises are true, the conclusion must also be true, making the argument both valid and truth-preserving.",
+    "chunk_id": 964,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How can we represent the argument 'If my alarm sounds, then I will wake up' in propositional form?",
+    "answer": "We can represent this argument in propositional form as: If A, then B, where A is 'my alarm sounds' and B is 'I will wake up'. In symbolic form, it can be written as A \u2192 B.",
+    "chunk_id": 967,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the conclusion of the argument 'My alarm sounded. I woke up. Therefore, I woke up.'?",
+    "answer": "The conclusion of the argument is 'I woke up.' This is the statement that follows from the premises 'My alarm sounded' and 'I woke up'.",
+    "chunk_id": 967,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the definition of a valid argument in logic?",
+    "answer": "An argument is valid if it satisfies the validity condition: it is logically impossible for the premises to be true and the conclusion false. If the premises being true always guarantees the conclusion is also true, then the argument is valid.",
+    "chunk_id": 968,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How would you determine if an argument is valid using the given definition?",
+    "answer": "To determine if an argument is valid, you would consider whether it is possible for the premises to be true and the conclusion to be false. If it is logically impossible for the premises to be true and the conclusion false, then the argument is valid. For example, if the premises are 'All A are B' and 'All B are C', and the conclusion is 'All A are C', then the argument is valid because if the premises are true, the conclusion must also be true.",
+    "chunk_id": 968,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What does it mean for an argument to be valid?",
+    "answer": "An argument is valid if it is impossible for all premises to be true while the conclusion is false.",
+    "chunk_id": 969,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How can a truth table be used to test validity?",
+    "answer": "Check the rows where all premises are true. If the conclusion is also true in every one of those rows, the argument is valid.",
+    "chunk_id": 969,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What shows that an argument is invalid?",
+    "answer": "An argument is invalid if there is at least one row where all premises are true but the conclusion is false.",
+    "chunk_id": 969,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the definition of a valid argument in logic?",
+    "answer": "A valid argument in logic is one that satisfies the validity condition; that is, the conclusion is true whenever all the premises are true. Alternatively, the argument is valid if the conditional statement formed by the premises implying the conclusion is a tautology.",
+    "chunk_id": 971,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How can you prove that the argument 'Modus Ponens' is valid?",
+    "answer": "To prove that the argument 'Modus Ponens' is valid, we need to show that the conditional statement (p \u2192 q) \u2227 p \u2192 q is a tautology. This can be done by constructing a truth table and showing that the statement is true for all possible truth values of p and q.",
+    "chunk_id": 971,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is a tautology in the context of constructing a truth table for logical arguments?",
+    "answer": "A tautology is a logical statement that is always true, regardless of the truth values of its individual components. In the context of a truth table, a tautology will have 'T' (true) in every row of the final column of the table.",
+    "chunk_id": 972,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How can you determine if an argument is valid using a truth table?",
+    "answer": "An argument is considered valid if the conclusion is true whenever all the premises are true. In a truth table, this means that the final column (representing the conclusion) should only contain 'T' (true) values when all the premises in that row are also 'T' (true). For example, in the given argument A, if the conclusion 'I woke up' is true in every row where 'my alarm sounded' is true, then the argument is valid.",
+    "chunk_id": 972,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is Modus Tollens?",
+    "answer": "Modus Tollens is the valid argument form: if p \u2192 q and \u00acq are true, then \u00acp follows.",
+    "chunk_id": 977,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How does Modus Tollens apply to friendship and Facebook friends?",
+    "answer": "If being friends implies being Facebook friends, and Antonio and Jose are not Facebook friends, then by Modus Tollens they are not friends.",
+    "chunk_id": 977,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Why is Modus Tollens a valid rule of inference?",
+    "answer": "Because whenever p \u2192 q is true and q is false, p must also be false.",
+    "chunk_id": 977,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the Rule of Simplification?",
+    "answer": "The Rule of Simplification states that from p \u2227 q, you may conclude p or conclude q.",
+    "chunk_id": 978,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the Rule of Addition?",
+    "answer": "The Rule of Addition states that from p, you may conclude p \u2228 q.",
+    "chunk_id": 978,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the Law of Syllogism?",
+    "answer": "The Law of Syllogism states that from p \u2192 q and q \u2192 r, you may conclude p \u2192 r.",
+    "chunk_id": 978,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How does the Rule of Simplification work?",
+    "answer": "If a conjunction such as p \u2227 q is true, then each component p and q must be true, so either one may be concluded.",
+    "chunk_id": 979,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How does the Rule of Addition work?",
+    "answer": "If p is true, then p \u2228 q is true because a disjunction is true when at least one part is true.",
+    "chunk_id": 979,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Why are rules of inference useful?",
+    "answer": "They allow conclusions to be derived logically from premises without constructing a full truth table every time.",
+    "chunk_id": 979,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How does the Law of Syllogism connect conditional statements?",
+    "answer": "It connects two conditionals by chaining them: if p implies q and q implies r, then p implies r.",
+    "chunk_id": 980,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the conclusion from p \u2192 q and q \u2192 r?",
+    "answer": "The conclusion is p \u2192 r.",
+    "chunk_id": 980,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Why is the Law of Syllogism valid?",
+    "answer": "Because if p leads to q and q leads to r, then p necessarily leads to r.",
+    "chunk_id": 980,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is a fallacy in logic?",
+    "answer": "A fallacy is an invalid argument where it is possible for the premises to be true while the conclusion is false.",
+    "chunk_id": 981,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the Fallacy of the Converse?",
+    "answer": "The Fallacy of the Converse has the form p \u2192 q, q, therefore p. It is invalid because q being true does not guarantee p is true.",
+    "chunk_id": 981,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How can a truth table show that an argument is a fallacy?",
+    "answer": "If there is a row where all premises are true but the conclusion is false, the argument is invalid and therefore a fallacy.",
+    "chunk_id": 981,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is a counterexample in logic?",
+    "answer": "A counterexample is a set of truth values that makes all premises true but the conclusion false.",
+    "chunk_id": 982,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Why is one counterexample enough to prove invalidity?",
+    "answer": "Because a valid argument must never have true premises and a false conclusion. One such case disproves validity.",
+    "chunk_id": 982,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What does it mean if the conditional representing an argument is not a tautology?",
+    "answer": "It means the argument is invalid because the conclusion does not always follow from the premises.",
+    "chunk_id": 982,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is a counterexample in the context of logical arguments?",
+    "answer": "A counterexample in the context of logical arguments is a specific instance where the argument's conclusion is false while the premises are true. This helps to show that the argument is not valid in all cases.",
+    "chunk_id": 983,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Explain why the argument 'If my alarm sounds, then I will wake up. I woke up. Therefore, my alarm sounded.' is a fallacy using a counterexample.",
+    "answer": "This argument is a fallacy because it commits the fallacy of affirming the consequent. A counterexample is when someone wakes up due to a different reason, such as a phone call, even though the alarm did not sound. In this case, the premises (alarm sounding -> waking up, waking up) are true, but the conclusion (alarm sounded) is false, showing the argument is not valid.",
+    "chunk_id": 983,
+    "topic": "your topic here"
+  },
+  {
+    "question": "If it is given that 'Either Alvin sings or dances with Nina' and 'Alvin sang with Nina', can we conclude that 'Alvin did not dance with Nina'? Explain your answer.",
+    "answer": "No, we cannot conclude that 'Alvin did not dance with Nina'. The statement 'Either Alvin sings or dances with Nina' means that at least one of the two actions (singing or dancing) must occur, but it does not specify that only one of them must occur. Since Alvin sang with Nina, it is still possible that he also danced with Nina. For example, Alvin could have both sung and danced with Nina.",
+    "chunk_id": 986,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Given the statement 'Either Alvin sings or dances with Nina' and 'Alvin did not dance with Nina', can we conclude that 'Alvin sang with Nina'? Explain your answer.",
+    "answer": "Yes, we can conclude that 'Alvin sang with Nina'. The statement 'Either Alvin sings or dances with Nina' means that at least one of the two actions must occur. If Alvin did not dance with Nina, then the only remaining possibility is that he sang with Nina.",
+    "chunk_id": 986,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is Disjunctive Syllogism?",
+    "answer": "Disjunctive Syllogism states that from p \u2228 q and \u00acp, you may conclude q.",
+    "chunk_id": 988,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How can the Commutative Law help in applying Disjunctive Syllogism?",
+    "answer": "It allows p \u2228 q to be rewritten as q \u2228 p, so the expression can match the needed form.",
+    "chunk_id": 988,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is Denying a Conjunct?",
+    "answer": "Denying a Conjunct is an invalid reasoning pattern involving a conjunction where a conclusion is drawn incorrectly from the denial of one part.",
+    "chunk_id": 988,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What type of fallacy is present in the argument 'If it rains today, then [some event]. It rained today. Therefore, [some event].'?",
+    "answer": "This argument is an example of the 'Affirming the Consequent' fallacy. The structure of the argument is: If P, then Q. Q. Therefore, P. This is logically invalid because the truth of Q does not guarantee the truth of P.",
+    "chunk_id": 996,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Identify the fallacy in the statement 'Either Lina or Lino will take the trash to the recycling center. Lina did not take the trash to the recycling center. Hence, Lino must have taken the trash to the recycling center.'",
+    "answer": "This statement is an example of the 'False Dilemma' or 'False Dichotomy' fallacy. It presents a situation as having only two possible outcomes when in fact there may be other possibilities. The correct logical form would be: Either P or Q. Not P. Therefore, Q. However, this does not rule out the possibility that neither Lina nor Lino took the trash.",
+    "chunk_id": 996,
+    "topic": "your topic here"
+  },
+  {
+    "question": "If Leona landed a recording contract with a famous company, can we conclude that she won the singing competition based on the given statement?",
+    "answer": "No, we cannot conclude that Leona won the singing competition based on the given statement. The statement only says that if Leona wins the singing competition, then she will land a recording contract. However, landing a recording contract could be due to other reasons as well, so we cannot reverse the implication.",
+    "chunk_id": 998,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How can we represent the logical statement 'If Michael sleeps early tonight or does not play with his pet dog, then he will wake up early tomorrow' using logical operators?",
+    "answer": "We can represent the statement using logical operators as: (P \u2228 Q) \u2192 R, where P represents 'Michael sleeps early tonight', Q represents 'Michael does not play with his pet dog', and R represents 'Michael will wake up early tomorrow'.",
+    "chunk_id": 998,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is Modus Ponens?",
+    "answer": "Modus Ponens is the valid form: if p \u2192 q and p are true, then q follows.",
+    "chunk_id": 999,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How is Disjunctive Syllogism used in an argument?",
+    "answer": "If one of two alternatives is true and one alternative is false, the other alternative must be true.",
+    "chunk_id": 999,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Why should arguments be translated into propositional form?",
+    "answer": "Translating arguments into symbols makes it easier to identify the rule of inference or fallacy being used.",
+    "chunk_id": 999,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the logical form of the argument given in the chunk, and how is it valid by Modus Tollens?",
+    "answer": "The logical form of the argument is: If Joe makes a reviewer for his class and studies the reviewer well, then Joe will get a high grade in the exam. In logical notation, this can be written as: (P \u2227 Q) \u2192 R. The argument is valid by Modus Tollens, which states that if P \u2192 Q is true and Q is false, then P must be false. Here, if the conclusion 'Joe will get a high grade in the exam' (R) is false, then either Joe did not make a reviewer for his class or he did not study it well (or both).",
+    "chunk_id": 1000,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How can the conclusion of the argument be rephrased, and what does this tell us about the logical structure?",
+    "answer": "The conclusion can be rephrased as 'If Joe does not get a high grade in the exam, then either he did not make a reviewer for his class or he did not study the reviewer well.' This rephrasing highlights the contrapositive form of the original implication, which is logically equivalent to the original statement. This shows that the argument is structured in a way that allows for the application of Modus Tollens.",
+    "chunk_id": 1000,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the Fallacy of the Inverse?",
+    "answer": "The Fallacy of the Inverse has the form p \u2192 q, \u00acp, therefore \u00acq. It is invalid because q can still be true even if p is false.",
+    "chunk_id": 1002,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the Fallacy of the Converse?",
+    "answer": "It has the form p \u2192 q, q, therefore p. The conclusion does not necessarily follow.",
+    "chunk_id": 1002,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Why are fallacies important to identify?",
+    "answer": "Identifying fallacies prevents accepting conclusions that do not logically follow from the given premises.",
+    "chunk_id": 1002,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the form of the argument given in the chunk, and why is it valid?",
+    "answer": "The argument is of the form 'If P, then Q. P. Therefore, Q.' This is valid due to the Modus Ponens rule, not the Rule of Proof by Cases. The given argument in the chunk is an example of Modus Ponens, where if P (Michael sleeps early tonight) is true, then Q (Michael will wake up early tomorrow) is also true, assuming the initial conditions are met.",
+    "chunk_id": 1003,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Explain the difference between a valid argument and a sound argument using the example provided in the chunk.",
+    "answer": "A valid argument is one where the conclusion logically follows from the premises, regardless of whether the premises are actually true. The argument in the chunk is valid because if the premises are true, the conclusion must be true. However, the argument is not sound because the premises may not be true in reality. For example, just because Michael sleeps early tonight does not guarantee he will wake up early tomorrow. A sound argument requires both validity and true premises.",
+    "chunk_id": 1003,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Is the argument 'Either Derrick was not informed about the meeting or he made the decision not to attend. Derrick was not informed about the meeting. Thus, he did not decide not to attend the meeting' valid and sound?",
+    "answer": "The argument is valid because it follows a logical structure known as the disjunctive syllogism. If either A or B is true, and A is true, then B must be false. However, the argument is not sound because the conclusion 'he did not decide not to attend the meeting' is not necessarily true based on the given information. Being not informed does not imply he did not make a decision not to attend, it just means he was not informed.",
+    "chunk_id": 1012,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Given that   is a polynomial function and it is a one-to-one function, is   a one-to-one function? Explain.",
+    "answer": "Yes,   is a one-to-one function. If   is a one-to-one function, it means that each input corresponds to a unique output, and no two different inputs give the same output. Since   is a polynomial function and it is one-to-one, the composition of these functions,   will also be one-to-one, as the one-to-one property is preserved under composition.",
+    "chunk_id": 1012,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How can Modus Tollens be recognized in a mathematical argument?",
+    "answer": "It appears when an argument has the form p \u2192 q and \u00acq, therefore \u00acp.",
+    "chunk_id": 1013,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How can a statement about quadrilaterals use Modus Tollens?",
+    "answer": "If a polygon is a quadrilateral, then its interior angles sum to 360\u00b0. If the sum is not 360\u00b0, then the polygon is not a quadrilateral.",
+    "chunk_id": 1013,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Why are conditional statements useful in mathematical proof?",
+    "answer": "They allow a conclusion to be drawn from a hypothesis and support valid reasoning forms such as Modus Ponens and Modus Tollens.",
+    "chunk_id": 1013,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the goal of a proof in mathematics?",
+    "answer": "The goal of a proof in mathematics is to demonstrate that the conclusion logically follows from the given propositions (or premises). Each step in the proof must be a valid assertion, either based on a given statement (premise) or derived from the premise using logical equivalences or rules of inference.",
+    "chunk_id": 1016,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How does a valid assertion in a proof differ from an invalid one?",
+    "answer": "A valid assertion in a proof is one that is either based on a given statement (premise) or follows from the premise via logical equivalences or rules of inference. An invalid assertion would not logically follow from the premises and would not contribute to the validity of the proof.",
+    "chunk_id": 1016,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How do you prove the validity of an argument using logical equivalences or rules of inferences?",
+    "answer": "To prove the validity of an argument, start by assuming all propositions in the argument are true. Then, use logical equivalences or rules of inferences to derive the conclusion from the given premises. A common strategy is to start with the statement not involving a conditional, and then think about how to reach the conclusion from that statement.",
+    "chunk_id": 1017,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the first step in proving the validity of the argument in Example 1?",
+    "answer": "The first step is to assume that all propositions over the line are true. Then, you need to establish a logical sequence of propositions to arrive at the conclusion. A common strategy is to start with the statement not involving a conditional, such as the premise, and think about how to reach the conclusion from that statement.",
+    "chunk_id": 1017,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What logical rule is used in step 5 of the proof?",
+    "answer": "Modus Tollens is used in step 5 of the proof. Modus Tollens is a form of logical argument that states if P implies Q, and Q is false, then P must be false. In this case, the premises are used to show that if the first premise is true, then the second premise must also be true, and since the second premise is false, the first premise must be false.",
+    "chunk_id": 1018,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How does the Rule of Addition apply in step 2 of the proof?",
+    "answer": "The Rule of Addition states that if a statement P is true, then the statement P or Q is also true, regardless of the truth value of Q. In step 2, since the first premise is true, the statement (1) or (2) is true. This is used to establish that (1) or (2) is true, which is necessary for the subsequent steps in the proof.",
+    "chunk_id": 1018,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is Modus Tollens in logical reasoning?",
+    "answer": "Modus Tollens is a form of logical argument that applies to conditional statements. It states that if a conditional statement (if P, then Q) is true and the consequent (Q) is false, then the antecedent (P) must also be false. For example, if the statement 'If it is raining, then the ground is wet' is true, and we observe that the ground is not wet, then we can conclude that it is not raining.",
+    "chunk_id": 1021,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How does Disjunctive Syllogism work in logical reasoning?",
+    "answer": "Disjunctive Syllogism is a rule of inference that states if one of two propositions is false, then the other must be true. It is based on the logical form: If P or Q is true and P is false, then Q must be true. For example, if we know that 'Either the light is on or the curtains are closed' is true, and we find out that the light is not on, then we can conclude that the curtains must be closed.",
+    "chunk_id": 1021,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the Switcheroo Law in logic, and how is it applied in the given example?",
+    "answer": "The Switcheroo Law in logic states that the conditional statement 'If P, then Q' is logically equivalent to 'If not Q, then not P'. In the given example, the premises are transformed using this law: the first premise 'If P, then Q' is transformed to 'If not Q, then not P', and the second premise 'If R, then P' is transformed to 'If not P, then not R'.",
+    "chunk_id": 1023,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How is Modus Tollens used in the given logical argument, and what is its role in the proof?",
+    "answer": "Modus Tollens is a rule of inference that states if 'If P, then Q' is true and Q is false, then P must be false. In the given argument, after applying the Switcheroo Law, we have 'If not Q, then not P' and 'If not P, then not R'. Using Modus Tollens on these transformed premises, we conclude that if not Q is true, then not P must be true, and subsequently, not R must be true.",
+    "chunk_id": 1023,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is a constructed dilemma?",
+    "answer": "A constructed dilemma is a valid argument form that combines alternatives with conditional statements to reach a conclusion.",
+    "chunk_id": 1025,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Why are premises listed with reasons in a proof?",
+    "answer": "Listing premises and reasons shows each logical step clearly and justifies how the conclusion follows.",
+    "chunk_id": 1025,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How does the Law of Syllogism help in longer proofs?",
+    "answer": "It links conditional statements together so that a chain of implications can be simplified into a direct implication.",
+    "chunk_id": 1025,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Why is the contrapositive useful in proofs?",
+    "answer": "The contrapositive of a conditional is logically equivalent to the original conditional, so it can be used as a valid replacement in a proof.",
+    "chunk_id": 1026,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How does Double Negation help simplify logic expressions?",
+    "answer": "Double Negation removes two negation symbols because \u00ac\u00acp is equivalent to p.",
+    "chunk_id": 1026,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What does it mean when an argument form is valid?",
+    "answer": "It means that whenever the premises are true, the conclusion must also be true.",
+    "chunk_id": 1026,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How do you show that an argument is invalid?",
+    "answer": "Find truth values that make all the premises true but the conclusion false.",
+    "chunk_id": 1027,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the role of symbolic form in testing an argument?",
+    "answer": "Symbolic form makes the structure of the argument clear, so it can be tested using truth values or rules of inference.",
+    "chunk_id": 1027,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Why does a counterexample prove invalidity?",
+    "answer": "Because it shows a possible case where the premises are true but the conclusion does not follow.",
+    "chunk_id": 1027,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What does it mean for a conditional conclusion to be false?",
+    "answer": "A conditional conclusion p \u2192 q is false only when p is true and q is false.",
+    "chunk_id": 1028,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How can you construct a counterexample for an invalid argument?",
+    "answer": "Choose truth values that make the premises true while making the conclusion false.",
+    "chunk_id": 1028,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Why can an argument with true premises and a false conclusion not be valid?",
+    "answer": "Validity requires that true premises always force a true conclusion, so one exception makes the argument invalid.",
+    "chunk_id": 1028,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is proof by contradiction?",
+    "answer": "Proof by contradiction assumes the opposite of what is to be proven and then shows that this assumption leads to a contradiction.",
+    "chunk_id": 1029,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is an indirect proof?",
+    "answer": "An indirect proof proves a statement by showing that denying it leads to an impossible or contradictory result.",
+    "chunk_id": 1029,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How is a counterexample different from a proof by contradiction?",
+    "answer": "A counterexample disproves a general claim by showing one case where it fails, while proof by contradiction proves a claim by showing its negation is impossible.",
+    "chunk_id": 1029,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What are three methods for proving an argument valid?",
+    "answer": "An argument can be proven valid using rules of inference, truth tables, or an indirect proof.",
+    "chunk_id": 1030,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Why might rules of inference be faster than truth tables?",
+    "answer": "Rules of inference use known valid patterns to derive conclusions directly, while truth tables require checking all truth-value combinations.",
+    "chunk_id": 1030,
+    "topic": "your topic here"
+  },
+  {
+    "question": "When is a truth table especially useful in logic?",
+    "answer": "A truth table is useful when you need to check every possible truth-value combination for validity or equivalence.",
+    "chunk_id": 1030,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the method used in step 3 to determine the validity of the argument in part b? Explain using the given truth table.",
+    "answer": "In part b, the validity of the argument is determined via truth tables. The truth table shows all possible truth values for the premises and the conclusion. For the argument to be valid, the conclusion must be true whenever all the premises are true. The given truth table indicates that the conclusion is true in all cases where the premises are true, making the argument a tautology and thus valid.",
+    "chunk_id": 1031,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How does an indirect proof work in part c to show the argument is valid?",
+    "answer": "In part c, an indirect proof is used to show the argument is valid by assuming the opposite of the conclusion (i.e., the conclusion is false) while keeping the premises true. If this assumption leads to a contradiction, then the original assumption must be false, and the conclusion must be true. This confirms the argument's validity.",
+    "chunk_id": 1031,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the definition of an even number using the 'if and only if' form?",
+    "answer": "An even number is a number that can be written as 2n, where n is an integer. This means that a number is even if and only if it can be written as 2n, where n is an integer.",
+    "chunk_id": 1033,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How can we define a parallelogram using the 'if and only if' form?",
+    "answer": "A parallelogram is a quadrilateral with two pairs of parallel sides. This means that a quadrilateral is a parallelogram if and only if it has two pairs of parallel sides.",
+    "chunk_id": 1033,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How do you prove that the sum of two even integers is even?",
+    "answer": "Let the even integers be x = 2a and y = 2b. Then x + y = 2a + 2b = 2(a + b). Since a + b is an integer, x + y is even.",
+    "chunk_id": 1035,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the definition of an even integer used in proofs?",
+    "answer": "An integer is even if it can be written in the form 2k for some integer k.",
+    "chunk_id": 1035,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Why is 2(a + b) even?",
+    "answer": "Because it is two times an integer, which matches the definition of an even number.",
+    "chunk_id": 1035,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What condition must a quadrilateral meet to be considered a rectangle?",
+    "answer": "A quadrilateral is considered a rectangle if it has four right angles. Alternatively, if it has three right angles, the fourth angle must also be a right angle, making all four angles right angles.",
+    "chunk_id": 1036,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How can we prove that a quadrilateral is not a rectangle if it has three right angles?",
+    "answer": "If a quadrilateral has three right angles, the fourth angle must also be a right angle for it to be a rectangle. If the fourth angle is not a right angle, then the quadrilateral cannot be a rectangle. For example, if the sum of the interior angles of a quadrilateral is 360 degrees and three of the angles are 90 degrees each, the fourth angle would be 90 degrees as well, making the quadrilateral a rectangle. If the fourth angle is not 90 degrees, then the quadrilateral is not a rectangle.",
+    "chunk_id": 1036,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What does it mean if a shape has only two right angles?",
+    "answer": "If a shape has only two right angles, it means that the other angles are not right angles. In the context of the given problem, this implies that the shape is not a rectangle, as rectangles have four right angles.",
+    "chunk_id": 1037,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How can you use the given equation to solve for an angle in an indirect proof?",
+    "answer": "In an indirect proof, you can solve for an angle by using the given information and the properties of the shape. For example, if you are given that three angles are right angles and one angle is not a right angle, you can set up an equation to solve for the unknown angle. If the equation leads to a contradiction, it supports the indirect proof.",
+    "chunk_id": 1037,
+    "topic": "your topic here"
+  },
+  {
+    "question": "If a machine is cheap, what can we conclude about its color based on the given statements?",
+    "answer": "If the machine is cheap, we can conclude that it is not painted red. The given statements are: 'If the machine is cheap or is energy efficient, then it will not make money for the manufacturer' and 'If the machine is painted red, then it will make money for the manufacturer.' Since the machine is cheap, it does not make money for the manufacturer, which means it cannot be painted red.",
+    "chunk_id": 1040,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Given that monsters roam the Earth and people are evacuating, what can we infer about the situation based on the provided statements?",
+    "answer": "Given that monsters roam the Earth and people are evacuating, we can infer that all people bought weapons and the Earth experiences tremors from beneath the surface. The given statements are: 'If monsters roam the Earth, then all people will buy weapons' and 'If Earth experiences tremors from beneath the surface, then all people will evacuate.' Since both conditions are met, we can conclude both inferences.",
+    "chunk_id": 1040,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is a counterexample and how was it used to show the argument is invalid in the given chunk?",
+    "answer": "A counterexample is a specific instance where the premises of an argument are true, but the conclusion is false. In the given chunk, the argument is invalid because a truth table showed that when 'Cherry\u2019s song is loud' (P), 'Cherry\u2019s song is tedious' (Q), and 'Cherry\u2019s song is long' (R) are true, and 'Cherry\u2019s song is not cacophonous' (S) is false, the conclusion 'Cherry\u2019s song is not tedious' (\u00acQ) is false. This specific instance demonstrates that the argument can be false even when the premises are true, thus proving the argument is invalid.",
+    "chunk_id": 1047,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What logical law was used in the proof to derive the conclusion in the given chunk?",
+    "answer": "The Addition Law was used in the proof to derive the conclusion. Specifically, the Addition Law states that if a statement P is true, then the disjunction P \u2228 Q is also true for any statement Q. In the proof, the premise 'Cherry\u2019s song is loud' (P) was used to derive 'Cherry\u2019s song is loud or Cherry\u2019s song is not cacophonous' (P \u2228 S), which is the second step in the proof.",
+    "chunk_id": 1047,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How do you prove that the sum of an even integer and an odd integer is odd?",
+    "answer": "Let the even integer be 2a and the odd integer be 2b + 1. Their sum is 2a + 2b + 1 = 2(a + b) + 1, which is odd.",
+    "chunk_id": 1051,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How do you show that the sum of two numbers divisible by 3 is divisible by 3?",
+    "answer": "Let the numbers be 3a and 3b. Their sum is 3a + 3b = 3(a + b), which is divisible by 3.",
+    "chunk_id": 1051,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the form of an odd integer?",
+    "answer": "An odd integer can be written as 2k + 1 for some integer k.",
+    "chunk_id": 1051,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How can contradiction prove that if n squared is odd, then n is odd?",
+    "answer": "Assume n is even, so n = 2k. Then n\u00b2 = 4k\u00b2 = 2(2k\u00b2), which is even. This contradicts the premise that n\u00b2 is odd, so n must be odd.",
+    "chunk_id": 1052,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Why does proving the opposite leads to contradiction prove the original statement?",
+    "answer": "If assuming the opposite creates an impossibility, then the opposite must be false and the original statement must be true.",
+    "chunk_id": 1052,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the key idea in parity proofs?",
+    "answer": "Parity proofs use the definitions of even and odd numbers to show whether expressions are even or odd.",
+    "chunk_id": 1052,
+    "topic": "your topic here"
+  },
+  {
+    "question": "If Michelle wakes up early or does not sleep, then she will get to class on time. Given that Michelle did not sleep, can we conclude that she will get to class on time?",
+    "answer": "Yes, we can conclude that Michelle will get to class on time. The statement 'If Michelle wakes up early or does not sleep, then she will get to class on time' is a conditional statement. Since Michelle did not sleep, which is one of the conditions, the conclusion that she will get to class on time follows logically.",
+    "chunk_id": 1055,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Given the statement 'If she commutes to school, then she will not get to class on time,' and knowing that Michelle did not sleep, can we conclude that she did not commute to school?",
+    "answer": "Yes, we can conclude that Michelle did not commute to school. The original statement can be written as 'If A, then not B', where A is 'she commutes to school' and B is 'she gets to class on time'. Since we know that Michelle did not sleep and she will get to class on time (from the previous part), the contrapositive of the original statement ('If not B, then not A') also holds true. Therefore, since she will get to class on time, she did not commute to school.",
+    "chunk_id": 1055,
+    "topic": "your topic here"
+  },
+  {
+    "question": "If 12 and 16 are divisible by 4, is their sum also divisible by 4? Explain why.",
+    "answer": "Yes, the sum of 12 and 16 is 28, which is divisible by 4. This is because 12 and 16 are both divisible by 4, and according to the given statement, if two numbers are divisible by 4, their sum is also divisible by 4. For example, 12 + 16 = 28, and 28 \u00f7 4 = 7, which is an integer.",
+    "chunk_id": 1058,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Is the statement 'If 10 is even, then 5 is even' true or false? Explain your reasoning.",
+    "answer": "The statement is false. The number 10 is even, but 5 is not even. An even number is divisible by 2, and 5 is not divisible by 2. Therefore, if a number is even, its half must also be an integer, but in this case, 10 \u00f7 2 = 5, which is not an even number.",
+    "chunk_id": 1058,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What are the domain and range of a basic exponential function with positive base?",
+    "answer": "For a basic exponential function such as f(x) = a^x with a > 0 and a \u2260 1, the domain is all real numbers and the range is all positive real numbers.",
+    "chunk_id": 1071,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the horizontal asymptote of a basic exponential function?",
+    "answer": "The horizontal asymptote is usually y = 0, meaning the graph approaches the x-axis but does not cross it.",
+    "chunk_id": 1071,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the y-intercept of f(x) = a^x?",
+    "answer": "The y-intercept is 1 because f(0) = a^0 = 1.",
+    "chunk_id": 1071,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How does multiplying an exponential function by 2 affect its graph?",
+    "answer": "It stretches the graph vertically by a factor of 2, making the y-values twice as large.",
+    "chunk_id": 1072,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What happens when an exponential graph is shifted one unit to the right?",
+    "answer": "The graph moves horizontally to the right by 1 unit, and the expression often changes from f(x) to f(x - 1).",
+    "chunk_id": 1072,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the range of a reflected exponential function below the x-axis?",
+    "answer": "If an exponential function is reflected about the x-axis, its range becomes negative values, often (-\u221e, 0).",
+    "chunk_id": 1072,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is a logarithmic equation?",
+    "answer": "A logarithmic equation is an equation that contains a logarithm with a variable in its argument or expression.",
+    "chunk_id": 1073,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is a logarithmic function?",
+    "answer": "A logarithmic function is the inverse of an exponential function and is commonly written in the form f(x) = log_b(x), where b > 0 and b \u2260 1.",
+    "chunk_id": 1073,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How are exponential and logarithmic forms related?",
+    "answer": "They are inverses: b^y = x is equivalent to log_b(x) = y.",
+    "chunk_id": 1073,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What does the graph of a logarithmic function usually have as a vertical asymptote?",
+    "answer": "A basic logarithmic function has a vertical asymptote at x = 0, but horizontal shifts change the asymptote.",
+    "chunk_id": 1074,
+    "topic": "your topic here"
+  },
+  {
+    "question": "If a logarithmic graph shifts 3 units to the right, what is its vertical asymptote?",
+    "answer": "The vertical asymptote becomes x = 3.",
+    "chunk_id": 1074,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is exponential decay?",
+    "answer": "Exponential decay occurs when a quantity decreases by a constant percentage over equal intervals of time.",
+    "chunk_id": 1074,
+    "topic": "your topic here"
+  },
+  {
+    "question": "For a logarithmic function shifted 3 units right, what is the domain?",
+    "answer": "The domain is x > 3 because the logarithm's input must be positive after the shift.",
+    "chunk_id": 1075,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the range of a logarithmic function?",
+    "answer": "The range of a logarithmic function is all real numbers.",
+    "chunk_id": 1075,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What does the x-intercept of a logarithmic graph represent?",
+    "answer": "It is the point where the graph crosses the x-axis, meaning the function value is 0.",
+    "chunk_id": 1075,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Why might answer-key chunks return no Q&A pairs?",
+    "answer": "If a chunk mostly contains answer lists without explanations or lesson content, it may not provide enough instructional material for meaningful Q&A generation.",
+    "chunk_id": 1076,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What should be done with chunks that contain only copyright text or answer lists?",
+    "answer": "They can be assigned an empty Q&A array if they do not contain definitions, procedures, examples, or explanations.",
+    "chunk_id": 1076,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is a periodic interest rate?",
+    "answer": "A periodic interest rate is the interest rate applied per compounding period, such as monthly, quarterly, or annually.",
+    "chunk_id": 1077,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How do you convert a percentage to decimal form?",
+    "answer": "Divide the percentage by 100. For example, 6% becomes 0.06 and 1% becomes 0.01.",
+    "chunk_id": 1077,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What does the number of periods represent in compound interest?",
+    "answer": "It represents how many times interest is applied over the duration of the investment or loan.",
+    "chunk_id": 1077,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How do you interpret an interest rate written as 0.0301?",
+    "answer": "The decimal 0.0301 is equivalent to 3.01% because multiplying by 100 converts it to a percentage.",
+    "chunk_id": 1078,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What does nominal interest converted semi-annually mean?",
+    "answer": "It means the annual nominal rate is divided into two compounding periods per year.",
+    "chunk_id": 1078,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Why are time periods important in finance problems?",
+    "answer": "They determine how many times interest is compounded or how many payments are made.",
+    "chunk_id": 1078,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the value of P4,573.65 in the given list of amounts?",
+    "answer": "The value of P4,573.65 is 4,573.65 pesos.",
+    "chunk_id": 1082,
+    "topic": "your topic here"
+  },
+  {
+    "question": "Identify the form of the compound proposition 'If Ted\u2019s score is less than 50, then Ted will fail the course'.",
+    "answer": "The form of the compound proposition is 'if p then q', where p is 'Ted\u2019s score is less than 50' and q is 'Ted will fail the course'.",
+    "chunk_id": 1082,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the form of the compound proposition for the statement 'It is sunny in Manila and its streets are flooded'?",
+    "answer": "The form of the compound proposition is ' and ', where p: 'It is sunny in Manila' and q: 'Its streets are flooded.'",
+    "chunk_id": 1083,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How would you express the statement 'If the lengths of the legs and the hypotenuse of a right triangle satisfy the Pythagorean theorem' using the if-then form?",
+    "answer": "The statement would be expressed as 'if    then   ', where p: 'the lengths of the legs and the hypotenuse of a right triangle' and q: 'satisfy the Pythagorean theorem', i.e., 'if the lengths of the legs and the hypotenuse of a right triangle satisfy the Pythagorean theorem'.",
+    "chunk_id": 1083,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What does it mean for a statement to be a tautology?",
+    "answer": "A tautology is a statement that is always true, regardless of the truth values of its individual components. In the given examples, the truth tables show that the statements are true for all possible combinations of truth values, confirming they are tautologies.",
+    "chunk_id": 1088,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How can you determine if a statement is a tautology using a truth table?",
+    "answer": "To determine if a statement is a tautology using a truth table, you need to evaluate the statement for all possible combinations of truth values of its components. If the statement evaluates to true for every combination, then it is a tautology. For example, in the given truth table, the statement is true for all 64 possible combinations, confirming it is a tautology.",
+    "chunk_id": 1088,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What does it mean for a proposition to be a tautology?",
+    "answer": "A tautology is a proposition that is always true, regardless of the truth values of its components. For example, in the given content, the propositions are evaluated for all possible combinations of truth values, and the result is always true, indicating that they are tautologies.",
+    "chunk_id": 1089,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How can we determine if a proposition is a tautology using a truth table?",
+    "answer": "To determine if a proposition is a tautology using a truth table, we evaluate the proposition for all possible combinations of truth values of its components. If the result is always true, then the proposition is a tautology. For instance, in the given content, the truth table for the proposition in part c shows T for all rows, confirming it is a tautology.",
+    "chunk_id": 1089,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the converse of the given proposition 'If the house help arrived today, then the clothes are neatly stacked and pressed'?",
+    "answer": "The converse of the given proposition is 'If the clothes are neatly stacked and pressed, then the house help arrived today'.",
+    "chunk_id": 1091,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the contrapositive of the given proposition 'If the house help arrived today, then the clothes are neatly stacked and pressed'?",
+    "answer": "The contrapositive of the given proposition is 'If the clothes are not neatly stacked and pressed, then the house help did not arrive today'.",
+    "chunk_id": 1091,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the converse of the statement 'If Nico studied alone, then he got the highest score in the class'?",
+    "answer": "The converse of the statement is 'If he got the highest score in the class, then Nico studied alone.'",
+    "chunk_id": 1092,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the contrapositive of the statement 'If Nico studied alone, then he got the highest score in the class'?",
+    "answer": "The contrapositive of the statement is 'If he did not get the highest score in the class, then Nico did not study alone.'",
+    "chunk_id": 1092,
+    "topic": "your topic here"
+  },
+  {
+    "question": "How can contradiction be used to prove a number is even?",
+    "answer": "Assume the number is odd and show that this assumption contradicts a given premise. If the odd assumption is impossible, the number must be even.",
+    "chunk_id": 1102,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the algebraic form of an odd integer?",
+    "answer": "An odd integer can be written as 2k + 1 for some integer k.",
+    "chunk_id": 1102,
+    "topic": "your topic here"
+  },
+  {
+    "question": "What is the algebraic form of an even integer?",
+    "answer": "An even integer can be written as 2k for some integer k.",
+    "chunk_id": 1102,
+    "topic": "your topic here"
+  }
+]
