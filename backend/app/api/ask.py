@@ -1,33 +1,23 @@
-from fastapi import APIRouter, HTTPException
-import requests
-import json
-import sys
-sys.path.insert(0, "../../ml")
+from fastapi import APIRouter, HTTPException, Query
 
-from retrieval.test_retrieval import load_index_and_chunks
+from app.services.rag_service import retrieve_context
+from app.services.ai_service import generate_answer
 
-router = APIRouter(prefix="/api", tags=["ask"])
+router = APIRouter(
+    prefix="/api",
+    tags=["ask"]
+)
 
 @router.post("/ask")
-def ask(question: str):
-    """
-    Ask a question, retrieve relevant chunks, generate answer with Phi-3
-    """
+def ask(question: str = Query(...)):
     try:
-        # Load FAISS index and chunks
-        index, chunks = load_index_and_chunks()
-        
-        # Retrieve relevant chunks
-        from sentence_transformers import SentenceTransformer
-        model = SentenceTransformer("all-MiniLM-L6-v2")
-        query_embedding = model.encode(question).astype("float32").reshape(1, -1)
-        distances, indices = index.search(query_embedding, k=5)
-        
-        # Get chunk content
-        retrieved_chunks = [chunks[idx]["content"] for idx in indices[0]]
-        context = "\n\n".join(retrieved_chunks)
-        
-        # Generate answer with Phi-3
+
+        context_data = retrieve_context(question)
+
+        context = "\n\n".join(
+            context_data["chunks"]
+        )
+
         prompt = f"""Based on this math content, answer the student's question.
 
 Content:
@@ -36,20 +26,23 @@ Content:
 Student Question: {question}
 
 Answer:"""
-        
-        response = requests.post("http://localhost:11434/api/generate", json={
-            "model": "phi",
-            "prompt": prompt,
-            "stream": False
-        })
-        
-        answer = response.json()["response"]
-        
+
+        answer = generate_answer(prompt)
+
         return {
             "question": question,
             "answer": answer,
-            "sources": [{"chunk_id": idx, "content": chunks[idx]["content"][:200]} for idx in indices[0]]
+            "sources": [
+                {
+                    "chunk_id": idx,
+                    "content": context_data["all_chunks"][idx]["content"][:200]
+                }
+                for idx in context_data["indices"]
+            ]
         }
-    
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )
