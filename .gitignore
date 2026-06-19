@@ -1,0 +1,65 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Logs and databases
+*.log
+*.sqlite3
+*.db
+
+# IDE / editor files
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Backend specific
+backend/__pycache__/
+backend/app/__pycache__/
+backend/app/api/__pycache__/
+backend/app/services/__pycache__/
+
+# ML / data artifacts
+ml/__pycache__/
+ml/retrieval/__pycache__/
+ml/embeddings/
+
+# Flutter / Dart build outputs
+**/build/
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/generated_plugin_registrant.dart
+
+# Local environment files
+.env
+*.env
+
+# Temporary files
+*.tmp
+*.temp
+*~
+
+# Ignore compiled Python extensions
+*.so
+*.dylib
+*.dll

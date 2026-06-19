@@ -6,19 +6,10 @@ import os
 import json
 import random
 
-# Add ML path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../ml"))
-
-# Safely import retrieval
-try:
-    from retrieval.test_retrieval import load_index_and_chunks
-except Exception as e:
-    print(f"Warning: Could not import retrieval: {e}")
-    load_index_and_chunks = None
-
+# Create app FIRST
 app = FastAPI(title="Mathiva API")
 
-# CORS Middleware
+# Add CORS Middleware SECOND
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -28,9 +19,25 @@ app.add_middleware(
     expose_headers=["*"],
 )
 
+# Add ML path THIRD (before importing routers/modules that depend on it)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../ml"))
+
+# Now import and include routers FOURTH
+from app.api.solve import router as solve_router
+app.include_router(solve_router)
+
+# Safely import retrieval FIFTH
+try:
+    from retrieval.test_retrieval import load_index_and_chunks
+except Exception as e:
+    print(f"Warning: Could not import retrieval: {e}")
+    load_index_and_chunks = None
+
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
 
 @app.post("/ask")
 def ask(question: str):
@@ -70,21 +77,12 @@ Answer:"""
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/solve")
-def solve(equation: str, variable: str = "x"):
-    """Solve a math equation"""
-    try:
-        from solver.math_solver import solve_equation
-        result = solve_equation(equation, variable)
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/quiz")
 def quiz(subject: str = "General Mathematics", difficulty: str = "Easy", count: int = 5):
     """Generate quiz questions from Q&A pairs"""
     try:
-        qa_path = os.path.join(os.path.dirname(__file__), "../../ml/retrieval/genmath_qa_pairs.json")
+        qa_path = os.path.join(os.path.dirname(__file__), "../../ml/retrieval/genmath_chunks.json")
         with open(qa_path, 'r') as f:
             all_qa = json.load(f)
         
@@ -108,6 +106,7 @@ def quiz(subject: str = "General Mathematics", difficulty: str = "Easy", count: 
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 if __name__ == "__main__":
     import uvicorn
