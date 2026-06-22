@@ -23,8 +23,8 @@ class AppTheme {
     final active = palette ?? AppPreferences.palette.value;
     return ThemeData(
       useMaterial3: true,
-      fontFamily: 'Roboto',
-      scaffoldBackgroundColor: active.background.last,
+      fontFamily: 'Poppins',
+      scaffoldBackgroundColor: Colors.white,
       colorScheme: ColorScheme.fromSeed(
         seedColor: active.primary,
         primary: active.primary,
@@ -38,19 +38,19 @@ class AppTheme {
         fillColor: MaterialStateProperty.resolveWith((states) => states.contains(MaterialState.selected) ? active.primary : null),
       ),
       appBarTheme: const AppBarTheme(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.white,
         elevation: 0,
-        centerTitle: false,
+        centerTitle: true,
         foregroundColor: AppColors.ink,
       ),
       cardTheme: CardThemeData(
-        color: Colors.white,
+        color: const Color(0xFFF7F9FC),
         elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: Colors.white.withOpacity(.84),
+        fillColor: const Color(0xFFF7F9FC).withOpacity(.84),
         hintStyle: const TextStyle(color: AppColors.muted),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(18), borderSide: BorderSide.none),
         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(18), borderSide: BorderSide(color: active.primary, width: 1.8)),
@@ -58,7 +58,7 @@ class AppTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: active.primary,
-        contentTextStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+        contentTextStyle: const TextStyle(color: const Color(0xFFF7F9FC), fontWeight: FontWeight.w600),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),

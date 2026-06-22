@@ -21,7 +21,7 @@ class AppHeader extends StatelessWidget {
             onPressed: () => Navigator.maybePop(context),
             icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
             style: IconButton.styleFrom(
-              backgroundColor: Colors.white.withOpacity( .86),
+              backgroundColor: const Color(0xFFF7F9FC).withOpacity( .86),
             ),
           ),
         if (showBack) const SizedBox(width: 10),
@@ -29,7 +29,7 @@ class AppHeader extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: AppColors.ink, letterSpacing: -.2)),
+              Text(title, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: AppColors.ink, letterSpacing: -.2)),
               if (subtitle != null) ...[
                 const SizedBox(height: 4),
                 Text(subtitle!, style: const TextStyle(color: AppColors.muted, fontWeight: FontWeight.w600)),
@@ -41,9 +41,9 @@ class AppHeader extends StatelessWidget {
           width: 42,
           height: 42,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity( .80),
+            color: const Color(0xFFF7F9FC).withOpacity( .80),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withOpacity( .9)),
+            border: Border.all(color: const Color(0xFFF7F9FC).withOpacity( .9)),
           ),
           child: Icon(Icons.auto_awesome_rounded, color: palette.primary, size: 22),
         ),

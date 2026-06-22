@@ -1,103 +1,142 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
-import '../data/local_mathiva_data.dart';
-import '../models/mathiva_models.dart';
-import '../theme/app_theme.dart';
 import '../services/app_preferences.dart';
+import 'package:go_router/go_router.dart';
+
+import '../services/local_content_service.dart';
 import '../utils/route_names.dart';
 import '../widgets/mathiva_bottom_nav.dart';
+import '../presentation/widgets/animated_background.dart';
+import '../presentation/widgets/fade_slide_in.dart';
+import '../presentation/widgets/tap_scale.dart';
 
-class HomeScreen extends StatefulWidget {
+const _ink = Color(0xFF111827);
+const _muted = Color(0xFF6B7280);
+const _border = Color(0xFFE5E7EB);
+const _surface = Color(0xFFFFFFFF);
+const _pageBg = Color(0xFFF8F9FB);
+
+// Shared app-chrome surface — a very light lavender tint used by the header
+// (and mirrored in MathivaBottomNav) so both pieces of app chrome read as
+// one distinct layer, sitting just above the white content surfaces below.
+const _chromeSurface = Color(0xFFF6F5FB);
+const _chromeBorder = Color(0xFFEAE8F5);
+
+class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
-  late final AnimationController _entranceController;
-  late final AnimationController _floatController;
-
-  @override
-  void initState() {
-    super.initState();
-    _entranceController = AnimationController(vsync: this, duration: const Duration(milliseconds: 950))..forward();
-    _floatController = AnimationController(vsync: this, duration: const Duration(milliseconds: 2600))..repeat();
-  }
-
-  @override
-  void dispose() {
-    _entranceController.dispose();
-    _floatController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final subjects = LocalContentService().getSubjects();
+    final firstSubject = subjects.first;
+    final firstTopic = firstSubject.topics.first;
+    final firstLesson = firstTopic.lessons.first;
+
     return Scaffold(
       extendBody: true,
-      body: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: AppPreferences.palette.value.background,
+      backgroundColor: _pageBg,
+      appBar: AppBar(
+        backgroundColor: _chromeSurface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 1,
+        shadowColor: Colors.black.withOpacity(0.04),
+        automaticallyImplyLeading: false,
+        centerTitle: false,
+        toolbarHeight: 58,
+        titleSpacing: 20,
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Image.asset(
+              'assets/mathiva_logo.png',
+              height: 26,
+              fit: BoxFit.contain,
+            ),
+            const SizedBox(width: 8),
+            const Text(
+              'Mathivia',
+              style: TextStyle(
+                color: Color(0xFF312E81),
+                fontSize: 19,
+                fontWeight: FontWeight.w600,
+                letterSpacing: -0.2,
+                height: 1,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          IconButton(
+            tooltip: 'Ask Math Tutor',
+            onPressed: () => context.push(RouteNames.chat),
+            icon: Icon(
+              Icons.chat_bubble_outline_rounded,
+              color: AppPreferences.palette.value.primary,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(
+            height: 1,
+            color: _chromeBorder,
           ),
         ),
-        child: SizedBox.expand(
-          child: ClipRect(
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-            SafeArea(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(24, 24, 24, 150),
-                physics: const BouncingScrollPhysics(),
-                children: [
-                  _AnimatedIn(animation: _entranceController, intervalStart: 0.00, child: const _Header()),
-                  const SizedBox(height: 18),
-                  _AnimatedIn(animation: _entranceController, intervalStart: 0.08, child: const _DailyMissionCard()),
-                  const SizedBox(height: 18),
-                  _AnimatedIn(
-                    animation: _entranceController,
-                    intervalStart: 0.16,
-                    child: _SearchPill(onTap: () => Navigator.pushNamed(context, RouteNames.search)),
+      ),
+      body: AnimatedBackground(
+        child: SafeArea(
+          top: false,
+          child: ListView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 112),
+            children: [
+              // ① Continue Learning
+              FadeSlideIn(
+                child: _ContinueLearningHero(
+                  subject: firstSubject.title,
+                  lesson: firstLesson.title,
+                  progress: firstTopic.progress,
+                  onTap: () => context.push(
+                    RouteNames.lessonDetail,
+                    extra: {
+                      'subjectId': firstSubject.id,
+                      'topicId': firstTopic.id,
+                      'lessonId': firstLesson.id,
+                    },
                   ),
-                  const SizedBox(height: 24),
-                  _AnimatedIn(animation: _entranceController, intervalStart: 0.28, child: const _SectionTitle()),
-                  const SizedBox(height: 14),
-                  for (int index = 0; index < LocalMathivaData.subjects.length; index++) ...[
-                    _AnimatedIn(
-                      animation: _entranceController,
-                      intervalStart: 0.34 + (index * .08),
-                      child: _SubjectCard(
-                        subject: LocalMathivaData.subjects[index],
-                        accent: _subjectAccents[index],
-                        onTap: () => Navigator.pushNamed(
-                          context,
-                          RouteNames.lessons,
-                          arguments: {'subjectId': LocalMathivaData.subjects[index].id},
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-                ],
+                ),
               ),
-            ),
-            Positioned(
-              right: 28,
-              bottom: 138,
-              child: _AnimatedIn(
-                animation: _entranceController,
-                intervalStart: 0.68,
-                child: _ImageSolverButton(onTap: () => Navigator.pushNamed(context, RouteNames.imageSolver)),
+              const SizedBox(height: 20),
+
+              // ② What would you like to do?
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 140),
+                child: _NextActionsZone(
+                  onScanTap: () => context.push(RouteNames.imageSolver),
+                  onPracticeTap: () => context.push(
+                    RouteNames.lessons,
+                    extra: {'subjectId': firstSubject.id},
+                  ),
+                  onProgressTap: () => context.push(RouteNames.progress),
+                  onAwardsTap: () =>
+                      context.push(RouteNames.progress, extra: true),
+                  onScan1Tap: () => context.push(RouteNames.solution),
+                  onScan2Tap: () => context.push(
+                    RouteNames.concept,
+                    extra: {
+                      'subjectId': firstSubject.id,
+                      'topicId': firstTopic.id,
+                      'lessonId': firstLesson.id,
+                      'conceptId': firstLesson.concepts.first.id,
+                    },
+                  ),
+                ),
               ),
-            ),
-              ],
-            ),
+            ],
           ),
         ),
       ),
@@ -106,117 +145,137 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 }
 
-class _Header extends StatelessWidget {
-  const _Header();
+// ─── Next Actions Zone ────────────────────────────────────────────────────────
+
+class _NextActionsZone extends StatelessWidget {
+  final VoidCallback onScanTap;
+  final VoidCallback onPracticeTap;
+  final VoidCallback onProgressTap;
+  final VoidCallback onAwardsTap;
+  final VoidCallback onScan1Tap;
+  final VoidCallback onScan2Tap;
+
+  const _NextActionsZone({
+    required this.onScanTap,
+    required this.onPracticeTap,
+    required this.onProgressTap,
+    required this.onAwardsTap,
+    required this.onScan1Tap,
+    required this.onScan2Tap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Container(
-          width: 58,
-          height: 58,
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity( .55),
-            borderRadius: BorderRadius.circular(20),
-                      ),
-          child: const Center(child: Text('👋', style: TextStyle(fontSize: 28))),
-        ),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ValueListenableBuilder<String>(
-                valueListenable: AppPreferences.studentName,
-                builder: (context, name, _) {
-                  final displayName = name.trim().isEmpty ? 'Learner' : name.trim();
-                  return Text(
-                    'Hello, $displayName!',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 29, height: 1.05, fontWeight: FontWeight.w900, color: AppColors.ink, letterSpacing: -.6),
-                  );
-                },
-              ),
-              const SizedBox(height: 6),
-              const Text(
-                'Ready for another math win?',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.muted),
-              ),
-            ],
+    final primary = AppPreferences.palette.value.primary;
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: _surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: _border, width: 1),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x08000000),
+            blurRadius: 10,
+            offset: Offset(0, 3),
           ),
-        ),
-        const SizedBox(width: 12),
-        GestureDetector(
-          onTap: () => Navigator.pushNamed(context, RouteNames.profile),
-          child: Container(
-            width: 58,
-            height: 58,
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(colors: [Colors.white, AppPreferences.palette.value.background.last]),
-                          ),
-            child: Container(
-              decoration: BoxDecoration(shape: BoxShape.circle, color: AppPreferences.palette.value.primary.withOpacity(.12)),
-              child: Icon(Icons.person_rounded, color: AppPreferences.palette.value.primary, size: 34),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 16, 18, 12),
+            child: Text(
+              'What would you like to do?',
+              style: TextStyle(
+                color: _muted,
+                fontSize: 11.5,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.4,
+              ),
             ),
           ),
-        ),
-      ],
-    );
-  }
-}
-
-class _DailyMissionCard extends StatelessWidget {
-  const _DailyMissionCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(30),
-        gradient: LinearGradient(colors: [Colors.white.withOpacity( .92), Colors.white.withOpacity( .70)]),
-        border: Border.all(color: Colors.white.withOpacity( .95)),
-              ),
-      child: Row(
-        children: [
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              SizedBox(
-                width: 72,
-                height: 72,
-                child: CircularProgressIndicator(
-                  value: .72,
-                  strokeWidth: 8,
-                  strokeCap: StrokeCap.round,
-                  backgroundColor: AppPreferences.palette.value.primary.withOpacity(.12),
-                  valueColor: AlwaysStoppedAnimation(AppPreferences.palette.value.primary),
-                ),
-              ),
-              const Text('72%', style: TextStyle(color: AppColors.ink, fontWeight: FontWeight.w900, fontSize: 18)),
-            ],
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: _PrimaryActionTile(
+              label: 'Scan a Problem',
+              description: 'Solve any equation instantly',
+              icon: Icons.document_scanner_rounded,
+              onTap: onScanTap,
+            ),
           ),
-          const SizedBox(width: 16),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(height: 10),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
               children: [
-                Text('Daily mission', style: TextStyle(fontSize: 18, color: AppColors.ink, fontWeight: FontWeight.w900)),
-                SizedBox(height: 6),
-                Text('Finish one lesson and one short quiz today.', style: TextStyle(fontSize: 14, color: AppColors.muted, fontWeight: FontWeight.w600, height: 1.35)),
+                Expanded(
+                  child: _ActionTile(
+                    label: 'Practice',
+                    icon: Icons.edit_note_rounded,
+                    onTap: onPracticeTap,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _ActionTile(
+                    label: 'Progress',
+                    icon: Icons.trending_up_rounded,
+                    onTap: onProgressTap,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _ActionTile(
+                    label: 'Awards',
+                    icon: Icons.emoji_events_rounded,
+                    onTap: onAwardsTap,
+                  ),
+                ),
               ],
             ),
           ),
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(color: AppPreferences.palette.value.secondary.withOpacity(.14), borderRadius: BorderRadius.circular(16)),
-            child: Icon(Icons.bolt_rounded, color: AppPreferences.palette.value.secondary),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 18, 18, 0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Divider(color: _border, height: 1, thickness: 1),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: Text(
+                    'Recent',
+                    style: TextStyle(
+                      color: _muted,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Divider(color: _border, height: 1, thickness: 1),
+                ),
+              ],
+            ),
+          ),
+          _RecentScanRow(
+            title: '2x² + 5x + 3 = 0',
+            subtitle: 'Quadratic equation · solved today',
+            onTap: onScan1Tap,
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 18),
+            child: Divider(color: _border, height: 1, thickness: 1),
+          ),
+          _RecentScanRow(
+            title: 'f(x) = 2x + 1',
+            subtitle: 'Functions · reviewed yesterday',
+            onTap: onScan2Tap,
+            isLast: true,
           ),
         ],
       ),
@@ -224,172 +283,65 @@ class _DailyMissionCard extends StatelessWidget {
   }
 }
 
-class _SearchPill extends StatelessWidget {
-  final VoidCallback onTap;
+// ─── Recent Scan Row ──────────────────────────────────────────────────────────
 
-  const _SearchPill({required this.onTap});
+class _RecentScanRow extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+  final bool isLast;
+
+  const _RecentScanRow({
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+    this.isLast = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(28),
-        onTap: onTap,
-        child: Ink(
-          height: 64,
-          padding: const EdgeInsets.symmetric(horizontal: 22),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity( .86),
-            borderRadius: BorderRadius.circular(28),
-                        border: Border.all(color: Colors.white.withOpacity( .90)),
-          ),
+    final primary = AppPreferences.palette.value.primary;
+
+    return TapScale(
+      onTap: onTap,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(18, 0, 18, isLast ? 14 : 0),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
           child: Row(
             children: [
-              const Icon(Icons.search_rounded, color: Color(0xFF4A465C), size: 30),
-              SizedBox(width: 16),
-              Expanded(
-                child: Text(
-                  'Search topics, lessons, formulas...',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: Color(0xFF9B96A8), fontWeight: FontWeight.w700, fontSize: 16),
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: primary.withOpacity(0.07),
+                  borderRadius: BorderRadius.circular(11),
                 ),
+                child: Icon(Icons.functions_rounded, color: primary, size: 17),
               ),
-              Icon(Icons.tune_rounded, color: AppPreferences.palette.value.primary, size: 26),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _QuickActions extends StatelessWidget {
-  const _QuickActions();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(child: _QuickAction(icon: Icons.menu_book_rounded, label: 'Lessons', color: AppPreferences.palette.value.primary, onTap: () {})),
-        const SizedBox(width: 10),
-        Expanded(child: _QuickAction(icon: Icons.task_alt_rounded, label: 'Practice', color: AppPreferences.palette.value.secondary, onTap: () {})),
-        const SizedBox(width: 10),
-        Expanded(child: _QuickAction(icon: Icons.document_scanner_rounded, label: 'Scan', color: AppPreferences.palette.value.primary, onTap: () => Navigator.pushNamed(context, RouteNames.imageSolver))),
-      ],
-    );
-  }
-}
-
-class _QuickAction extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _QuickAction({required this.icon, required this.label, required this.color, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(22),
-        child: Ink(
-          padding: const EdgeInsets.symmetric(vertical: 13),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity( .70),
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: Colors.white.withOpacity( .9)),
-          ),
-          child: Column(
-            children: [
-              Icon(icon, color: color, size: 24),
-              const SizedBox(height: 6),
-              Text(label, style: const TextStyle(color: AppColors.ink, fontWeight: FontWeight.w900, fontSize: 12)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SectionTitle extends StatelessWidget {
-  const _SectionTitle();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Row(
-      children: [
-        Text('Math Subjects', style: TextStyle(fontSize: 20, color: AppColors.ink, fontWeight: FontWeight.w900)),
-        Spacer(),
-        Text('4 courses', style: TextStyle(fontSize: 13, color: AppColors.muted, fontWeight: FontWeight.w800)),
-      ],
-    );
-  }
-}
-
-class _SubjectCard extends StatelessWidget {
-  final MathSubject subject;
-  final _SubjectAccent accent;
-  final VoidCallback onTap;
-
-  const _SubjectCard({required this.subject, required this.accent, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(30),
-        onTap: onTap,
-        child: Ink(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity( .92),
-            borderRadius: BorderRadius.circular(30),
-            border: Border.all(color: Colors.white.withOpacity( .96)),
-                      ),
-          child: Row(
-            children: [
-              _SubjectIcon(accent: accent),
-              const SizedBox(width: 18),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      subject.title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: AppColors.ink, fontSize: 18, height: 1.15, fontWeight: FontWeight.w900),
+                      title,
+                      style: const TextStyle(
+                        color: _ink,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13.5,
+                      ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 2),
                     Text(
-                      accent.description,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: AppColors.muted, fontSize: 13, height: 1.35, fontWeight: FontWeight.w600),
+                      subtitle,
+                      style: const TextStyle(color: _muted, fontSize: 12),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 10),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
-                decoration: BoxDecoration(color: AppPreferences.palette.value.primary.withOpacity(.10), borderRadius: BorderRadius.circular(99)),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('Start', style: TextStyle(color: AppPreferences.palette.value.primary, fontSize: 13, fontWeight: FontWeight.w900)),
-                    const SizedBox(width: 4),
-                    Icon(Icons.chevron_right_rounded, color: AppPreferences.palette.value.primary, size: 22),
-                  ],
-                ),
-              ),
+              const SizedBox(width: 8),
+              const Icon(Icons.chevron_right_rounded, color: _muted, size: 17),
             ],
           ),
         ),
@@ -398,180 +350,282 @@ class _SubjectCard extends StatelessWidget {
   }
 }
 
-class _SubjectIcon extends StatelessWidget {
-  final _SubjectAccent accent;
+// ─── White Card Base ──────────────────────────────────────────────────────────
 
-  const _SubjectIcon({required this.accent});
+class _WhiteCard extends StatelessWidget {
+  final Widget child;
+  final VoidCallback? onTap;
+  final EdgeInsets padding;
+
+  const _WhiteCard({
+    required this.child,
+    this.onTap,
+    this.padding = const EdgeInsets.all(20),
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 76,
-      height: 76,
+    final card = Container(
+      width: double.infinity,
+      padding: padding,
       decoration: BoxDecoration(
-        gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [AppPreferences.palette.value.primary.withOpacity(.12), Colors.white.withOpacity( .8)]),
-        borderRadius: BorderRadius.circular(24),
-              ),
-      child: Stack(
+        color: _surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _border, width: 1),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x08000000),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: child,
+    );
+
+    if (onTap == null) return card;
+    return TapScale(onTap: onTap, child: card);
+  }
+}
+
+// ─── Continue Learning Hero ───────────────────────────────────────────────────
+
+class _ContinueLearningHero extends StatelessWidget {
+  final String subject;
+  final String lesson;
+  final int progress;
+  final VoidCallback onTap;
+
+  const _ContinueLearningHero({
+    required this.subject,
+    required this.lesson,
+    required this.progress,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = AppPreferences.palette.value.primary;
+
+    return _WhiteCard(
+      onTap: onTap,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Positioned(right: 9, top: 8, child: Icon(Icons.auto_awesome_rounded, color: AppPreferences.palette.value.primary.withOpacity( .18), size: 17)),
-          Center(child: Icon(accent.icon, color: AppPreferences.palette.value.primary, size: 38)),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: primary.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(Icons.auto_awesome_rounded, color: primary, size: 22),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Today's Focus",
+                      style: TextStyle(
+                        color: _muted,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      lesson,
+                      style: const TextStyle(
+                        color: _ink,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subject,
+                      style: const TextStyle(color: _muted, fontSize: 12.5),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: primary.withOpacity(0.07),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: primary.withOpacity(0.12)),
+                ),
+                child: Text(
+                  '$progress%',
+                  style: TextStyle(
+                    color: primary,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(99),
+                  child: LinearProgressIndicator(
+                    value: (progress / 100).clamp(0.0, 1.0),
+                    minHeight: 6,
+                    backgroundColor: _border,
+                    valueColor: AlwaysStoppedAnimation<Color>(primary),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Text(
+                'Continue',
+                style: TextStyle(
+                  color: primary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(width: 2),
+              Icon(Icons.arrow_forward_rounded, color: primary, size: 14),
+            ],
+          ),
         ],
       ),
     );
   }
 }
 
-class _ImageSolverButton extends StatefulWidget {
+// ─── Primary Action Tile (Scan) ───────────────────────────────────────────────
+
+class _PrimaryActionTile extends StatelessWidget {
+  final String label;
+  final String description;
+  final IconData icon;
   final VoidCallback onTap;
 
-  const _ImageSolverButton({required this.onTap});
-
-  @override
-  State<_ImageSolverButton> createState() => _ImageSolverButtonState();
-}
-
-class _ImageSolverButtonState extends State<_ImageSolverButton> with SingleTickerProviderStateMixin {
-  late final AnimationController _floatController;
-
-  @override
-  void initState() {
-    super.initState();
-    _floatController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1800))..repeat(reverse: true);
-  }
-
-  @override
-  void dispose() {
-    _floatController.dispose();
-    super.dispose();
-  }
+  const _PrimaryActionTile({
+    required this.label,
+    required this.description,
+    required this.icon,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _floatController,
-      builder: (context, child) {
-        final dy = math.sin(_floatController.value * math.pi) * -6;
-        return Transform.translate(offset: Offset(0, dy), child: child);
-      },
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: Container(
-          width: 86,
-          height: 86,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [AppPreferences.palette.value.secondary, AppPreferences.palette.value.primary]),
-                      ),
-          child: const Icon(Icons.document_scanner_rounded, color: Colors.white, size: 42),
+    final primary = AppPreferences.palette.value.primary;
+
+    return TapScale(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: primary.withOpacity(0.06),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: primary.withOpacity(0.18), width: 1),
         ),
-      ),
-    );
-  }
-}
-
-class _AnimatedIn extends StatelessWidget {
-  final Animation<double> animation;
-  final double intervalStart;
-  final Widget child;
-
-  const _AnimatedIn({required this.animation, required this.intervalStart, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    // Keep this wrapper so existing UI code stays unchanged, but avoid Opacity,
-    // Transform and animated layers because they triggered rendering artifacts
-    // on some Android tablets.
-    return child;
-  }
-}
-
-class _GlowBlob extends StatelessWidget {
-  final double size;
-  final Color color;
-
-  const _GlowBlob({required this.size, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: RepaintBoundary(
-        child: Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: color.withOpacity( .20),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _DotPattern extends StatelessWidget {
-  const _DotPattern();
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: Opacity(
-        opacity: .50,
-        child: SizedBox(
-          width: 88,
-          child: Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: List.generate(
-              24,
-              (_) => Container(width: 4, height: 4, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle)),
+        child: Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: primary.withOpacity(0.10),
+                borderRadius: BorderRadius.circular(11),
+              ),
+              child: Icon(
+                Icons.document_scanner_rounded,
+                color: primary,
+                size: 20,
+              ),
             ),
-          ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      color: _ink,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 1),
+                  Text(
+                    description,
+                    style: const TextStyle(
+                      color: _muted,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(Icons.arrow_forward_rounded, color: primary, size: 16),
+          ],
         ),
       ),
     );
   }
 }
 
-class _OrbitDot extends StatelessWidget {
-  final AnimationController controller;
-  final Color color;
+// ─── Action Tile ──────────────────────────────────────────────────────────────
 
-  const _OrbitDot({required this.controller, required this.color});
+class _ActionTile extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _ActionTile({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Transform.translate(
-      offset: Offset(math.cos(controller.value * math.pi * 2) * 12, math.sin(controller.value * math.pi * 2) * 12),
-      child: Container(width: 10, height: 10, decoration: BoxDecoration(color: color.withOpacity( .7), shape: BoxShape.circle)),
+    final primary = AppPreferences.palette.value.primary;
+
+    return TapScale(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: _pageBg,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: _border, width: 1),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: primary, size: 22),
+            const SizedBox(height: 7),
+            Text(
+              label,
+              style: const TextStyle(
+                color: _ink,
+                fontSize: 11.5,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
-
-class _Sparkle extends StatelessWidget {
-  final AnimationController controller;
-
-  const _Sparkle({required this.controller});
-
-  @override
-  Widget build(BuildContext context) {
-    final scale = .75 + (math.sin(controller.value * math.pi * 2) + 1) * .18;
-    return Transform.scale(scale: scale, child: Icon(Icons.auto_awesome_rounded, color: AppPreferences.palette.value.secondary, size: 22));
-  }
-}
-
-class _SubjectAccent {
-  final IconData icon;
-  final Color primary;
-  final Color soft;
-  final String description;
-
-  const _SubjectAccent({required this.icon, required this.primary, required this.soft, required this.description});
-}
-
-final _subjectAccents = [
-  _SubjectAccent(icon: Icons.functions_rounded, primary: AppPreferences.palette.value.primary, soft: AppPreferences.palette.value.background.last, description: 'Build strong foundations in everyday math.'),
-  _SubjectAccent(icon: Icons.bar_chart_rounded, primary: AppPreferences.palette.value.primary, soft: AppPreferences.palette.value.background.last, description: 'Explore data, variability, and chance.'),
-  _SubjectAccent(icon: Icons.show_chart_rounded, primary: AppPreferences.palette.value.primary, soft: AppPreferences.palette.value.background.last, description: 'Prepare for advanced math concepts.'),
-  _SubjectAccent(icon: Icons.integration_instructions_rounded, primary: AppPreferences.palette.value.primary, soft: AppPreferences.palette.value.background.last, description: 'Differentiate, integrate, and understand change.'),
-];

@@ -1,382 +1,694 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
-import '../services/local_content_service.dart';
 import '../services/app_preferences.dart';
-import '../theme/app_theme.dart';
+import '../services/local_content_service.dart';
 import '../utils/route_names.dart';
 import '../widgets/mathiva_bottom_nav.dart';
-import '../widgets/progress_line.dart';
+import '../presentation/widgets/animated_background.dart';
+import '../presentation/widgets/fade_slide_in.dart';
+import '../presentation/widgets/tap_scale.dart';
+
+// ── Design tokens (mirrors HomeScreen exactly) ────────────────────────────────
+const _ink = Color(0xFF111827);
+const _muted = Color(0xFF6B7280);
+const _border = Color(0xFFE5E7EB);
+const _surface = Color(0xFFFFFFFF);
+const _pageBg = Color(0xFFF8F9FB);
+
+// Shared app-chrome surface — matches the header treatment on HomeScreen
+// (and MathivaBottomNav) so this screen's header reads as the same layer
+// of app chrome, sitting just above the white content surfaces below.
+const _chromeSurface = Color(0xFFF6F5FB);
+const _chromeBorder = Color(0xFFEAE8F5);
 
 class ProgressOverviewScreen extends StatefulWidget {
-  const ProgressOverviewScreen({super.key});
+  final bool scrollToAchievements;
+  const ProgressOverviewScreen({super.key, this.scrollToAchievements = false});
 
   @override
   State<ProgressOverviewScreen> createState() => _ProgressOverviewScreenState();
 }
 
-class _ProgressOverviewScreenState extends State<ProgressOverviewScreen> with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
+class _ProgressOverviewScreenState extends State<ProgressOverviewScreen> {
+  final _scrollController = ScrollController();
+  final _achievementsKey = GlobalKey();
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 850))..forward();
+    if (widget.scrollToAchievements) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Future.delayed(const Duration(milliseconds: 150), () {
+          final ctx = _achievementsKey.currentContext;
+          if (ctx != null) {
+            Scrollable.ensureVisible(
+              ctx,
+              duration: const Duration(milliseconds: 700),
+              curve: Curves.easeInOut,
+              alignment: 0.0,
+            );
+          }
+        });
+      });
+    }
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final primary = AppPreferences.palette.value.primary;
     final subjects = LocalContentService().getSubjects();
-    final average = subjects.isEmpty ? 0 : (subjects.map((s) => s.progress).reduce((a, b) => a + b) / subjects.length).round();
-    final palette = AppPreferences.palette.value;
+    final topics = subjects.expand((s) => s.topics).toList();
 
     return Scaffold(
       extendBody: true,
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: palette.background,
+      backgroundColor: _pageBg,
+      appBar: AppBar(
+        backgroundColor: _chromeSurface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 1,
+        shadowColor: Colors.black.withOpacity(0.04),
+        automaticallyImplyLeading: false,
+        centerTitle: false,
+        toolbarHeight: 58,
+        titleSpacing: 20,
+        title: const Text(
+          'Progress',
+          style: TextStyle(
+            color: Color(0xFF312E81),
+            fontSize: 19,
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.2,
+            height: 1,
           ),
         ),
-        child: Stack(
-          children: [
-            Positioned(top: -70, left: -65, child: _GlowBlob(size: 190, color: palette.secondary.withOpacity(.38))),
-            Positioned(top: 180, right: -90, child: _GlowBlob(size: 220, color: palette.primary.withOpacity(.28))),
-            Positioned(bottom: 20, left: -80, child: _GlowBlob(size: 230, color: palette.secondary.withOpacity(.22))),
-            SafeArea(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(24, 26, 24, 148),
-                physics: const BouncingScrollPhysics(),
-                children: [
-                  _AnimatedIn(
-                    animation: _controller,
-                    intervalStart: 0,
-                    child: _Header(average: average),
-                  ),
-                  const SizedBox(height: 22),
-                  _AnimatedIn(
-                    animation: _controller,
-                    intervalStart: .10,
-                    child: _OverallCard(average: average),
-                  ),
-                  const SizedBox(height: 18),
-                  GridView.count(
-                    crossAxisCount: 2,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    childAspectRatio: 1.2,
-                    children: [
-                      _AnimatedIn(animation: _controller, intervalStart: .18, child: const _SummaryCard(label: 'Lessons Done', value: '34/50', percent: 68, icon: Icons.menu_book_rounded)),
-                      _AnimatedIn(animation: _controller, intervalStart: .24, child: const _SummaryCard(label: 'Practice Done', value: '6/10', percent: 60, icon: Icons.task_alt_rounded)),
-                      _AnimatedIn(animation: _controller, intervalStart: .30, child: const _SummaryCard(label: 'Study Time', value: '2h 15m', percent: 45, icon: Icons.schedule_rounded)),
-                      _AnimatedIn(animation: _controller, intervalStart: .36, child: const _SummaryCard(label: 'Avg. Speed', value: '2m 05s', percent: 58, icon: Icons.timer_rounded)),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  _AnimatedIn(
-                    animation: _controller,
-                    intervalStart: .42,
-                    child: const Text('Subject Progress', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w900, color: AppColors.ink)),
-                  ),
-                  const SizedBox(height: 12),
-                  for (int index = 0; index < subjects.length; index++) ...[
-                    _AnimatedIn(
-                      animation: _controller,
-                      intervalStart: .48 + (index * .06),
-                      child: _SubjectProgressCard(
-                        title: subjects[index].title,
-                        iconText: subjects[index].iconText,
-                        percent: subjects[index].progress,
-                        onTap: () => Navigator.pushNamed(context, RouteNames.subjectProgress, arguments: {'subjectId': subjects[index].id}),
+        actions: [
+          IconButton(
+            tooltip: 'Ask Math Tutor',
+            onPressed: () => context.push(RouteNames.chat),
+            icon: Icon(
+              Icons.chat_bubble_outline_rounded,
+              color: primary,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(height: 1, color: _chromeBorder),
+        ),
+      ),
+      body: AnimatedBackground(
+        child: SafeArea(
+          top: false,
+          child: ListView(
+            controller: _scrollController,
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 112),
+            children: [
+              // ── Stat cards ─────────────────────────────────────────────────
+              FadeSlideIn(
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _StatCard(
+                        label: 'Problems Solved',
+                        value: '128',
+                        icon: Icons.check_circle_outline_rounded,
+                        primary: primary,
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _StatCard(
+                        label: 'Accuracy',
+                        value: '86%',
+                        icon: Icons.track_changes_rounded,
+                        primary: primary,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _StatCard(
+                        label: 'Streak Days',
+                        value: '12',
+                        icon: Icons.local_fire_department_rounded,
+                        primary: primary,
+                      ),
+                    ),
                   ],
-                  const SizedBox(height: 8),
-                  _AnimatedIn(
-                    animation: _controller,
-                    intervalStart: .70,
-                    child: const _WeeklyActivityCard(),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // ── Weekly activity card ────────────────────────────────────────
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 60),
+                child: _WhiteCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _SectionLabel(label: 'Weekly Activity'),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        height: 160,
+                        child: _WeeklyLineChart(primary: primary),
+                      ),
+                    ],
                   ),
-                ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // ── Topic Mastery label ─────────────────────────────────────────
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 100),
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text(
+                        'Topic Mastery',
+                        style: TextStyle(
+                          color: _muted,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.4,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // ── Topic mastery rows ──────────────────────────────────────────
+              ...topics.asMap().entries.map((entry) {
+                final i = entry.key;
+                final topic = entry.value;
+                final subjectId = subjects
+                    .firstWhere((s) => s.topics.contains(topic))
+                    .id;
+                return FadeSlideIn(
+                  delay: Duration(milliseconds: 120 + 50 * i),
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: _TopicMasteryCard(
+                      topic: topic,
+                      primary: primary,
+                      onTap: () => context.push(
+                        RouteNames.topicAnalytics,
+                        extra: {
+                          'subjectId': subjectId,
+                          'topicId': topic.id,
+                        },
+                      ),
+                    ),
+                  ),
+                );
+              }),
+              const SizedBox(height: 24),
+
+              // ── Achievements label ──────────────────────────────────────────
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 160),
+                child: Padding(
+                  key: _achievementsKey,
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: const Text(
+                    'Achievements',
+                    style: TextStyle(
+                      color: _muted,
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.4,
+                    ),
+                  ),
+                ),
+              ),
+
+              // ── Achievements grid ───────────────────────────────────────────
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 180),
+                child: _AchievementsGrid(primary: primary),
+              ),
+            ],
+          ),
+        ),
+      ),
+      bottomNavigationBar:
+          const MathivaBottomNav(selected: MathivaTab.progress),
+    );
+  }
+}
+
+// ── Stat Card ─────────────────────────────────────────────────────────────────
+
+class _StatCard extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color primary;
+
+  const _StatCard({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.primary,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 16),
+      decoration: BoxDecoration(
+        color: _surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _border, width: 1),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x08000000),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: primary.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(11),
+            ),
+            child: Icon(icon, color: primary, size: 18),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            value,
+            style: const TextStyle(
+              color: _ink,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: _muted, fontSize: 10.5),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Topic Mastery Card ────────────────────────────────────────────────────────
+
+class _TopicMasteryCard extends StatelessWidget {
+  final dynamic topic;
+  final Color primary;
+  final VoidCallback onTap;
+
+  const _TopicMasteryCard({
+    required this.topic,
+    required this.primary,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = (topic.progress as num).toDouble();
+
+    return TapScale(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: _surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: _border, width: 1),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x08000000),
+              blurRadius: 8,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    topic.title,
+                    style: const TextStyle(
+                      color: _ink,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14.5,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: primary.withOpacity(0.07),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: primary.withOpacity(0.12)),
+                  ),
+                  child: Text(
+                    '${topic.progress}%',
+                    style: TextStyle(
+                      color: primary,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Icon(Icons.arrow_forward_rounded, color: _muted, size: 15),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(99),
+              child: LinearProgressIndicator(
+                value: (progress / 100).clamp(0.0, 1.0),
+                minHeight: 5,
+                backgroundColor: _border,
+                valueColor: AlwaysStoppedAnimation<Color>(primary),
               ),
             ),
           ],
         ),
       ),
-      bottomNavigationBar: const MathivaBottomNav(selected: MathivaTab.progress),
     );
   }
 }
 
-class _Header extends StatelessWidget {
-  final int average;
+// ── Weekly Line Chart ─────────────────────────────────────────────────────────
 
-  const _Header({required this.average});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
-              Text('Your Progress', style: TextStyle(fontSize: 30, height: 1.05, fontWeight: FontWeight.w900, color: AppColors.ink, letterSpacing: -.5)),
-              SizedBox(height: 8),
-              Text('See what you finished and what to review next.', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.muted)),
-            ],
-          ),
-        ),
-        Container(
-          width: 70,
-          height: 70,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(colors: [AppPreferences.palette.value.secondary, AppPreferences.palette.value.primary]),
-            shape: BoxShape.circle,
-                      ),
-          alignment: Alignment.center,
-          child: Text('$average%', style: const TextStyle(color: Colors.white, fontSize: 19, fontWeight: FontWeight.w900)),
-        ),
-      ],
-    );
-  }
-}
-
-class _OverallCard extends StatelessWidget {
-  final int average;
-
-  const _OverallCard({required this.average});
+class _WeeklyLineChart extends StatelessWidget {
+  final Color primary;
+  const _WeeklyLineChart({required this.primary});
 
   @override
   Widget build(BuildContext context) {
-    return _GlassCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.auto_graph_rounded, color: AppPreferences.palette.value.primary, size: 28),
-              SizedBox(width: 10),
-              Text('Overall Learning Progress', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: AppColors.ink)),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Text('$average% complete', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: AppColors.ink)),
-          const SizedBox(height: 10),
-          ProgressLine(percent: average, height: 10),
-          const SizedBox(height: 10),
-          const Text('This is the average progress from all math subjects. Tap a subject below for details.', style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w600)),
-        ],
-      ),
-    );
-  }
-}
-
-class _SummaryCard extends StatelessWidget {
-  final String label;
-  final String value;
-  final int percent;
-  final IconData icon;
-
-  const _SummaryCard({required this.label, required this.value, required this.percent, required this.icon});
-
-  @override
-  Widget build(BuildContext context) {
-    return _GlassCard(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Icon(icon, color: AppPreferences.palette.value.primary, size: 28),
-          Text(value, style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w900, color: AppColors.ink)),
-          Text(label, style: const TextStyle(color: AppColors.muted, fontSize: 12, fontWeight: FontWeight.w700)),
-          ProgressLine(percent: percent, height: 6),
-        ],
-      ),
-    );
-  }
-}
-
-class _SubjectProgressCard extends StatelessWidget {
-  final String title;
-  final String iconText;
-  final int percent;
-  final VoidCallback onTap;
-
-  const _SubjectProgressCard({required this.title, required this.iconText, required this.percent, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(26),
-        onTap: onTap,
-        child: _GlassCard(
-          padding: const EdgeInsets.all(16),
+    return CustomPaint(
+      painter: _WeeklyLinePainter(primary: primary),
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 4),
           child: Row(
-            children: [
-              Container(
-                width: 56,
-                height: 56,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(color: AppPreferences.palette.value.primary.withOpacity(.12), borderRadius: BorderRadius.circular(18)),
-                child: Text(iconText, style: TextStyle(color: AppPreferences.palette.value.primary, fontSize: 18, fontWeight: FontWeight.w900)),
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: const [
+              Text('M', style: TextStyle(color: _muted, fontSize: 11)),
+              Text('T', style: TextStyle(color: _muted, fontSize: 11)),
+              Text('W', style: TextStyle(color: _muted, fontSize: 11)),
+              Text('T', style: TextStyle(color: _muted, fontSize: 11)),
+              Text('F', style: TextStyle(color: _muted, fontSize: 11)),
+              Text('S', style: TextStyle(color: _muted, fontSize: 11)),
+              Text('S', style: TextStyle(color: _muted, fontSize: 11)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _WeeklyLinePainter extends CustomPainter {
+  final Color primary;
+  const _WeeklyLinePainter({required this.primary});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final values = [0.25, 0.45, 0.38, 0.65, 0.58, 0.8, 0.72];
+    final chartHeight = size.height - 26;
+    final path = Path();
+    final points = <Offset>[];
+
+    for (var i = 0; i < values.length; i++) {
+      final x = i * (size.width / (values.length - 1));
+      final y = chartHeight - values[i] * (chartHeight - 10) + 5;
+      points.add(Offset(x, y));
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
+
+    // Grid lines
+    final gridPaint = Paint()
+      ..color = _border
+      ..strokeWidth = 1;
+    for (var i = 0; i < 4; i++) {
+      final y = i * chartHeight / 4;
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
+    }
+
+    // Line
+    final linePaint = Paint()
+      ..color = primary
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..strokeWidth = 2.5;
+    canvas.drawPath(path, linePaint);
+
+    // Dots
+    final dotPaint = Paint()..color = primary;
+    final haloPaint = Paint()..color = primary.withOpacity(0.08);
+    for (final point in points) {
+      canvas.drawCircle(point, 8, haloPaint);
+      canvas.drawCircle(point, 4, dotPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _WeeklyLinePainter old) =>
+      old.primary != primary;
+}
+
+// ── Achievements Grid ─────────────────────────────────────────────────────────
+
+class _AchievementsGrid extends StatelessWidget {
+  final Color primary;
+
+  static const _achievements = [
+    _AchievementData(
+        icon: Icons.emoji_events_rounded,
+        label: 'First Win',
+        desc: 'Solved your first problem',
+        earned: true),
+    _AchievementData(
+        icon: Icons.local_fire_department_rounded,
+        label: '7-Day Streak',
+        desc: 'Practiced 7 days in a row',
+        earned: true),
+    _AchievementData(
+        icon: Icons.bolt_rounded,
+        label: 'Speed Demon',
+        desc: 'Solved a problem in under 10s',
+        earned: true),
+    _AchievementData(
+        icon: Icons.star_rounded,
+        label: 'Perfect Score',
+        desc: 'Got 100% on a quiz',
+        earned: false),
+    _AchievementData(
+        icon: Icons.school_rounded,
+        label: 'Topic Master',
+        desc: 'Mastered an entire topic',
+        earned: false),
+    _AchievementData(
+        icon: Icons.psychology_rounded,
+        label: 'Big Brain',
+        desc: 'Solved 50 hard problems',
+        earned: false),
+  ];
+
+  const _AchievementsGrid({required this.primary});
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.count(
+      crossAxisCount: 3,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisSpacing: 10,
+      mainAxisSpacing: 10,
+      childAspectRatio: 0.85,
+      children: _achievements
+          .map((a) => _AchievementTile(data: a, primary: primary))
+          .toList(),
+    );
+  }
+}
+
+class _AchievementData {
+  final IconData icon;
+  final String label;
+  final String desc;
+  final bool earned;
+  const _AchievementData({
+    required this.icon,
+    required this.label,
+    required this.desc,
+    required this.earned,
+  });
+}
+
+class _AchievementTile extends StatelessWidget {
+  final _AchievementData data;
+  final Color primary;
+
+  const _AchievementTile({
+    required this.data,
+    required this.primary,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text(data.label,
+              style: const TextStyle(
+                  color: _ink, fontWeight: FontWeight.w700, fontSize: 16)),
+          content: Text(data.desc,
+              style: const TextStyle(color: _muted, fontSize: 14)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('OK',
+                  style: TextStyle(
+                      color: primary, fontWeight: FontWeight.w600)),
+            ),
+          ],
+        ),
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          color: _surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: _border, width: 1),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x08000000),
+              blurRadius: 8,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 46,
+              height: 46,
+              decoration: BoxDecoration(
+                color: data.earned
+                    ? primary.withOpacity(0.08)
+                    : const Color(0xFFF1F5F9),
+                shape: BoxShape.circle,
               ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w900, color: AppColors.ink)),
-                    const SizedBox(height: 9),
-                    ProgressLine(percent: percent, height: 8),
-                  ],
+              child: Icon(
+                data.icon,
+                color: data.earned ? primary : const Color(0xFFCBD5E1),
+                size: 22,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              child: Text(
+                data.label,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                style: TextStyle(
+                  color: data.earned ? _ink : const Color(0xFF94A3B8),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(width: 12),
-              Text('$percent%', style: TextStyle(color: AppPreferences.palette.value.primary, fontWeight: FontWeight.w900)),
-              Icon(Icons.chevron_right_rounded, color: AppPreferences.palette.value.primary),
+            ),
+            if (!data.earned) ...[
+              const SizedBox(height: 4),
+              const Icon(Icons.lock_rounded,
+                  size: 11, color: Color(0xFFCBD5E1)),
             ],
-          ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _WeeklyActivityCard extends StatelessWidget {
-  const _WeeklyActivityCard();
+// ── Section Label ─────────────────────────────────────────────────────────────
+
+class _SectionLabel extends StatelessWidget {
+  final String label;
+  const _SectionLabel({required this.label});
 
   @override
   Widget build(BuildContext context) {
-    return _GlassCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Weekly Activity', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: AppColors.ink)),
-          const SizedBox(height: 16),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _Bar(day: 'M', height: 48),
-              _Bar(day: 'T', height: 72),
-              _Bar(day: 'W', height: 38),
-              _Bar(day: 'T', height: 90),
-              _Bar(day: 'F', height: 64),
-              _Bar(day: 'S', height: 44),
-              _Bar(day: 'S', height: 80),
-            ],
-          ),
-        ],
+    return Text(
+      label,
+      style: const TextStyle(
+        color: _muted,
+        fontSize: 11.5,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.4,
       ),
     );
   }
 }
 
-class _Bar extends StatelessWidget {
-  final String day;
-  final double height;
+// ── White Card ────────────────────────────────────────────────────────────────
 
-  const _Bar({required this.day, required this.height});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          width: 18,
-          height: height,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [AppPreferences.palette.value.secondary, AppPreferences.palette.value.primary]),
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(day, style: const TextStyle(color: AppColors.muted, fontSize: 12, fontWeight: FontWeight.w700)),
-      ],
-    );
-  }
-}
-
-class _GlassCard extends StatelessWidget {
+class _WhiteCard extends StatelessWidget {
   final Widget child;
-  final EdgeInsetsGeometry padding;
-
-  const _GlassCard({required this.child, this.padding = const EdgeInsets.all(18)});
+  const _WhiteCard({required this.child});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: padding,
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity( .92),
-        borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: Colors.white.withOpacity( .95)),
-              ),
-      child: child,
-    );
-  }
-}
-
-class _AnimatedIn extends StatelessWidget {
-  final Animation<double> animation;
-  final double intervalStart;
-  final Widget child;
-
-  const _AnimatedIn({required this.animation, required this.intervalStart, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    final curved = CurvedAnimation(
-      parent: animation,
-      curve: Interval(math.max(0.0, math.min(intervalStart, .92)), 1, curve: Curves.easeOutCubic),
-    );
-
-    return AnimatedBuilder(
-      animation: curved,
-      child: child,
-      builder: (context, child) {
-        return Opacity(
-          opacity: curved.value,
-          child: Transform.translate(
-            offset: Offset(0, 28 * (1 - curved.value)),
-            child: Transform.scale(scale: .97 + (.03 * curved.value), alignment: Alignment.topCenter, child: child),
+        color: _surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _border, width: 1),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x08000000),
+            blurRadius: 8,
+            offset: Offset(0, 2),
           ),
-        );
-      },
-    );
-  }
-}
-
-class _GlowBlob extends StatelessWidget {
-  final double size;
-  final Color color;
-
-  const _GlowBlob({required this.size, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(shape: BoxShape.circle, color: color.withOpacity( .50), ),
+        ],
       ),
+      child: child,
     );
   }
 }
