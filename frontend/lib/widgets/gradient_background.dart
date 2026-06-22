@@ -18,13 +18,7 @@ class GradientBackground extends StatelessWidget {
         return Container(
           width: double.infinity,
           height: double.infinity,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: palette.background,
-            ),
-          ),
+          color: Colors.white,
           child: scrollable
               ? LayoutBuilder(
                   builder: (context, constraints) {

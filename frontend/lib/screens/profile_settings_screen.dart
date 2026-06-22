@@ -1,520 +1,480 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
+import '../presentation/widgets/animated_background.dart';
+import 'package:go_router/go_router.dart';
 
-import '../theme/app_theme.dart';
 import '../services/app_preferences.dart';
+import '../utils/route_names.dart';
 import '../widgets/mathiva_bottom_nav.dart';
 
-class ProfileSettingsScreen extends StatefulWidget {
+// ─── Neutral palette ───────────────────────────────────────────────────────────
+// Same hex values as HomeScreen's _ink / _muted / _border / _surface / _pageBg,
+// so this screen's neutrals are pixel-identical to the rest of the app.
+const _kInk     = Color(0xFF111827); // primary text
+const _kSub     = Color(0xFF6B7280); // secondary text
+const _kMute    = Color(0xFF9CA3AF); // placeholder / caption
+const _kDivider = Color(0xFFE5E7EB); // borders / separators
+const _kSurface = Color(0xFFFFFFFF); // card background
+const _kBg      = Color(0xFFF8F9FB); // subtle off-white fill
+
+// Shared app-chrome surface — matches the header treatment on HomeScreen
+// (and MathivaBottomNav) so this screen's header reads as the same layer
+// of app chrome, sitting just above the white content surfaces below.
+const _chromeSurface = Color(0xFFF6F5FB);
+const _chromeBorder = Color(0xFFEAE8F5);
+
+class ProfileSettingsScreen extends StatelessWidget {
   const ProfileSettingsScreen({super.key});
-
-  @override
-  State<ProfileSettingsScreen> createState() => _ProfileSettingsScreenState();
-}
-
-class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 850))..forward();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  Future<void> _pickReminderTime() async {
-    final picked = await showTimePicker(context: context, initialTime: AppPreferences.reminderTime.value);
-    if (picked != null) {
-      AppPreferences.reminderTime.value = picked;
-      AppPreferences.studyRemindersEnabled.value = true;
-      if (mounted) setState(() {});
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Study reminder set for ${picked.format(context)}.')));
-      }
-    }
-  }
-
-  Future<void> _showAppearanceSheet() async {
-    await showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
-      builder: (context) {
-        return ValueListenableBuilder<MathiviaPalette>(
-          valueListenable: AppPreferences.palette,
-          builder: (context, active, _) {
-            return Padding(
-              padding: const EdgeInsets.fromLTRB(22, 6, 22, 28),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Choose palette', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.ink)),
-                  const SizedBox(height: 6),
-                  const Text('This now changes Mathivia colors across screens, buttons, progress bars, and the bottom navigation.', style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 18),
-                  for (final palette in AppPreferences.palettes) ...[
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: LinearGradient(colors: [palette.primary, palette.secondary]),
-                        ),
-                      ),
-                      title: Text(palette.name, style: const TextStyle(fontWeight: FontWeight.w900, color: AppColors.ink)),
-                      trailing: active == palette ? Icon(Icons.check_circle_rounded, color: palette.primary) : const Icon(Icons.circle_outlined, color: AppColors.muted),
-                      onTap: () {
-                        AppPreferences.setPalette(palette);
-                        setState(() {});
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Palette changed to ${palette.name}.')));
-                      },
-                    ),
-                  ],
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Future<void> _showPrivacyAccountSheet() async {
-    final nameController = TextEditingController(text: AppPreferences.studentName.value);
-    final roleController = TextEditingController(text: AppPreferences.learnerRole.value);
-
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setSheetState) {
-            return Padding(
-              padding: EdgeInsets.fromLTRB(22, 6, 22, MediaQuery.of(context).viewInsets.bottom + 28),
-              child: SingleChildScrollView(
-                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Privacy and account', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.ink)),
-                    const SizedBox(height: 6),
-                    const Text('Edit the student profile and choose what Mathivia saves locally.', style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 16),
-                    TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Student name')),
-                    const SizedBox(height: 10),
-                    TextField(controller: roleController, decoration: const InputDecoration(labelText: 'Account type / grade')),
-                    const SizedBox(height: 8),
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('Private profile', style: TextStyle(fontWeight: FontWeight.w900)),
-                      subtitle: const Text('Keep learner details visible only on this device.'),
-                      value: AppPreferences.privateProfile.value,
-                      onChanged: (value) {
-                        AppPreferences.privateProfile.value = value;
-                        setSheetState(() {});
-                      },
-                    ),
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('Save learning progress', style: TextStyle(fontWeight: FontWeight.w900)),
-                      subtitle: const Text('Use progress data for home goals and analytics.'),
-                      value: AppPreferences.saveLearningProgress.value,
-                      onChanged: (value) {
-                        AppPreferences.saveLearningProgress.value = value;
-                        setSheetState(() {});
-                      },
-                    ),
-                    const SizedBox(height: 8),
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton.icon(
-                        icon: const Icon(Icons.save_rounded),
-                        label: const Text('Save account settings'),
-                        onPressed: () {
-                          AppPreferences.studentName.value = nameController.text.trim().isEmpty ? 'Learner' : nameController.text.trim();
-                          AppPreferences.learnerRole.value = roleController.text.trim().isEmpty ? 'Senior High School Learner' : roleController.text.trim();
-                          setState(() {});
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Account and privacy settings saved.')));
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  void _showAboutDialog() {
-    final palette = AppPreferences.palette.value;
-    showAboutDialog(
-      context: context,
-      applicationName: 'Mathivia',
-      applicationVersion: '1.0.0',
-      applicationIcon: Container(
-        height: 54,
-        width: 54,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: LinearGradient(colors: [palette.secondary, palette.primary]),
-        ),
-        child: const Center(child: Text('M', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 30))),
-      ),
-      children: const [
-        SizedBox(height: 8),
-        Text(
-          'Mathivia is a student-friendly mathematics learning app created to help learners study, practice, and track progress in one simple place. It is designed for topics such as General Mathematics, Statistics and Probability, Pre-Calculus, and Basic Calculus, with lessons that explain concepts step by step and practice questions that help students check their understanding.',
-        ),
-        SizedBox(height: 12),
-        Text(
-          'The app focuses on making math less intimidating. Instead of forcing students to type long answers on a keypad, Mathivia uses multiple-choice practice so learners can concentrate on choosing the best solution, comparing options, and learning from mistakes. Practice sessions also include a timer that counts upward, so students can see how long they spent solving without feeling pressured by a countdown.',
-        ),
-        SizedBox(height: 12),
-        Text(
-          'Mathivia also includes progress tracking, study reminders, notification controls, account and privacy settings, and palette customization. The progress page helps students see completed lessons, subject progress, and weekly activity. The settings page lets learners personalize their study experience, choose app colors, manage reminders, and keep learner information private on the device.',
-        ),
-        SizedBox(height: 12),
-        Text(
-          'The goal of Mathivia is to support independent learning: read a concept, practice it, review progress, and return to topics that need improvement. It is built as a practical math companion for students who want a cleaner, easier, and more motivating way to study mathematics.',
-        ),
-      ],
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<MathiviaPalette>(
       valueListenable: AppPreferences.palette,
       builder: (context, palette, _) {
+        final primary   = palette.primary;
+        final secondary = palette.secondary;
+
         return Scaffold(
+          backgroundColor: _kBg,
           extendBody: true,
-          body: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: palette.background,
+          appBar: AppBar(
+            backgroundColor: _chromeSurface,
+            surfaceTintColor: Colors.transparent,
+            elevation: 0,
+            scrolledUnderElevation: 1,
+            shadowColor: Colors.black.withOpacity(0.04),
+            automaticallyImplyLeading: false,
+            centerTitle: false,
+            toolbarHeight: 58,
+            titleSpacing: 20,
+            title: const Text(
+              'Settings',
+              style: TextStyle(
+                color: Color(0xFF312E81),
+                fontSize: 19,
+                fontWeight: FontWeight.w600,
+                letterSpacing: -0.2,
+                height: 1,
               ),
             ),
-            child: Stack(
-              children: [
-                Positioned(top: -75, left: -65, child: _GlowBlob(size: 190, color: palette.secondary.withOpacity(.38))),
-                Positioned(top: 170, right: -90, child: _GlowBlob(size: 230, color: palette.primary.withOpacity(.28))),
-                Positioned(bottom: 10, left: -90, child: _GlowBlob(size: 240, color: palette.secondary.withOpacity(.22))),
-                SafeArea(
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(24, 26, 24, 148),
-                    physics: const BouncingScrollPhysics(),
-                    children: [
-                      _AnimatedIn(animation: _controller, intervalStart: 0, child: const _Header()),
-                      const SizedBox(height: 22),
-                      _AnimatedIn(animation: _controller, intervalStart: .12, child: const _ProfileCard()),
-                      const SizedBox(height: 22),
-                      _AnimatedIn(
-                        animation: _controller,
-                        intervalStart: .20,
-                        child: const Text('Settings', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w900, color: AppColors.ink)),
-                      ),
-                      const SizedBox(height: 12),
-                      ValueListenableBuilder<bool>(
-                        valueListenable: AppPreferences.notificationsEnabled,
-                        builder: (context, value, _) {
-                          return _AnimatedIn(
-                            animation: _controller,
-                            intervalStart: .28,
-                            child: _SettingsTile(
-                              icon: Icons.notifications_rounded,
-                              title: 'Notifications',
-                              subtitle: value ? 'On - app updates and practice alerts allowed' : 'Off - alerts are muted',
-                              trailing: Switch(
-                                value: value,
-                                onChanged: (newValue) {
-                                  AppPreferences.notificationsEnabled.value = newValue;
-                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(newValue ? 'Notifications turned on.' : 'Notifications turned off.')));
-                                },
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      ValueListenableBuilder<bool>(
-                        valueListenable: AppPreferences.studyRemindersEnabled,
-                        builder: (context, enabled, _) {
-                          return ValueListenableBuilder<TimeOfDay>(
-                            valueListenable: AppPreferences.reminderTime,
-                            builder: (context, time, _) {
-                              return _AnimatedIn(
-                                animation: _controller,
-                                intervalStart: .36,
-                                child: _SettingsTile(
-                                  icon: Icons.alarm_rounded,
-                                  title: 'Study reminders',
-                                  subtitle: enabled ? 'Daily reminder at ${time.format(context)}' : 'Off - tap clock to choose a time',
-                                  onTap: _pickReminderTime,
-                                  trailing: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      IconButton(onPressed: _pickReminderTime, icon: Icon(Icons.schedule_rounded, color: palette.primary)),
-                                      Switch(
-                                        value: enabled,
-                                        onChanged: (value) async {
-                                          AppPreferences.studyRemindersEnabled.value = value;
-                                          if (value) await _pickReminderTime();
-                                          if (mounted && !value) {
-                                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Study reminders turned off.')));
-                                          }
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            },
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      _AnimatedIn(
-                        animation: _controller,
-                        intervalStart: .44,
-                        child: _SettingsTile(
-                          icon: Icons.palette_rounded,
-                          title: 'Appearance',
-                          subtitle: palette.name,
-                          onTap: _showAppearanceSheet,
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                width: 28,
-                                height: 28,
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(colors: [palette.primary, palette.secondary]),
-                                  shape: BoxShape.circle,
-                                  border: Border.all(color: AppColors.ink.withOpacity(.15), width: 2),
-                                ),
-                              ),
-                              Icon(Icons.chevron_right_rounded, color: palette.primary, size: 30),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      ValueListenableBuilder<bool>(
-                        valueListenable: AppPreferences.privateProfile,
-                        builder: (context, private, _) {
-                          return _AnimatedIn(
-                            animation: _controller,
-                            intervalStart: .52,
-                            child: _SettingsTile(
-                              icon: Icons.lock_rounded,
-                              title: 'Privacy and account',
-                              subtitle: private ? 'Private profile and local progress controls' : 'Profile visibility is less restricted',
-                              onTap: _showPrivacyAccountSheet,
-                              trailing: Icon(Icons.chevron_right_rounded, color: palette.primary, size: 30),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      _AnimatedIn(
-                        animation: _controller,
-                        intervalStart: .60,
-                        child: _SettingsTile(
-                          icon: Icons.info_rounded,
-                          title: 'About Mathivia',
-                          subtitle: 'App information, version, and features',
-                          onTap: _showAboutDialog,
-                          trailing: Icon(Icons.chevron_right_rounded, color: palette.primary, size: 30),
-                        ),
-                      ),
-                    ],
-                  ),
+            actions: [
+              IconButton(
+                tooltip: 'Ask Math Tutor',
+                onPressed: () => context.push(RouteNames.chat),
+                icon: Icon(
+                  Icons.chat_bubble_outline_rounded,
+                  color: primary,
+                  size: 22,
                 ),
-              ],
+              ),
+              const SizedBox(width: 8),
+            ],
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(1),
+              child: Container(
+                height: 1,
+                color: _chromeBorder,
+              ),
             ),
           ),
-          bottomNavigationBar: const MathivaBottomNav(selected: MathivaTab.profile),
+          body: AnimatedBackground(
+            child: SafeArea(
+              top: true,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 112),
+                physics: const BouncingScrollPhysics(),
+                children: [
+                  const SizedBox(height: 8),
+
+                  // ── Avatar card ──────────────────────────────────────────
+                  _LearningAccountCard(primary: primary),
+
+                  const SizedBox(height: 20),
+
+                  // ── Stat row ─────────────────────────────────────────────
+                  Row(
+                    children: [
+                      Expanded(child: _Stat(value: '128', label: 'Solved', primary: primary)),
+                      const SizedBox(width: 10),
+                      Expanded(child: _Stat(value: '86%', label: 'Accuracy', primary: primary)),
+                      const SizedBox(width: 10),
+                      Expanded(child: _Stat(value: '12',  label: 'Streak', primary: primary)),
+                    ],
+                  ),
+
+                  const SizedBox(height: 28),
+
+                  // ── Preferences ──────────────────────────────────────────
+                  const _SectionTitle('Preferences'),
+                  const SizedBox(height: 10),
+
+                  ValueListenableBuilder<bool>(
+                    valueListenable: AppPreferences.notificationsEnabled,
+                    builder: (context, enabled, _) => _SwitchTile(
+                      icon: Icons.notifications_outlined,
+                      title: 'Notifications',
+                      subtitle: 'Quiz reminders and progress updates',
+                      value: enabled,
+                      onChanged: (v) => AppPreferences.notificationsEnabled.value = v,
+                      primary: primary,
+                    ),
+                  ),
+                  ValueListenableBuilder<bool>(
+                    valueListenable: AppPreferences.studyRemindersEnabled,
+                    builder: (context, enabled, _) => _SwitchTile(
+                      icon: Icons.alarm_outlined,
+                      title: 'Study Reminders',
+                      subtitle: 'Daily reminder to keep your streak alive',
+                      value: enabled,
+                      onChanged: (v) => AppPreferences.studyRemindersEnabled.value = v,
+                      primary: primary,
+                    ),
+                  ),
+                  ValueListenableBuilder<bool>(
+                    valueListenable: AppPreferences.hapticFeedback,
+                    builder: (context, enabled, _) => _SwitchTile(
+                      icon: Icons.vibration_outlined,
+                      title: 'Haptic Feedback',
+                      subtitle: 'Feel a vibration on correct answers',
+                      value: enabled,
+                      onChanged: (v) => AppPreferences.hapticFeedback.value = v,
+                      primary: primary,
+                    ),
+                  ),
+                  ValueListenableBuilder<bool>(
+                    valueListenable: AppPreferences.saveLearningProgress,
+                    builder: (context, enabled, _) => _SwitchTile(
+                      icon: Icons.save_alt_outlined,
+                      title: 'Save Progress',
+                      subtitle: 'Store learning progress on this device',
+                      value: enabled,
+                      onChanged: (v) => AppPreferences.saveLearningProgress.value = v,
+                      primary: primary,
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+                  const _SectionTitle('General'),
+                  const SizedBox(height: 10),
+
+                  _Tile(
+                    icon: Icons.info_outline_rounded,
+                    title: 'About Mathivia',
+                    subtitle: 'Learn more about this app',
+                    primary: primary,
+                    onTap: () => _showAbout(context, primary, secondary),
+                  ),
+                  _Tile(
+                    icon: Icons.lock_outline_rounded,
+                    title: 'Privacy',
+                    subtitle: 'Keep learning progress private on this device',
+                    primary: primary,
+                    onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Privacy settings are ready for backend integration.')),
+                    ),
+                  ),
+                  _Tile(
+                    icon: Icons.help_outline_rounded,
+                    title: 'Help & Support',
+                    subtitle: 'FAQs, tips, and contact support',
+                    primary: primary,
+                    onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Help center coming soon.')),
+                    ),
+                  ),
+                  _Tile(
+                    icon: Icons.star_outline_rounded,
+                    title: 'Rate Mathivia',
+                    subtitle: 'Enjoying the app? Leave us a review',
+                    primary: primary,
+                    onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Thank you for your support!')),
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+                  _LogOutButton(onPressed: () => context.go(RouteNames.login)),
+                ],
+              ),
+            ),
+          ),
+          bottomNavigationBar: const MathivaBottomNav(selected: MathivaTab.settings),
         );
       },
     );
   }
-}
 
-class _Header extends StatelessWidget {
-  const _Header();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Profile Settings', style: TextStyle(fontSize: 30, height: 1.05, fontWeight: FontWeight.w900, color: AppColors.ink, letterSpacing: -.5)),
-        SizedBox(height: 8),
-        Text('Manage your account and study preferences.', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.muted)),
-      ],
+  // ─── About sheet ──────────────────────────────────────────────────────────────
+  static void _showAbout(BuildContext context, Color primary, Color secondary) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (sheetCtx) => DraggableScrollableSheet(
+        initialChildSize: 0.82,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (_, scroll) => Container(
+          padding: const EdgeInsets.fromLTRB(22, 18, 22, 32),
+          decoration: const BoxDecoration(
+            color: _kSurface,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          child: ListView(
+            controller: scroll,
+            children: [
+              Row(children: [
+                const Spacer(),
+                Container(
+                  width: 40, height: 4,
+                  margin: const EdgeInsets.only(bottom: 4),
+                  decoration: BoxDecoration(color: _kDivider, borderRadius: BorderRadius.circular(99)),
+                ),
+                const Spacer(),
+                IconButton(icon: const Icon(Icons.close_rounded, color: _kSub), onPressed: () => sheetCtx.pop()),
+              ]),
+              // App icon — tinted primary fill, matches HomeScreen icon-tile motif
+              Center(
+                child: Container(
+                  width: 64, height: 64,
+                  decoration: BoxDecoration(
+                    color: primary.withOpacity(0.08),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: primary.withOpacity(0.15)),
+                  ),
+                  child: Center(
+                    child: Text('m', style: TextStyle(color: primary, fontSize: 28, fontWeight: FontWeight.w700)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              const Center(child: Text('Mathivia', style: TextStyle(color: _kInk, fontSize: 26, fontWeight: FontWeight.w700))),
+              const SizedBox(height: 4),
+              const Center(child: Text('Version 1.0.0', style: TextStyle(color: _kMute, fontSize: 13))),
+              const SizedBox(height: 24),
+              _AboutSection(
+                title: 'What is Mathivia?',
+                icon: Icons.auto_awesome_outlined,
+                primary: primary,
+                body: 'Mathivia is a thoughtfully designed math learning companion built specifically for Senior High School students following the K–12 curriculum. It combines the power of AI tutoring with structured lesson content, interactive quizzes, and detailed step-by-step problem explanations — all wrapped in a clean, distraction-free interface.\n\nWhether you are a Grade 11 student tackling General Mathematics and Statistics for the first time, or a Grade 12 learner deepening your understanding of Pre-Calculus and Basic Calculus, Mathivia has the content and tools to guide you every step of the way.',
+              ),
+              const SizedBox(height: 12),
+              _AboutSection(
+                title: 'Subjects Covered',
+                icon: Icons.menu_book_outlined,
+                primary: primary,
+                body: 'Mathivia currently covers four core math subjects from the Philippine SHS curriculum:\n\n• General Mathematics (Grade 11) — functions, rational expressions, inverse functions, exponential and logarithmic functions, simple and compound interest, annuities, stocks and bonds, and logic.\n\n• Statistics and Probability (Grade 11) — data collection, measures of central tendency, measures of spread, normal distribution, hypothesis testing, and basic probability theory.\n\n• Pre-Calculus (Grade 12) — analytic geometry, conic sections (circles, parabolas, ellipses, hyperbolas), series and sequences, trigonometric identities, polar coordinates, and parametric equations.\n\n• Basic Calculus (Grade 12) — limits and continuity, derivatives and differentiation rules, applications of derivatives, antiderivatives, definite integrals, and the fundamental theorem of calculus.',
+              ),
+              const SizedBox(height: 12),
+              _AboutSection(
+                title: 'Key Features',
+                icon: Icons.star_outline_rounded,
+                primary: primary,
+                body: '📷  Scan & Solve — point your camera at any printed or handwritten math problem and Mathivia\'s AI will recognize it, break it down step by step, and explain the solution clearly.\n\n📚  Structured Lessons — every topic is broken into bite-sized lessons with definitions, formulas, worked examples, and practice problems arranged in a logical learning order.\n\n🧠  AI Math Tutor — chat with the built-in tutor to ask any math question, request alternative explanations, or explore deeper connections between concepts.\n\n📊  Progress Tracking — track mastery per topic and subject, see your accuracy over time, and earn badges for consistent practice.\n\n🎯  Practice Mode — generate unlimited practice problems across any subject or topic and receive immediate, detailed feedback with every answer.',
+              ),
+              const SizedBox(height: 12),
+              _AboutSection(
+                title: 'Our Philosophy',
+                icon: Icons.lightbulb_outline_rounded,
+                primary: primary,
+                body: 'Mathivia was built on a simple belief: every student deserves to understand math, not just memorize it. Too many students struggle not because they lack ability, but because they lack access to patient, clear, and personalized explanations.\n\nWe designed Mathivia to be the math tutor that is always available — one that never gets tired of explaining the same concept a different way, never makes you feel embarrassed for asking a basic question, and always celebrates your progress no matter how small.\n\nThe interface is intentionally minimal. No loud animations, no gamification gimmicks, no unnecessary clutter. Just clean, focused tools that put math front and center.',
+              ),
+              const SizedBox(height: 12),
+              _AboutSection(
+                title: 'Built For You',
+                icon: Icons.favorite_outline_rounded,
+                primary: primary,
+                body: 'Mathivia is designed and maintained with Senior High School students in the Philippines in mind. We understand the pressure of board exams, quarterly assessments, and performance tasks — and we want to be a reliable tool you can turn to when the textbook isn\'t enough.\n\nFeedback from real students shapes every update. If there is a topic you wish was covered more deeply, a feature you think would help you learn better, or a bug that got in your way, we want to hear about it. Mathivia grows with you.',
+              ),
+              const SizedBox(height: 24),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: _kBg,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: _kDivider),
+                ),
+                child: const Column(
+                  children: [
+                    Text('Made with ❤️ for math students', style: TextStyle(color: _kInk, fontWeight: FontWeight.w600, fontSize: 14), textAlign: TextAlign.center),
+                    SizedBox(height: 6),
+                    Text('© 2026 Mathivia. All rights reserved.', style: TextStyle(color: _kMute, fontSize: 12), textAlign: TextAlign.center),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
 
-class _ProfileCard extends StatelessWidget {
-  const _ProfileCard();
+// ─── About section block ──────────────────────────────────────────────────────
+class _AboutSection extends StatelessWidget {
+  final String title;
+  final String body;
+  final IconData icon;
+  final Color primary;
+
+  const _AboutSection({required this.title, required this.body, required this.icon, required this.primary});
 
   @override
   Widget build(BuildContext context) {
-    final palette = AppPreferences.palette.value;
-    return _GlassCard(
-      child: Row(
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _kSurface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _kDivider),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ValueListenableBuilder<String>(
-            valueListenable: AppPreferences.studentName,
-            builder: (context, name, _) {
-              final initial = name.trim().isEmpty ? 'S' : name.trim().substring(0, 1).toUpperCase();
-              return Container(
-                width: 76,
-                height: 76,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(colors: [palette.secondary, palette.primary]),
-                ),
+          Row(
+            children: [
+              Container(
+                width: 30, height: 30,
                 alignment: Alignment.center,
-                child: Text(initial, style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.w900)),
-              );
-            },
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ValueListenableBuilder<String>(
-                  valueListenable: AppPreferences.studentName,
-                  builder: (context, name, _) => Text(name, style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w900, color: AppColors.ink)),
+                decoration: BoxDecoration(
+                  color: primary.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                const SizedBox(height: 4),
-                ValueListenableBuilder<String>(
-                  valueListenable: AppPreferences.learnerRole,
-                  builder: (context, role, _) => Text(role, style: const TextStyle(color: AppColors.muted, fontWeight: FontWeight.w700)),
-                ),
-              ],
-            ),
+                child: Icon(icon, color: primary, size: 16),
+              ),
+              const SizedBox(width: 10),
+              Text(title, style: const TextStyle(color: _kInk, fontWeight: FontWeight.w700, fontSize: 14)),
+            ],
           ),
+          const SizedBox(height: 10),
+          Text(body, style: const TextStyle(color: _kSub, fontSize: 13.5, height: 1.55)),
         ],
       ),
     );
   }
 }
 
-class _SettingsTile extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final Widget trailing;
-  final VoidCallback? onTap;
+// ─── Avatar / account card ────────────────────────────────────────────────────
+class _LearningAccountCard extends StatelessWidget {
+  final Color primary;
+  const _LearningAccountCard({required this.primary});
 
-  const _SettingsTile({required this.icon, required this.title, required this.subtitle, required this.trailing, this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final palette = AppPreferences.palette.value;
-    final content = Row(
-      children: [
-        Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(color: palette.primary.withOpacity(.12), borderRadius: BorderRadius.circular(16)),
-          child: Icon(icon, color: palette.primary, size: 26),
-        ),
-        const SizedBox(width: 14),
-        Expanded(
+  void _showEditName(BuildContext context) {
+    final controller = TextEditingController(text: AppPreferences.studentName.value);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetCtx) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(sheetCtx).viewInsets.bottom),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
+          decoration: const BoxDecoration(
+            color: _kSurface,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+          ),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: const TextStyle(fontWeight: FontWeight.w900, color: AppColors.ink, fontSize: 15)),
-              const SizedBox(height: 3),
-              Text(subtitle, style: const TextStyle(color: AppColors.muted, fontWeight: FontWeight.w600, fontSize: 12)),
+              Center(
+                child: Container(
+                  width: 40, height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(color: _kDivider, borderRadius: BorderRadius.circular(99)),
+                ),
+              ),
+              Row(children: [
+                const Expanded(child: Text('Edit Name', style: TextStyle(color: _kInk, fontSize: 22, fontWeight: FontWeight.w700))),
+                IconButton(icon: const Icon(Icons.close_rounded, color: _kSub), onPressed: () => sheetCtx.pop()),
+              ]),
+              const SizedBox(height: 14),
+              TextField(
+                controller: controller,
+                autofocus: true,
+                style: const TextStyle(color: _kInk, fontWeight: FontWeight.w600),
+                decoration: InputDecoration(
+                  hintText: 'Your name',
+                  filled: true,
+                  fillColor: _kBg,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: _kDivider)),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: _kDivider)),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: primary, width: 1.5)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                ),
+              ),
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: () {
+                    final name = controller.text.trim();
+                    if (name.isNotEmpty) AppPreferences.studentName.value = name;
+                    sheetCtx.pop();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    elevation: 0,
+                  ),
+                  child: const Text('Save', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                ),
+              ),
             ],
           ),
         ),
-        const SizedBox(width: 8),
-        trailing,
-      ],
-    );
-
-    return _GlassCard(
-      padding: EdgeInsets.zero,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(26),
-          onTap: onTap,
-          child: Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14), child: content),
-        ),
       ),
     );
   }
-}
-
-class _GlassCard extends StatelessWidget {
-  final Widget child;
-  final EdgeInsetsGeometry padding;
-
-  const _GlassCard({required this.child, this.padding = const EdgeInsets.all(18)});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: padding,
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(.92),
-        borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: Colors.white.withOpacity(.95)),
-      ),
-      child: child,
-    );
-  }
-}
-
-class _AnimatedIn extends StatelessWidget {
-  final Animation<double> animation;
-  final double intervalStart;
-  final Widget child;
-
-  const _AnimatedIn({required this.animation, required this.intervalStart, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    final curved = CurvedAnimation(parent: animation, curve: Interval(math.max(0.0, math.min(intervalStart, .92)), 1, curve: Curves.easeOutCubic));
-
-    return AnimatedBuilder(
-      animation: curved,
-      child: child,
-      builder: (context, child) {
-        return Opacity(
-          opacity: curved.value,
-          child: Transform.translate(
-            offset: Offset(0, 28 * (1 - curved.value)),
-            child: Transform.scale(scale: .97 + (.03 * curved.value), alignment: Alignment.topCenter, child: child),
+    return ValueListenableBuilder<String>(
+      valueListenable: AppPreferences.studentName,
+      builder: (ctx, name, _) {
+        final initial = name.isNotEmpty ? name[0].toUpperCase() : 'L';
+        return _Card(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              // Avatar — tinted primary circle, matches icon-tile motif
+              Container(
+                width: 52, height: 52,
+                decoration: BoxDecoration(
+                  color: primary.withOpacity(0.10),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: primary.withOpacity(0.18)),
+                ),
+                child: Center(
+                  child: Text(initial, style: TextStyle(color: primary, fontSize: 20, fontWeight: FontWeight.w700)),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(name.isNotEmpty ? name : 'Learner',
+                        style: const TextStyle(color: _kInk, fontSize: 18, fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 3),
+                    const Text('Senior High School Learner', style: TextStyle(color: _kSub, fontSize: 13)),
+                  ],
+                ),
+              ),
+              GestureDetector(
+                onTap: () => _showEditName(context),
+                child: Container(
+                  width: 34, height: 34,
+                  decoration: BoxDecoration(
+                    color: primary.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(Icons.edit_outlined, color: primary, size: 16),
+                ),
+              ),
+            ],
           ),
         );
       },
@@ -522,20 +482,178 @@ class _AnimatedIn extends StatelessWidget {
   }
 }
 
-class _GlowBlob extends StatelessWidget {
-  final double size;
-  final Color color;
+// ─── Section header ───────────────────────────────────────────────────────────
+class _SectionTitle extends StatelessWidget {
+  final String title;
+  const _SectionTitle(this.title);
 
-  const _GlowBlob({required this.size, required this.color});
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.only(left: 2),
+        child: Text(title, style: const TextStyle(color: _kInk, fontSize: 13, fontWeight: FontWeight.w700, letterSpacing: 0.4)),
+      );
+}
+
+// ─── Stat card ────────────────────────────────────────────────────────────────
+class _Stat extends StatelessWidget {
+  final String value;
+  final String label;
+  final Color primary;
+  const _Stat({required this.value, required this.label, required this.primary});
 
   @override
   Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(shape: BoxShape.circle, color: color),
+    return _Card(
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+      child: Column(
+        children: [
+          Text(value, style: TextStyle(color: primary, fontSize: 20, fontWeight: FontWeight.w700)),
+          const SizedBox(height: 4),
+          Text(label, textAlign: TextAlign.center, style: const TextStyle(color: _kMute, fontSize: 11.5)),
+        ],
       ),
+    );
+  }
+}
+
+// ─── Toggle tile ──────────────────────────────────────────────────────────────
+class _SwitchTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+  final Color primary;
+
+  const _SwitchTile({
+    required this.icon, required this.title, required this.subtitle,
+    required this.value, required this.onChanged, required this.primary,
+  });
+
+  @override
+  Widget build(BuildContext context) => _Tile(
+        icon: icon, title: title, subtitle: subtitle, primary: primary,
+        trailing: Switch(
+          value: value,
+          onChanged: onChanged,
+          activeColor: primary,
+          inactiveThumbColor: _kMute,
+          inactiveTrackColor: _kDivider,
+        ),
+      );
+}
+
+// ─── List tile ────────────────────────────────────────────────────────────────
+class _Tile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color primary;
+  final Widget? trailing;
+  final VoidCallback? onTap;
+
+  const _Tile({
+    required this.icon, required this.title, required this.subtitle, required this.primary,
+    this.trailing, this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: _Card(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+        onTap: onTap,
+        child: Row(
+          children: [
+            // Icon container — tinted primary fill, matches Home/Search/Login motif
+            Container(
+              width: 38, height: 38,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: primary.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: primary, size: 18),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: const TextStyle(color: _kInk, fontWeight: FontWeight.w600, fontSize: 14)),
+                  const SizedBox(height: 2),
+                  Text(subtitle, style: const TextStyle(color: _kMute, fontSize: 12)),
+                ],
+              ),
+            ),
+            if (trailing != null)
+              trailing!
+            else if (onTap != null)
+              const Icon(Icons.chevron_right_rounded, color: _kMute, size: 20),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Log out button ───────────────────────────────────────────────────────────
+class _LogOutButton extends StatelessWidget {
+  final VoidCallback onPressed;
+  const _LogOutButton({required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: OutlinedButton(
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          backgroundColor: _kSurface,
+          foregroundColor: _kSub,
+          side: const BorderSide(color: _kDivider),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          elevation: 0,
+        ),
+        child: const Text('Log Out', style: TextStyle(fontWeight: FontWeight.w600, color: _kSub)),
+      ),
+    );
+  }
+}
+
+// ─── Shared white card ────────────────────────────────────────────────────────
+class _Card extends StatelessWidget {
+  final Widget child;
+  final EdgeInsets padding;
+  final VoidCallback? onTap;
+
+  const _Card({required this.child, this.padding = const EdgeInsets.all(16), this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final card = Container(
+      width: double.infinity,
+      padding: padding,
+      decoration: BoxDecoration(
+        color: _kSurface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _kDivider),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x08000000),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: child,
+    );
+    if (onTap == null) return card;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(borderRadius: BorderRadius.circular(16), onTap: onTap, child: card),
     );
   }
 }

@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import '../models/mathiva_models.dart';
 
 class LocalMathivaData {
@@ -18,6 +19,7 @@ class LocalMathivaData {
       title: 'General Mathematics',
       gradeLevel: 'Grade 11',
       iconText: 'GM',
+      subjectIcon: Icons.calculate_rounded,
       progress: 57,
       topics: [
         MathTopic(
@@ -132,6 +134,7 @@ class LocalMathivaData {
       title: 'Statistics and Probability',
       gradeLevel: 'Grade 11',
       iconText: 'SP',
+      subjectIcon: Icons.bar_chart_rounded,
       progress: 42,
       topics: [
         MathTopic(
@@ -195,6 +198,7 @@ class LocalMathivaData {
       title: 'Pre-Calculus',
       gradeLevel: 'Grade 12',
       iconText: 'PC',
+      subjectIcon: Icons.show_chart_rounded,
       progress: 38,
       topics: [
         MathTopic(
@@ -258,6 +262,7 @@ class LocalMathivaData {
       title: 'Basic Calculus',
       gradeLevel: 'Grade 12',
       iconText: 'BC',
+      subjectIcon: Icons.functions_rounded,
       progress: 31,
       topics: [
         MathTopic(
