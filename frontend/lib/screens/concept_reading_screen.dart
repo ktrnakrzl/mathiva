@@ -400,11 +400,12 @@ class _PrimaryButton extends StatelessWidget {
     return SizedBox(
       width: double.infinity,
       height: 50,
-      child: ElevatedButton(
+      child: OutlinedButton(
         onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: primary,
-          foregroundColor: Colors.white,
+        style: OutlinedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          foregroundColor: primary,
+          side: BorderSide(color: primary, width: 1),
           shadowColor: Colors.transparent,
           elevation: 0,
           shape: RoundedRectangleBorder(

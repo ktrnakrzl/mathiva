@@ -496,12 +496,13 @@ class _InputBar extends StatelessWidget {
               SizedBox(
                 width: 44,
                 height: 44,
-                child: ElevatedButton(
+                child: OutlinedButton(
                   onPressed: enabled ? onSend : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primary,
-                    disabledBackgroundColor: _border,
-                    foregroundColor: Colors.white,
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    foregroundColor: primary,
+                    disabledForegroundColor: _border,
+                    side: BorderSide(color: enabled ? primary : _border, width: 1),
                     elevation: 0,
                     shadowColor: Colors.transparent,
                     padding: EdgeInsets.zero,

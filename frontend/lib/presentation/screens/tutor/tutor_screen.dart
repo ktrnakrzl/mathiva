@@ -120,13 +120,10 @@ class _GradientButton extends StatelessWidget {
     return SizedBox(
       width: double.infinity,
       height: 54,
-      child: DecoratedBox(
-        decoration: BoxDecoration(gradient: LinearGradient(colors: [palette.primary, palette.secondary]), borderRadius: BorderRadius.circular(14)),
-        child: ElevatedButton(
-          onPressed: onPressed,
-          style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent, foregroundColor: const Color(0xFFF7F9FC), shadowColor: Colors.transparent, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
-          child: Text(label, style: const TextStyle(fontWeight: FontWeight.w900)),
-        ),
+      child: OutlinedButton(
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(backgroundColor: Colors.transparent, foregroundColor: palette.primary, side: BorderSide(color: palette.primary, width: 1), shadowColor: Colors.transparent, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+        child: Text(label, style: const TextStyle(fontWeight: FontWeight.w900)),
       ),
     );
   }

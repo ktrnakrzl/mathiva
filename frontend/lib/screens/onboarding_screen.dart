@@ -133,11 +133,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 SizedBox(
                   width: double.infinity,
                   height: 56,
-                  child: ElevatedButton(
+                  child: OutlinedButton(
                     onPressed: _next,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _primary,
-                      foregroundColor: const Color(0xFFFAFBFD),
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      foregroundColor: _primary,
+                      side: BorderSide(color: _primary, width: 1),
                       elevation: 0,
                       shadowColor: Colors.transparent,
                       shape: RoundedRectangleBorder(

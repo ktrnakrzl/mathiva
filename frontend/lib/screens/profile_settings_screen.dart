@@ -3,6 +3,7 @@ import '../presentation/widgets/animated_background.dart';
 import 'package:go_router/go_router.dart';
 
 import '../services/app_preferences.dart';
+import '../services/notification_service.dart';
 import '../utils/route_names.dart';
 import '../widgets/mathiva_bottom_nav.dart';
 
@@ -114,7 +115,7 @@ class ProfileSettingsScreen extends StatelessWidget {
                       title: 'Notifications',
                       subtitle: 'Quiz reminders and progress updates',
                       value: enabled,
-                      onChanged: (v) => AppPreferences.notificationsEnabled.value = v,
+                      onChanged: (v) => _onNotificationsChanged(context, v),
                       primary: primary,
                     ),
                   ),
@@ -125,7 +126,7 @@ class ProfileSettingsScreen extends StatelessWidget {
                       title: 'Study Reminders',
                       subtitle: 'Daily reminder to keep your streak alive',
                       value: enabled,
-                      onChanged: (v) => AppPreferences.studyRemindersEnabled.value = v,
+                      onChanged: (v) => _onStudyRemindersChanged(context, v),
                       primary: primary,
                     ),
                   ),
@@ -163,33 +164,6 @@ class ProfileSettingsScreen extends StatelessWidget {
                     primary: primary,
                     onTap: () => _showAbout(context, primary, secondary),
                   ),
-                  _Tile(
-                    icon: Icons.lock_outline_rounded,
-                    title: 'Privacy',
-                    subtitle: 'Keep learning progress private on this device',
-                    primary: primary,
-                    onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Privacy settings are ready for backend integration.')),
-                    ),
-                  ),
-                  _Tile(
-                    icon: Icons.help_outline_rounded,
-                    title: 'Help & Support',
-                    subtitle: 'FAQs, tips, and contact support',
-                    primary: primary,
-                    onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Help center coming soon.')),
-                    ),
-                  ),
-                  _Tile(
-                    icon: Icons.star_outline_rounded,
-                    title: 'Rate Mathivia',
-                    subtitle: 'Enjoying the app? Leave us a review',
-                    primary: primary,
-                    onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Thank you for your support!')),
-                    ),
-                  ),
 
                   const SizedBox(height: 24),
                   _LogOutButton(onPressed: () => context.go(RouteNames.login)),
@@ -200,6 +174,54 @@ class ProfileSettingsScreen extends StatelessWidget {
           bottomNavigationBar: const MathivaBottomNav(selected: MathivaTab.settings),
         );
       },
+    );
+  }
+
+  // ─── Notifications toggle ───────────────────────────────────────────────────
+  static Future<void> _onNotificationsChanged(BuildContext context, bool value) async {
+    if (!value) {
+      AppPreferences.notificationsEnabled.value = false;
+      await NotificationService.instance.cancelDailyStreakReminder();
+      return;
+    }
+
+    final granted = await NotificationService.instance.requestPermission();
+    if (!granted) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Notification permission was denied. Enable it in your device settings to receive reminders.'),
+          ),
+        );
+      }
+      return;
+    }
+
+    AppPreferences.notificationsEnabled.value = true;
+    if (AppPreferences.studyRemindersEnabled.value) {
+      await NotificationService.instance.scheduleDailyStreakReminder(
+        AppPreferences.reminderTime.value,
+      );
+    }
+  }
+
+  // ─── Study Reminders toggle ─────────────────────────────────────────────────
+  static Future<void> _onStudyRemindersChanged(BuildContext context, bool value) async {
+    AppPreferences.studyRemindersEnabled.value = value;
+
+    if (!value) {
+      await NotificationService.instance.cancelDailyStreakReminder();
+      return;
+    }
+
+    if (!AppPreferences.notificationsEnabled.value) {
+      // Master switch is off — save the preference, but don't schedule
+      // anything or prompt for permission until Notifications is also on.
+      return;
+    }
+
+    await NotificationService.instance.scheduleDailyStreakReminder(
+      AppPreferences.reminderTime.value,
     );
   }
 
@@ -407,15 +429,16 @@ class _LearningAccountCard extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 height: 52,
-                child: ElevatedButton(
+                child: OutlinedButton(
                   onPressed: () {
                     final name = controller.text.trim();
                     if (name.isNotEmpty) AppPreferences.studentName.value = name;
                     sheetCtx.pop();
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primary,
-                    foregroundColor: Colors.white,
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    foregroundColor: primary,
+                    side: BorderSide(color: primary, width: 1),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     elevation: 0,
                   ),

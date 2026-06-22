@@ -274,11 +274,12 @@ class _GradientButton extends StatelessWidget {
     return SizedBox(
       width: double.infinity,
       height: 54,
-      child: ElevatedButton(
+      child: OutlinedButton(
         onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: primary,
-          foregroundColor: Colors.white,
+        style: OutlinedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          foregroundColor: primary,
+          side: BorderSide(color: primary, width: 1),
           elevation: 0,
           shadowColor: Colors.transparent,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -305,7 +306,7 @@ class _OutlineButton extends StatelessWidget {
       child: OutlinedButton(
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
-          backgroundColor: _surface,
+          backgroundColor: Colors.transparent,
           foregroundColor: primary,
           side: const BorderSide(color: _border),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),

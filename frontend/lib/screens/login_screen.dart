@@ -46,28 +46,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   // ── Understated brand lockup (matches HomeScreen app bar) ──
                   FadeSlideIn(
-                    child: Container(
-                      width: 56,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        color: _surface,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: _border, width: 1),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x08000000),
-                            blurRadius: 8,
-                            offset: Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Image.asset(
-                          'assets/mathiva_logo.png',
-                          fit: BoxFit.contain,
-                        ),
-                      ),
+                    child: Image.asset(
+                      'assets/mathiva_logo.png',
+                      height: 72,
+                      fit: BoxFit.contain,
                     ),
                   ),
                   const SizedBox(height: 18),
@@ -264,11 +246,12 @@ class _PrimaryButton extends StatelessWidget {
     return SizedBox(
       width: double.infinity,
       height: 50,
-      child: ElevatedButton(
+      child: OutlinedButton(
         onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: primary,
-          foregroundColor: Colors.white,
+        style: OutlinedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          foregroundColor: primary,
+          side: BorderSide(color: primary, width: 1),
           elevation: 0,
           shadowColor: Colors.transparent,
           shape: RoundedRectangleBorder(
@@ -307,7 +290,12 @@ class _GoogleButton extends StatelessWidget {
           ),
           elevation: 0,
         ),
-        icon: const Icon(Icons.g_mobiledata_rounded, color: _muted, size: 24),
+        icon: Image.asset(
+          'assets/google.png',
+          height: 18,
+          width: 18,
+          fit: BoxFit.contain,
+        ),
         label: const Text(
           'Continue with Google',
           style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),

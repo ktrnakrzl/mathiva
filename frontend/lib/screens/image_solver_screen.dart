@@ -898,6 +898,13 @@ class _PickedImageView extends StatelessWidget {
 
 // ── Scan Action Button ────────────────────────────────────────────────────────
 
+// Minimal outline button. No fill, no shadow — every action (primary or
+// secondary) reads the same way: a thin border with matching text/icon
+// color. `filled` is kept as a parameter (rather than removed) so call
+// sites don't need to change, but it now only controls *which color* the
+// outline uses, not whether there's a fill — `filled: true` means "this is
+// the primary action on this row", rendered with the accent color instead
+// of neutral gray.
 class _ScanActionButton extends StatelessWidget {
   final String label;
   final IconData icon;
@@ -917,41 +924,34 @@ class _ScanActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final outlineColor = dark ? Colors.white24 : _border;
-    final labelColor =
-        filled ? Colors.white : (dark ? Colors.white : _ink);
-    final iconColor = filled ? Colors.white : (dark ? Colors.white70 : _muted);
-    final bgColor = filled ? primary : (dark ? Colors.transparent : _surface);
+    // Primary actions get the accent color outline/text; secondary actions
+    // get a neutral outline/text. `dark` (used on the black crop screen)
+    // swaps the neutral tone for a white-on-black equivalent.
+    final accentColor = filled ? primary : (dark ? Colors.white : _ink);
+    final outlineColor = filled
+        ? primary
+        : (dark ? Colors.white24 : _border);
 
     return TapScale(
       onTap: onPressed,
       child: Container(
         height: 52,
         decoration: BoxDecoration(
-          color: bgColor,
+          color: Colors.transparent,
           borderRadius: BorderRadius.circular(14),
-          border: filled ? null : Border.all(color: outlineColor, width: 1),
-          boxShadow: filled
-              ? [
-                  BoxShadow(
-                    color: primary.withOpacity(0.22),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : null,
+          border: Border.all(color: outlineColor, width: 1),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 18, color: iconColor),
+            Icon(icon, size: 18, color: accentColor),
             const SizedBox(width: 8),
             Text(
               label,
               style: TextStyle(
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w600,
                 fontSize: 14.5,
-                color: labelColor,
+                color: accentColor,
               ),
             ),
           ],
