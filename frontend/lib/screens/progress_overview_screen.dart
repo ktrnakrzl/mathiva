@@ -115,36 +115,44 @@ class _ProgressOverviewScreenState extends State<ProgressOverviewScreen> {
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 112),
             children: [
               // ── Stat cards ─────────────────────────────────────────────────
+              // Wrapped in IntrinsicHeight so all three Expanded cards share
+              // the height of whichever one is tallest. Without this, each
+              // card sized itself independently — and since "Problems
+              // Solved" wraps to two lines while "Accuracy"/"Streak Days"
+              // stay on one, that card alone grew taller than its siblings.
               FadeSlideIn(
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _StatCard(
-                        label: 'Problems Solved',
-                        value: '128',
-                        icon: Icons.check_circle_outline_rounded,
-                        primary: primary,
+                child: IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        child: _StatCard(
+                          label: 'Problems Solved',
+                          value: '128',
+                          icon: Icons.check_circle_outline_rounded,
+                          primary: primary,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _StatCard(
-                        label: 'Accuracy',
-                        value: '86%',
-                        icon: Icons.track_changes_rounded,
-                        primary: primary,
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _StatCard(
+                          label: 'Accuracy',
+                          value: '86%',
+                          icon: Icons.track_changes_rounded,
+                          primary: primary,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _StatCard(
-                        label: 'Streak Days',
-                        value: '12',
-                        icon: Icons.local_fire_department_rounded,
-                        primary: primary,
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _StatCard(
+                          label: 'Streak Days',
+                          value: '12',
+                          icon: Icons.local_fire_department_rounded,
+                          primary: primary,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
@@ -282,6 +290,7 @@ class _StatCard extends StatelessWidget {
         ],
       ),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
             width: 36,

@@ -2,6 +2,7 @@ import 'dart:async';
 import '../presentation/widgets/animated_background.dart';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../services/app_preferences.dart';
 import 'package:go_router/go_router.dart';
 
@@ -60,6 +61,16 @@ class _PracticeScreenState extends State<PracticeScreen> {
     final selected = _selected;
     if (selected == null) return;
     _timer?.cancel();
+
+    final correct = selected == correctAnswer;
+    if (AppPreferences.hapticFeedback.value) {
+      if (correct) {
+        HapticFeedback.lightImpact();
+      } else {
+        HapticFeedback.heavyImpact();
+      }
+    }
+
     context.push(
       RouteNames.result,
       extra: {
@@ -70,7 +81,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
         'difficulty': widget.difficulty,
         'selectedAnswer': selected,
         'elapsedSeconds': _elapsedSeconds,
-        'isCorrect': selected == correctAnswer,
+        'isCorrect': correct,
       },
     );
   }
@@ -94,6 +105,25 @@ class _PracticeScreenState extends State<PracticeScreen> {
         ? [problem.answer, 'x = 1 and x = 3/2', 'x = -2 and x = 3', 'No solution']
         : problem.choices;
 
+    // The screen uses `extendBodyBehindAppBar: true` + `SafeArea(top:
+    // false)` so the scrolling background shows through behind the
+    // translucent-feeling app bar. That means the ListView itself has to
+    // account for *all* of the space the app bar visually occupies —
+    // status bar height + the app bar's own height (including its
+    // bottom hairline) — before the real content starts.
+    //
+    // MathivaAppBar is taller when it has a subtitle (74 vs 58) plus a
+    // 1px bottom border, and this screen always passes a subtitle. A
+    // hardcoded `86` doesn't track that, and on devices with a taller
+    // status bar it ends up too small, letting the app bar visually
+    // overlap/clip the first chunk of scrollable content (which is what
+    // was happening — the list *was* scrolling, it just started from
+    // underneath the header).
+    const appBarHeight = 74.0; // MathivaAppBar.preferredSize when subtitle != null
+    const appBarBottomBorder = 1.0;
+    final statusBarHeight = MediaQuery.of(context).padding.top;
+    final topPadding = statusBarHeight + appBarHeight + appBarBottomBorder + 12;
+
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: MathivaAppBar(
@@ -115,7 +145,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
         child: SafeArea(
           top: false,
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 86, 16, 28),
+            padding: EdgeInsets.fromLTRB(16, topPadding, 16, 28),
             physics: const BouncingScrollPhysics(),
             children: [
               _SoftCard(
@@ -297,6 +327,10 @@ class _Pill extends StatelessWidget {
   }
 }
 
+// Minimal outline button — no fill, no shadow. Renamed from
+// `_GradientButton` would change the public surface other files might
+// reference by name, so the class name is left as-is; only the visual
+// treatment changed to match the rest of the app's new outline style.
 class _GradientButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
@@ -311,15 +345,19 @@ class _GradientButton extends StatelessWidget {
     final _gBackgroundStart = _palette.background.first;
     final _chip = Color.alphaBlend(_primary.withOpacity(0.05), const Color(0xFFF7F9FC));
 
+    final isDisabled = onPressed == null;
+    final accentColor = isDisabled ? const Color(0xFFB4B2A9) : _primary;
+
     return SizedBox(
       width: double.infinity,
       height: 54,
-      child: ElevatedButton(
+      child: OutlinedButton(
         onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: onPressed == null ? const Color(0xFFD1D5DB) : _primary,
-          foregroundColor: Colors.white,
-          disabledForegroundColor: Colors.white,
+        style: OutlinedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          foregroundColor: accentColor,
+          disabledForegroundColor: accentColor,
+          side: BorderSide(color: accentColor, width: 1),
           shadowColor: Colors.transparent,
           elevation: 0,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),

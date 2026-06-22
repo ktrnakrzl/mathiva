@@ -124,21 +124,16 @@ class _GradientButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) => SizedBox(
         height: 54,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: _primary,
-            borderRadius: BorderRadius.circular(14),
+        child: OutlinedButton(
+          onPressed: onPressed,
+          style: OutlinedButton.styleFrom(
+            backgroundColor: Colors.transparent,
+            foregroundColor: _primary,
+            side: BorderSide(color: _primary, width: 1),
+            shadowColor: Colors.transparent,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           ),
-          child: ElevatedButton(
-            onPressed: onPressed,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.transparent,
-              foregroundColor: const Color(0xFFF7F9FC),
-              shadowColor: Colors.transparent,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-            ),
-            child: Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
-          ),
+          child: Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
         ),
       );
 }
