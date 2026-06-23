@@ -8,25 +8,43 @@ router = APIRouter(
     tags=["ask"]
 )
 
+
 @router.post("/ask")
 def ask(question: str = Query(...)):
     try:
 
+        # Retrieve relevant chunks
         context_data = retrieve_context(question)
 
+        # Combine chunks into one context string
         context = "\n\n".join(
             context_data["chunks"]
         )
 
-        prompt = f"""Based on this math content, answer the student's question.
+        # Build prompt
+        prompt = f"""You are Mathiva, a helpful math tutor.
 
-Content:
+Use the following course material to answer the student's question.
+
+Course Material:
 {context}
 
-Student Question: {question}
+Student Question:
+{question}
+
+Instructions:
+- Answer clearly and concisely.
+- Do not repeat the course material.
+- Do not repeat these instructions.
 
 Answer:"""
 
+        # Debug: print the prompt in the terminal
+        print("\n===== PROMPT =====")
+        print(prompt)
+        print("==================\n")
+
+        # Generate answer using Phi
         answer = generate_answer(prompt)
 
         return {

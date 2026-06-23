@@ -1,7 +1,5 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-
-import '../core/constants/api_constants.dart';
+import '../services/chat_service.dart';
 import '../services/app_preferences.dart';
 import '../theme/app_theme.dart';
 import '../widgets/mathiva_bottom_nav.dart';
@@ -41,19 +39,9 @@ class _ChatScreenState extends State<ChatScreen> {
   });
 
   try {
-    final dio = Dio(BaseOptions(
-      baseUrl: kBaseUrl,
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 60),
-      headers: {'Content-Type': 'application/json'},
-    ));
-
-    final response = await dio.post(
-      '/ask',
-      queryParameters: {'question': question},
-    );
-
-    final fullAnswer = response.data['answer']?.toString() ?? 'Sorry, I could not get an answer.';
+    // ask backend and get answer
+    
+    final fullAnswer = await ChatService.ask(question);
     
     // Add empty message first
     setState(() {
