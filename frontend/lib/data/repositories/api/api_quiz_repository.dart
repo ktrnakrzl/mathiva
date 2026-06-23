@@ -14,13 +14,15 @@ class ApiQuizRepository implements QuizRepository {
 
   @override
   Future<AnswerResponse> submitAnswer(AnswerRequest request) async {
-    final response = await _dio.post('/quiz/submit-answer', data: request.toJson());
+    final response =
+        await _dio.post('/quiz/submit-answer', data: request.toJson());
     return AnswerResponse.fromJson(response.data);
   }
 
   @override
   Future<QuizResult> finishQuiz(String quizId, String studentId) async {
-    final response = await _dio.post('/quiz/finish', data: {'quiz_id': quizId, 'student_id': studentId});
+    final response = await _dio.post('/quiz/finish',
+        data: {'quiz_id': quizId, 'student_id': studentId});
     return QuizResult.fromJson(response.data);
   }
 }

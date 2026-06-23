@@ -20,9 +20,15 @@ final dioProvider = Provider<Dio>((ref) {
 });
 
 // API Repository Providers
-final authRepositoryProvider = Provider<AuthRepository>((ref) => ApiAuthRepository(ref.read(dioProvider)));
-final subjectRepositoryProvider = Provider<SubjectRepository>((ref) => ApiSubjectRepository(ref.read(dioProvider)));
-final tutorRepositoryProvider = Provider<TutorRepository>((ref) => ApiTutorRepository(ref.read(dioProvider)));
-final quizRepositoryProvider = Provider<QuizRepository>((ref) => ApiQuizRepository(ref.read(dioProvider)));
-final reviewRepositoryProvider = Provider<ReviewRepository>((ref) => ApiReviewRepository(ref.read(dioProvider)));
-final progressRepositoryProvider = Provider<ProgressRepository>((ref) => ApiProgressRepository(ref.read(dioProvider)));
+final authRepositoryProvider =
+    Provider<AuthRepository>((ref) => ApiAuthRepository(ref.read(dioProvider)));
+final subjectRepositoryProvider = Provider<SubjectRepository>(
+    (ref) => ApiSubjectRepository(ref.read(dioProvider)));
+final tutorRepositoryProvider = Provider<TutorRepository>(
+    (ref) => ApiTutorRepository(ref.read(dioProvider)));
+final quizRepositoryProvider =
+    Provider<QuizRepository>((ref) => ApiQuizRepository(ref.read(dioProvider)));
+final reviewRepositoryProvider = Provider<ReviewRepository>(
+    (ref) => ApiReviewRepository(ref.read(dioProvider)));
+final progressRepositoryProvider = Provider<ProgressRepository>(
+    (ref) => ApiProgressRepository(ref.read(dioProvider)));

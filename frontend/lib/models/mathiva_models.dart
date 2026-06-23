@@ -1,8 +1,11 @@
+import 'package:flutter/material.dart';
+
 class MathSubject {
   final String id;
   final String title;
   final String gradeLevel;
   final String iconText;
+  final IconData subjectIcon;
   final int progress;
   final List<MathTopic> topics;
 
@@ -11,6 +14,7 @@ class MathSubject {
     required this.title,
     required this.gradeLevel,
     required this.iconText,
+    this.subjectIcon = Icons.calculate_rounded,
     required this.progress,
     required this.topics,
   });

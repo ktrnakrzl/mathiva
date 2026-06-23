@@ -9,7 +9,9 @@ class ApiSubjectRepository implements SubjectRepository {
   @override
   Future<List<Subject>> getSubjects() async {
     final response = await _dio.get('/subjects');
-    return (response.data as List).map((item) => Subject.fromJson(item)).toList();
+    return (response.data as List)
+        .map((item) => Subject.fromJson(item))
+        .toList();
   }
 
   @override

@@ -10,7 +10,8 @@ class AuthNotifier extends StateNotifier<AsyncValue<LoginResponse?>> {
   Future<void> login(String email, String password) async {
     state = const AsyncValue.loading();
     try {
-      final response = await _repository.login(LoginRequest(email: email, password: password));
+      final response = await _repository
+          .login(LoginRequest(email: email, password: password));
       state = AsyncValue.data(response);
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
@@ -18,6 +19,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<LoginResponse?>> {
   }
 }
 
-final authNotifierProvider = StateNotifierProvider<AuthNotifier, AsyncValue<LoginResponse?>>((ref) {
+final authNotifierProvider =
+    StateNotifierProvider<AuthNotifier, AsyncValue<LoginResponse?>>((ref) {
   return AuthNotifier(ref.read(authRepositoryProvider));
 });

@@ -13,8 +13,10 @@ class PointsBar extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Points: $points', style: Theme.of(context).textTheme.titleMedium),
-            Text('Streak: $streakDays days', style: Theme.of(context).textTheme.titleMedium),
+            Text('Points: $points',
+                style: Theme.of(context).textTheme.titleMedium),
+            Text('Streak: $streakDays days',
+                style: Theme.of(context).textTheme.titleMedium),
           ],
         ),
       ),

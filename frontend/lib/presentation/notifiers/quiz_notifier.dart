@@ -10,8 +10,14 @@ class QuizState {
   final QuizResult? result;
   const QuizState({this.quiz, this.lastAnswer, this.result});
 
-  QuizState copyWith({QuizStartResponse? quiz, AnswerResponse? lastAnswer, QuizResult? result}) {
-    return QuizState(quiz: quiz ?? this.quiz, lastAnswer: lastAnswer ?? this.lastAnswer, result: result ?? this.result);
+  QuizState copyWith(
+      {QuizStartResponse? quiz,
+      AnswerResponse? lastAnswer,
+      QuizResult? result}) {
+    return QuizState(
+        quiz: quiz ?? this.quiz,
+        lastAnswer: lastAnswer ?? this.lastAnswer,
+        result: result ?? this.result);
   }
 }
 
@@ -19,11 +25,17 @@ class QuizNotifier extends StateNotifier<AsyncValue<QuizState>> {
   final QuizRepository _repository;
   QuizNotifier(this._repository) : super(const AsyncValue.data(QuizState()));
 
-  Future<void> startQuiz(String subjectId, String topicId, String difficulty) async {
+  Future<void> startQuiz(
+      String subjectId, String topicId, String difficulty) async {
     state = const AsyncValue.loading();
     try {
       final quiz = await _repository.startQuiz(
-        QuizStartRequest(student_id: AppStrings.studentId, subject_id: subjectId, topic_id: topicId, difficulty: difficulty, item_count: 5),
+        QuizStartRequest(
+            student_id: AppStrings.studentId,
+            subject_id: subjectId,
+            topic_id: topicId,
+            difficulty: difficulty,
+            item_count: 5),
       );
       state = AsyncValue.data(QuizState(quiz: quiz));
     } catch (error, stackTrace) {
@@ -31,11 +43,13 @@ class QuizNotifier extends StateNotifier<AsyncValue<QuizState>> {
     }
   }
 
-  Future<void> submitAnswer(String quizId, String questionId, String answer) async {
+  Future<void> submitAnswer(
+      String quizId, String questionId, String answer) async {
     final current = state.value ?? const QuizState();
     state = const AsyncValue.loading();
     try {
-      final response = await _repository.submitAnswer(AnswerRequest(quiz_id: quizId, question_id: questionId, student_answer: answer));
+      final response = await _repository.submitAnswer(AnswerRequest(
+          quiz_id: quizId, question_id: questionId, student_answer: answer));
       state = AsyncValue.data(current.copyWith(lastAnswer: response));
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
@@ -54,6 +68,7 @@ class QuizNotifier extends StateNotifier<AsyncValue<QuizState>> {
   }
 }
 
-final quizNotifierProvider = StateNotifierProvider<QuizNotifier, AsyncValue<QuizState>>((ref) {
+final quizNotifierProvider =
+    StateNotifierProvider<QuizNotifier, AsyncValue<QuizState>>((ref) {
   return QuizNotifier(ref.read(quizRepositoryProvider));
 });

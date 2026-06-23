@@ -19,6 +19,8 @@ class ProgressNotifier extends StateNotifier<AsyncValue<StudentProgress?>> {
   }
 }
 
-final progressNotifierProvider = StateNotifierProvider<ProgressNotifier, AsyncValue<StudentProgress?>>((ref) {
+final progressNotifierProvider =
+    StateNotifierProvider<ProgressNotifier, AsyncValue<StudentProgress?>>(
+        (ref) {
   return ProgressNotifier(ref.read(progressRepositoryProvider));
 });

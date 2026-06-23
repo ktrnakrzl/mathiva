@@ -15,7 +15,9 @@ class ApiProgressRepository implements ProgressRepository {
   @override
   Future<List<TopicMastery>> getMastery(String studentId) async {
     final response = await _dio.get('/students/$studentId/mastery');
-    return (response.data as List).map((item) => TopicMastery.fromJson(item)).toList();
+    return (response.data as List)
+        .map((item) => TopicMastery.fromJson(item))
+        .toList();
   }
 
   @override

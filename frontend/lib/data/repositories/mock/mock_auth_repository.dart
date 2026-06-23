@@ -5,7 +5,11 @@ class MockAuthRepository implements AuthRepository {
   @override
   Future<LoginResponse> login(LoginRequest request) async {
     await Future.delayed(const Duration(milliseconds: 500));
-    return LoginResponse(student_id: 'student_001', name: 'Mathiva Student', grade_level: 'Grade 11', token: 'mock-token');
+    return LoginResponse(
+        student_id: 'student_001',
+        name: 'Mathiva Student',
+        grade_level: 'Grade 11',
+        token: 'mock-token');
   }
 
   @override

@@ -1,43 +1,233 @@
 import 'package:flutter/material.dart';
+import '../presentation/widgets/animated_background.dart';
+import '../presentation/widgets/fade_slide_in.dart';
+import '../services/app_preferences.dart';
+import 'package:go_router/go_router.dart';
 
 import '../utils/route_names.dart';
-import '../widgets/app_header.dart';
-import '../widgets/gradient_background.dart';
-import '../widgets/gradient_button.dart';
-import '../widgets/mathiva_logo.dart';
-import '../widgets/section_card.dart';
+import '../widgets/mathiva_app_bar.dart';
+
+// Shared tokens — identical values to HomeScreen's palette, so this screen
+// reads as the same surface system rather than its own design.
+const _ink = Color(0xFF111827);
+const _muted = Color(0xFF6B7280);
+const _border = Color(0xFFE5E7EB);
+const _surface = Color(0xFFFFFFFF);
+const _pageBg = Color(0xFFF8F9FB);
 
 class RegisterScreen extends StatelessWidget {
   const RegisterScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final primary = AppPreferences.palette.value.primary;
+
     return Scaffold(
-      body: GradientBackground(
-        child: Column(
-          children: [
-            const AppHeader(title: 'Create Account', subtitle: 'Start your Mathivia review journey'),
-            const SizedBox(height: 18),
-            const MathivaLogo(size: 70),
-            const SizedBox(height: 24),
-            SectionCard(
-              child: Column(
-                children: [
-                  const TextField(decoration: InputDecoration(prefixIcon: Icon(Icons.person_rounded), hintText: 'Username')),
-                  const SizedBox(height: 12),
-                  const TextField(decoration: InputDecoration(prefixIcon: Icon(Icons.email_rounded), hintText: 'Email')),
-                  const SizedBox(height: 12),
-                  const TextField(obscureText: true, decoration: InputDecoration(prefixIcon: Icon(Icons.lock_rounded), hintText: 'Password')),
-                  const SizedBox(height: 12),
-                  const TextField(obscureText: true, decoration: InputDecoration(prefixIcon: Icon(Icons.verified_user_rounded), hintText: 'Confirm Password')),
-                  const SizedBox(height: 18),
-                  GradientButton(label: 'Create Account', onPressed: () => Navigator.pushReplacementNamed(context, RouteNames.home)),
-                  const SizedBox(height: 10),
-                  TextButton(onPressed: () => Navigator.pop(context), child: const Text('Already have an account? Login')),
-                ],
+      backgroundColor: _pageBg,
+      appBar: MathivaAppBar(
+        title: 'Create Account',
+        subtitle: 'Join Mathivia today',
+        icon: Icons.person_add_rounded,
+        showBack: true,
+        onBack: () => context.canPop() ? context.pop() : context.go('/login'),
+      ),
+      body: AnimatedBackground(
+        child: SafeArea(
+          top: false,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+            physics: const BouncingScrollPhysics(),
+            children: [
+              FadeSlideIn(
+                child: Text(
+                  'Join Mathivia',
+                  style: const TextStyle(
+                    color: _ink,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 6),
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 60),
+                child: Text(
+                  'Create your learner profile and start practicing.',
+                  style: const TextStyle(
+                    color: _muted,
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // ── Form card ──
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 120),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
+                  decoration: BoxDecoration(
+                    color: _surface,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: _border, width: 1),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x08000000),
+                        blurRadius: 10,
+                        offset: Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _Field(
+                        hint: 'Full name',
+                        icon: Icons.person_outline_rounded,
+                        primary: primary,
+                      ),
+                      const SizedBox(height: 12),
+                      _Field(
+                        hint: 'Email',
+                        icon: Icons.mail_outline_rounded,
+                        primary: primary,
+                      ),
+                      const SizedBox(height: 12),
+                      _Field(
+                        hint: 'Password',
+                        icon: Icons.lock_outline_rounded,
+                        obscure: true,
+                        primary: primary,
+                      ),
+                      const SizedBox(height: 18),
+                      _PrimaryButton(
+                        label: 'Create Account',
+                        primary: primary,
+                        onPressed: () => context.go(RouteNames.home),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
+
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 170),
+                child: Center(
+                  child: TextButton(
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    onPressed: () => context.go(RouteNames.login),
+                    child: Text(
+                      'Already have an account? Log in',
+                      style: TextStyle(
+                        color: primary,
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Field ────────────────────────────────────────────────────────────────────
+
+class _Field extends StatelessWidget {
+  final String hint;
+  final IconData icon;
+  final bool obscure;
+  final Color primary;
+
+  const _Field({
+    required this.hint,
+    required this.icon,
+    required this.primary,
+    this.obscure = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      obscureText: obscure,
+      style: const TextStyle(
+        color: _ink,
+        fontSize: 14.5,
+        fontWeight: FontWeight.w500,
+      ),
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: const TextStyle(
+          color: _muted,
+          fontSize: 14.5,
+          fontWeight: FontWeight.w400,
+        ),
+        prefixIcon: Icon(icon, color: _muted, size: 19),
+        filled: true,
+        fillColor: _pageBg,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(13),
+          borderSide: const BorderSide(color: _border, width: 1),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(13),
+          borderSide: const BorderSide(color: _border, width: 1),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(13),
+          borderSide: BorderSide(color: primary, width: 1.5),
+        ),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+      ),
+    );
+  }
+}
+
+// ─── Primary Button ───────────────────────────────────────────────────────────
+
+class _PrimaryButton extends StatelessWidget {
+  final String label;
+  final Color primary;
+  final VoidCallback onPressed;
+
+  const _PrimaryButton({
+    required this.label,
+    required this.primary,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 50,
+      child: OutlinedButton(
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          foregroundColor: primary,
+          side: BorderSide(color: primary, width: 1),
+          elevation: 0,
+          shadowColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(13),
+          ),
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5),
         ),
       ),
     );

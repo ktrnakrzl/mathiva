@@ -24,7 +24,8 @@ class _StepRevealerState extends State<StepRevealer> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Step ${entry.key + 1}: ', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    Text('Step ${entry.key + 1}: ',
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
                     Expanded(child: MathRenderer(text: entry.value)),
                   ],
                 ),

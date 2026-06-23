@@ -9,11 +9,16 @@ class TutorNotifier extends StateNotifier<AsyncValue<TutorResponse?>> {
 
   TutorNotifier(this._repository) : super(const AsyncValue.data(null));
 
-  Future<void> askQuestion(String question, String subjectId, String topicId) async {
+  Future<void> askQuestion(
+      String question, String subjectId, String topicId) async {
     state = const AsyncValue.loading();
     try {
       final response = await _repository.askQuestion(
-        TutorRequest(student_id: AppStrings.studentId, question: question, subject_id: subjectId, topic_id: topicId),
+        TutorRequest(
+            student_id: AppStrings.studentId,
+            question: question,
+            subject_id: subjectId,
+            topic_id: topicId),
       );
       state = AsyncValue.data(response);
     } catch (error, stackTrace) {
@@ -22,6 +27,7 @@ class TutorNotifier extends StateNotifier<AsyncValue<TutorResponse?>> {
   }
 }
 
-final tutorNotifierProvider = StateNotifierProvider<TutorNotifier, AsyncValue<TutorResponse?>>((ref) {
+final tutorNotifierProvider =
+    StateNotifierProvider<TutorNotifier, AsyncValue<TutorResponse?>>((ref) {
   return TutorNotifier(ref.read(tutorRepositoryProvider));
 });

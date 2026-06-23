@@ -1,16 +1,21 @@
 import 'dart:async';
+import '../presentation/widgets/animated_background.dart';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../services/app_preferences.dart';
+import 'package:go_router/go_router.dart';
 
-import '../models/mathiva_models.dart';
 import '../services/local_content_service.dart';
-import '../theme/app_theme.dart';
 import '../utils/route_names.dart';
-import '../widgets/app_header.dart';
-import '../widgets/gradient_background.dart';
-import '../widgets/progress_line.dart';
-import '../widgets/section_card.dart';
+import '../widgets/mathiva_app_bar.dart';
+
+final _primary = Color(0xFF2563EB);
+final _secondary = Color(0xFF14B8A6);
+final _chip = Color(0xFFEFF6FF);
+
+final _ink = Color(0xFF242033);
+final _muted = Color(0xFF8C879A);
 
 class PracticeScreen extends StatefulWidget {
   final String subjectId;
@@ -33,15 +38,14 @@ class PracticeScreen extends StatefulWidget {
 }
 
 class _PracticeScreenState extends State<PracticeScreen> {
+  String? _selected;
   Timer? _timer;
   int _elapsedSeconds = 0;
-  String? _selectedAnswer;
-  bool _submitted = false;
 
   @override
   void initState() {
     super.initState();
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       setState(() => _elapsedSeconds++);
     });
@@ -53,169 +57,368 @@ class _PracticeScreenState extends State<PracticeScreen> {
     super.dispose();
   }
 
-  List<String> _choicesFor(PracticeProblem problem) {
-    if (problem.choices.isNotEmpty) return problem.choices;
-    final answer = problem.answer;
-    if (answer.contains('-1') && answer.contains('-3/2')) {
-      return [answer, 'x = 1 and x = 3/2', 'x = -2 and x = -3', 'x = 0 and x = -5/2'];
-    }
-    if (answer == '9' || answer == 'f(4) = 9') return [answer, '7', '8', '10'];
-    if (answer == 'x + 1') return [answer, 'x - 1', 'x^2 + 1', '1'];
-    if (answer == '3') return [answer, '2', '4', '5'];
-    if (answer == '6') return [answer, '5', '7', '8'];
-    if (answer == '1/2') return [answer, '1/4', '1/3', '2'];
-    if (answer == '3/5') return [answer, '5/3', '6/10 only', '4/5'];
-    if (answer == '4') return [answer, '2', '8', '16'];
-    return [answer, 'Not enough information', '0', '1'];
-  }
-
-  String _formatTime(int seconds) {
-    final minutes = seconds ~/ 60;
-    final secs = seconds % 60;
-    return '$minutes:${secs.toString().padLeft(2, '0')}';
-  }
-
-  void _submit() {
-    if (_submitted || !mounted) return;
-    _submitted = true;
+  void _submit(String correctAnswer) {
+    final selected = _selected;
+    if (selected == null) return;
     _timer?.cancel();
-    final concept = LocalContentService().getConcept(widget.subjectId, widget.topicId, widget.lessonId, widget.conceptId);
-    final selected = _selectedAnswer;
-    Navigator.pushReplacementNamed(context, RouteNames.result, arguments: {
-      'subjectId': widget.subjectId,
-      'topicId': widget.topicId,
-      'lessonId': widget.lessonId,
-      'conceptId': widget.conceptId,
-      'difficulty': widget.difficulty,
-      'selectedAnswer': selected,
-      'elapsedSeconds': _elapsedSeconds,
-      'isCorrect': selected == concept.problem.answer,
-    });
+
+    final correct = selected == correctAnswer;
+    if (AppPreferences.hapticFeedback.value) {
+      if (correct) {
+        HapticFeedback.lightImpact();
+      } else {
+        HapticFeedback.heavyImpact();
+      }
+    }
+
+    context.push(
+      RouteNames.result,
+      extra: {
+        'subjectId': widget.subjectId,
+        'topicId': widget.topicId,
+        'lessonId': widget.lessonId,
+        'conceptId': widget.conceptId,
+        'difficulty': widget.difficulty,
+        'selectedAnswer': selected,
+        'elapsedSeconds': _elapsedSeconds,
+        'isCorrect': correct,
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final concept = LocalContentService().getConcept(widget.subjectId, widget.topicId, widget.lessonId, widget.conceptId);
+    final _palette = AppPreferences.palette.value;
+    final _primary = _palette.primary;
+    final _secondary = _palette.secondary;
+    final _gBackgroundStart = _palette.background.first;
+    final _chip =
+        Color.alphaBlend(_primary.withOpacity(0.05), const Color(0xFFF7F9FC));
+
+    final concept = LocalContentService().getConcept(
+      widget.subjectId,
+      widget.topicId,
+      widget.lessonId,
+      widget.conceptId,
+    );
     final problem = concept.problem;
-    final choices = _choicesFor(problem);
+    final choices = problem.choices.isEmpty
+        ? [
+            problem.answer,
+            'x = 1 and x = 3/2',
+            'x = -2 and x = 3',
+            'No solution'
+          ]
+        : problem.choices;
+
+    // The screen uses `extendBodyBehindAppBar: true` + `SafeArea(top:
+    // false)` so the scrolling background shows through behind the
+    // translucent-feeling app bar. That means the ListView itself has to
+    // account for *all* of the space the app bar visually occupies —
+    // status bar height + the app bar's own height (including its
+    // bottom hairline) — before the real content starts.
+    //
+    // MathivaAppBar is taller when it has a subtitle (74 vs 58) plus a
+    // 1px bottom border, and this screen always passes a subtitle. A
+    // hardcoded `86` doesn't track that, and on devices with a taller
+    // status bar it ends up too small, letting the app bar visually
+    // overlap/clip the first chunk of scrollable content (which is what
+    // was happening — the list *was* scrolling, it just started from
+    // underneath the header).
+    const appBarHeight =
+        74.0; // MathivaAppBar.preferredSize when subtitle != null
+    const appBarBottomBorder = 1.0;
+    final statusBarHeight = MediaQuery.of(context).padding.top;
+    final topPadding = statusBarHeight + appBarHeight + appBarBottomBorder + 12;
+
     return Scaffold(
-      body: GradientBackground(
-        scrollable: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+      extendBodyBehindAppBar: true,
+      appBar: MathivaAppBar(
+        title: '${widget.difficulty} Practice',
+        subtitle: 'Choose your answer carefully',
+        icon: Icons.edit_note_rounded,
+        onBack: () => context.canPop() ? context.pop() : context.go('/concept'),
+        actions: [
+          IconButton(
+            tooltip: 'Ask Math Tutor',
+            onPressed: () => context.push(RouteNames.chat),
+            icon: const Icon(Icons.chat_bubble_outline_rounded),
+            color: _primary,
+          ),
+          const SizedBox(width: 4),
+        ],
+      ),
+      body: AnimatedBackground(
+        child: SafeArea(
+          top: false,
+          child: ListView(
+            padding: EdgeInsets.fromLTRB(16, topPadding, 16, 28),
+            physics: const BouncingScrollPhysics(),
             children: [
-            const AppHeader(title: 'Practice', subtitle: '1/1 multiple-choice problem'),
-            const SizedBox(height: 12),
-            const ProgressLine(percent: 100),
-            const SizedBox(height: 16),
-            Row(
-              children: ['Easy', 'Medium', 'Hard']
-                  .map((level) => Expanded(
-                        child: Container(
-                          margin: const EdgeInsets.only(right: 8),
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          decoration: BoxDecoration(color: level == widget.difficulty ? Theme.of(context).colorScheme.primary : Colors.white, borderRadius: BorderRadius.circular(14)),
-                          child: Center(child: Text(level, style: TextStyle(color: level == widget.difficulty ? Colors.white : AppColors.ink, fontWeight: FontWeight.w900))),
-                        ),
-                      ))
-                  .toList(),
-            ),
-            const SizedBox(height: 18),
-            Expanded(
-              child: ListView(
-                padding: EdgeInsets.zero,
-                physics: const BouncingScrollPhysics(),
-                children: [
-                  SectionCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+              _SoftCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
                       children: [
-                        const Text('Problem', style: TextStyle(color: AppColors.muted, fontWeight: FontWeight.w800)),
-                        const SizedBox(height: 12),
-                        Text(problem.question, textAlign: TextAlign.center, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.ink)),
-                        const SizedBox(height: 20),
-                        const Text('Choose the correct answer', style: TextStyle(fontWeight: FontWeight.w900)),
-                        const SizedBox(height: 10),
-                        ...choices.map((choice) {
-                          final selected = choice == _selectedAnswer;
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: Material(
-                              color: selected ? Theme.of(context).colorScheme.primary.withOpacity(.12) : AppPreferences.palette.value.primary.withOpacity(.04),
-                              borderRadius: BorderRadius.circular(18),
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(18),
-                                onTap: () => setState(() => _selectedAnswer = choice),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(18),
-                                    border: Border.all(color: selected ? Theme.of(context).colorScheme.primary : Colors.transparent, width: 2),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Icon(selected ? Icons.radio_button_checked_rounded : Icons.radio_button_off_rounded, color: selected ? Theme.of(context).colorScheme.primary : AppColors.muted),
-                                      const SizedBox(width: 12),
-                                      Expanded(child: Text(choice, style: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.ink))),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        }),
+                        const _Pill(label: 'Question 1 of 1'),
+                        const Spacer(),
+                        _TimerBadge(seconds: _elapsedSeconds),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(child: OutlinedButton(onPressed: () => setState(() => _selectedAnswer = null), child: const Text('Clear'))),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: _selectedAnswer == null ? null : () => _submit(),
-                          style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary, foregroundColor: Colors.white),
-                          child: const Text('Submit'),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary.withOpacity(.10),
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(.25)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.timer_rounded, color: Theme.of(context).colorScheme.primary, size: 24),
-                          const SizedBox(width: 8),
-                          Text(
-                            _formatTime(_elapsedSeconds),
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.primary,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ],
+                    const SizedBox(height: 16),
+                    Text(
+                      problem.question,
+                      style: TextStyle(
+                        color: _ink,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        height: 1.35,
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 12),
+                    Text(
+                      'Choose an answer. The next screen will show the solution and why it works.',
+                      style: TextStyle(color: _muted, height: 1.4),
+                    ),
+                  ],
+                ),
               ),
-            ),
+              const SizedBox(height: 20),
+              ...choices.map(
+                (choice) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _ChoiceTile(
+                    label: choice,
+                    selected: _selected == choice,
+                    onTap: () => setState(() => _selected = choice),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              _GradientButton(
+                label: 'Submit Answer',
+                onPressed:
+                    _selected == null ? null : () => _submit(problem.answer),
+              ),
             ],
           ),
         ),
       ),
     );
   }
+}
+
+class _ChoiceTile extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _ChoiceTile({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final _palette = AppPreferences.palette.value;
+    final _primary = _palette.primary;
+    final _secondary = _palette.secondary;
+    final _gBackgroundStart = _palette.background.first;
+    final _chip =
+        Color.alphaBlend(_primary.withOpacity(0.05), const Color(0xFFF7F9FC));
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: onTap,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF7F9FC),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+                color: selected ? _primary : const Color(0xFFF1ECFF)),
+            boxShadow: [
+              BoxShadow(
+                color: _primary.withOpacity(selected ? .12 : .06),
+                blurRadius: 8,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: selected ? _primary : _chip,
+                ),
+                child: selected
+                    ? const Icon(Icons.check_rounded,
+                        color: const Color(0xFFF7F9FC), size: 16)
+                    : null,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    color: selected ? _primary : _ink,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TimerBadge extends StatelessWidget {
+  final int seconds;
+
+  const _TimerBadge({required this.seconds});
+
+  @override
+  Widget build(BuildContext context) {
+    final _palette = AppPreferences.palette.value;
+    final _primary = _palette.primary;
+    final _secondary = _palette.secondary;
+    final _gBackgroundStart = _palette.background.first;
+    final _chip =
+        Color.alphaBlend(_primary.withOpacity(0.05), const Color(0xFFF7F9FC));
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7F9FC),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: _chip),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.timer_outlined, size: 16, color: _primary),
+          const SizedBox(width: 5),
+          Text(
+            _formatTimer(seconds),
+            style: TextStyle(color: _primary, fontWeight: FontWeight.w700),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Pill extends StatelessWidget {
+  final String label;
+
+  const _Pill({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final _palette = AppPreferences.palette.value;
+    final _primary = _palette.primary;
+    final _secondary = _palette.secondary;
+    final _gBackgroundStart = _palette.background.first;
+    final _chip =
+        Color.alphaBlend(_primary.withOpacity(0.05), const Color(0xFFF7F9FC));
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      decoration:
+          BoxDecoration(color: _chip, borderRadius: BorderRadius.circular(20)),
+      child: Text(label,
+          style: TextStyle(color: _primary, fontWeight: FontWeight.w600)),
+    );
+  }
+}
+
+// Minimal outline button — no fill, no shadow. Renamed from
+// `_GradientButton` would change the public surface other files might
+// reference by name, so the class name is left as-is; only the visual
+// treatment changed to match the rest of the app's new outline style.
+class _GradientButton extends StatelessWidget {
+  final String label;
+  final VoidCallback? onPressed;
+
+  const _GradientButton({required this.label, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    final _palette = AppPreferences.palette.value;
+    final _primary = _palette.primary;
+    final _secondary = _palette.secondary;
+    final _gBackgroundStart = _palette.background.first;
+    final _chip =
+        Color.alphaBlend(_primary.withOpacity(0.05), const Color(0xFFF7F9FC));
+
+    final isDisabled = onPressed == null;
+    final accentColor = isDisabled ? const Color(0xFFB4B2A9) : _primary;
+
+    return SizedBox(
+      width: double.infinity,
+      height: 54,
+      child: OutlinedButton(
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          foregroundColor: accentColor,
+          disabledForegroundColor: accentColor,
+          side: BorderSide(color: accentColor, width: 1),
+          shadowColor: Colors.transparent,
+          elevation: 0,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        ),
+        child: Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
+      ),
+    );
+  }
+}
+
+class _SoftCard extends StatelessWidget {
+  final Widget child;
+
+  const _SoftCard({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    final _palette = AppPreferences.palette.value;
+    final _primary = _palette.primary;
+    final _chip =
+        Color.alphaBlend(_primary.withOpacity(0.05), const Color(0xFFF7F9FC));
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7F9FC),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFF1ECFF)),
+        boxShadow: [
+          BoxShadow(
+            color: _primary.withOpacity(0.04),
+            blurRadius: 9,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+}
+
+String _formatTimer(int seconds) {
+  final minutes = seconds ~/ 60;
+  final remainder = seconds % 60;
+  return '${minutes.toString().padLeft(2, '0')}:${remainder.toString().padLeft(2, '0')}';
 }

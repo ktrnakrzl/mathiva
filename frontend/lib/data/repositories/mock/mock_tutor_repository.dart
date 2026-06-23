@@ -6,7 +6,8 @@ class MockTutorRepository implements TutorRepository {
   Future<TutorResponse> askQuestion(TutorRequest request) async {
     await Future.delayed(const Duration(milliseconds: 800));
     return TutorResponse(
-      answer: 'A function is a relation where every input has exactly one output. Example: \\(f(x)=2x+1\\).',
+      answer:
+          'A function is a relation where every input has exactly one output. Example: \\(f(x)=2x+1\\).',
       steps: const [
         'Identify the input values.',
         'Check whether any input is paired with more than one output.',

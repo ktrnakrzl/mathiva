@@ -7,7 +7,8 @@ class GradientButton extends StatelessWidget {
   final VoidCallback onPressed;
   final IconData? icon;
 
-  const GradientButton({super.key, required this.label, required this.onPressed, this.icon});
+  const GradientButton(
+      {super.key, required this.label, required this.onPressed, this.icon});
 
   @override
   Widget build(BuildContext context) {
@@ -24,18 +25,25 @@ class GradientButton extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 18),
             decoration: BoxDecoration(
-              gradient: LinearGradient(colors: [palette.primary, palette.secondary]),
+              gradient:
+                  LinearGradient(colors: [palette.primary, palette.secondary]),
               borderRadius: BorderRadius.circular(18),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                if (icon != null) ...[Icon(icon, color: Colors.white, size: 20), const SizedBox(width: 8)],
+                if (icon != null) ...[
+                  Icon(icon, color: const Color(0xFFF7F9FC), size: 20),
+                  const SizedBox(width: 8)
+                ],
                 Flexible(
                   child: Text(
                     label,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16),
+                    style: const TextStyle(
+                        color: const Color(0xFFF7F9FC),
+                        fontWeight: FontWeight.w900,
+                        fontSize: 16),
                   ),
                 ),
               ],

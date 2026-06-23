@@ -9,12 +9,16 @@ class ApiReviewRepository implements ReviewRepository {
   @override
   Future<List<ReviewQuestion>> getReviewQueue(String studentId) async {
     final response = await _dio.get('/students/$studentId/review-queue');
-    return (response.data as List).map((item) => ReviewQuestion.fromJson(item)).toList();
+    return (response.data as List)
+        .map((item) => ReviewQuestion.fromJson(item))
+        .toList();
   }
 
   @override
-  Future<ReviewResultResponse> submitReviewResult(String studentId, ReviewResult result) async {
-    final response = await _dio.post('/students/$studentId/review-result', data: result.toJson());
+  Future<ReviewResultResponse> submitReviewResult(
+      String studentId, ReviewResult result) async {
+    final response = await _dio.post('/students/$studentId/review-result',
+        data: result.toJson());
     return ReviewResultResponse.fromJson(response.data);
   }
 }

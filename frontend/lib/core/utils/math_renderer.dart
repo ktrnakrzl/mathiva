@@ -6,7 +6,8 @@ class MathRenderer extends StatelessWidget {
   final TextStyle? textStyle;
   final double mathFontSize;
 
-  const MathRenderer({super.key, required this.text, this.textStyle, this.mathFontSize = 16});
+  const MathRenderer(
+      {super.key, required this.text, this.textStyle, this.mathFontSize = 16});
 
   @override
   Widget build(BuildContext context) {

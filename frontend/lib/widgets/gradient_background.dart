@@ -6,7 +6,8 @@ class GradientBackground extends StatelessWidget {
   final Widget child;
   final bool scrollable;
 
-  const GradientBackground({super.key, required this.child, this.scrollable = true});
+  const GradientBackground(
+      {super.key, required this.child, this.scrollable = true});
 
   @override
   Widget build(BuildContext context) {
@@ -18,13 +19,7 @@ class GradientBackground extends StatelessWidget {
         return Container(
           width: double.infinity,
           height: double.infinity,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: palette.background,
-            ),
-          ),
+          color: Colors.white,
           child: scrollable
               ? LayoutBuilder(
                   builder: (context, constraints) {
@@ -32,7 +27,8 @@ class GradientBackground extends StatelessWidget {
                       padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
                       physics: const BouncingScrollPhysics(),
                       child: ConstrainedBox(
-                        constraints: BoxConstraints(minHeight: constraints.maxHeight - 48),
+                        constraints: BoxConstraints(
+                            minHeight: constraints.maxHeight - 48),
                         child: content,
                       ),
                     );
