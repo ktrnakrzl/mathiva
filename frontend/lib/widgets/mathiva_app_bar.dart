@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
 import '../services/app_preferences.dart';
 
-/// SHARED APP BAR
-/// Mirrors the HomeScreen header exactly: the same lavender chrome surface
-/// and hairline border, the same indigo title treatment used for page
-/// titles ("Mathivia", "Progress"), and the same muted supporting-text
-/// style used for subtitles. This keeps every screen that uses
-/// MathivaAppBar feeling like part of the same header component family
-/// as HomeScreen, rather than a visually distinct app bar.
+/// Shared AppBar used by secondary screens (solution, search, register,
+/// practice, result, quiz, review, mastery, rewards, tutor).
+///
+/// Design system:
+///  - Chrome surface: 0xFFF6F5FB (same lavender tint as HomeScreen AppBar
+///    and MathivaBottomNav — all three pieces of app chrome read as one layer)
+///  - Chrome border: 0xFFEAE8F5 (1 px hairline)
+///  - Title color: 0xFF312E81 (indigo — consistent with every screen title)
+///  - Icon badge: palette.primary at 10 % opacity
+///  - Back arrow: palette.primary
+///
+/// No gradient. No diagnostic colors. Clean chrome surface only.
 class MathivaAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final String? subtitle;
@@ -17,14 +22,8 @@ class MathivaAppBar extends StatelessWidget implements PreferredSizeWidget {
   final List<Widget>? actions;
   final VoidCallback? onBack;
 
-  // Shared chrome tokens — identical to the lavender surface/border used by
-  // HomeScreen's AppBar and MathivaBottomNav, so all app chrome reads as
-  // one consistent surface.
   static const _chromeSurface = Color(0xFFF6F5FB);
   static const _chromeBorder = Color(0xFFEAE8F5);
-
-  // Shared text tokens — identical to HomeScreen's title color and the
-  // muted supporting-text color used across the app.
   static const _titleColor = Color(0xFF312E81);
   static const _muted = Color(0xFF6B7280);
 
@@ -44,17 +43,12 @@ class MathivaAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    final palette = AppPreferences.palette.value;
-    final primary = palette.primary;
+    final primary = AppPreferences.palette.value.primary;
 
     return AppBar(
       backgroundColor: _chromeSurface,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
-      // Matches HomeScreen's AppBar exactly: a barely-there shadow that
-      // only appears once content scrolls beneath the header, giving
-      // subtle separation from page content without a visible resting
-      // shadow or heavy border.
       scrolledUnderElevation: 1,
       shadowColor: Colors.black.withOpacity(0.04),
       automaticallyImplyLeading: automaticallyImplyLeading,
@@ -62,23 +56,20 @@ class MathivaAppBar extends StatelessWidget implements PreferredSizeWidget {
       leadingWidth: showBack ? 52 : 0,
       leading: showBack
           ? IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
-              color: primary,
-              onPressed: onBack ??
-                  () => Navigator.of(context).maybePop(),
+              icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: primary),
+              onPressed: onBack ?? () => Navigator.of(context).maybePop(),
             )
           : null,
       titleSpacing: showBack ? 0 : 20,
       title: Row(
         children: [
-          // Icon badge — same soft primary-tinted chip used throughout the
-          // app (HomeScreen action tiles, recent scans, stat cards) rather
-          // than a standalone gradient treatment.
+          // Icon badge — soft primary-tinted chip matching the icon
+          // treatment used in HomeScreen action tiles and stat cards.
           Container(
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: primary.withOpacity(0.08),
+              color: primary.withOpacity(0.09),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, color: primary, size: 17),
@@ -120,10 +111,7 @@ class MathivaAppBar extends StatelessWidget implements PreferredSizeWidget {
       actions: actions,
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(1),
-        child: Container(
-          height: 1,
-          color: _chromeBorder,
-        ),
+        child: Container(height: 1, color: _chromeBorder),
       ),
     );
   }

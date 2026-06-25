@@ -27,6 +27,7 @@ dev_dependencies:
     sdk: flutter
 
   flutter_lints: ^3.0.2
+  flutter_launcher_icons: ^0.13.1
 
 flutter:
   uses-material-design: true
@@ -64,3 +65,8 @@ flutter:
           weight: 700
         - asset: assets/fonts/Inter_24pt-ExtraBold.ttf
           weight: 800
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/app_icon.png"

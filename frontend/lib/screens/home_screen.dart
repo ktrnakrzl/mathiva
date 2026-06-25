@@ -9,11 +9,11 @@ import '../widgets/mathiva_bottom_nav.dart';
 import '../presentation/widgets/animated_background.dart';
 import '../presentation/widgets/fade_slide_in.dart';
 import '../presentation/widgets/tap_scale.dart';
+import '../presentation/widgets/app_card.dart';
 
 const _ink = Color(0xFF111827);
 const _muted = Color(0xFF6B7280);
 const _border = Color(0xFFE5E7EB);
-const _surface = Color(0xFFFFFFFF);
 const _pageBg = Color(0xFFF8F9FB);
 
 // Shared app-chrome surface — a very light lavender tint used by the header
@@ -34,7 +34,9 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
       extendBody: true,
-      backgroundColor: _pageBg,
+      // No explicit backgroundColor — the Scaffold now inherits AppTheme's
+      // scaffoldBackgroundColor, which is the active palette's faint tint.
+      // Switching palettes (Settings) recolors this screen automatically.
       appBar: AppBar(
         backgroundColor: _chromeSurface,
         surfaceTintColor: Colors.transparent,
@@ -166,119 +168,121 @@ class _NextActionsZone extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primary = AppPreferences.palette.value.primary;
-
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: _surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _border, width: 1),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x08000000),
-            blurRadius: 10,
-            offset: Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(18, 16, 18, 12),
-            child: Text(
-              'What would you like to do?',
-              style: TextStyle(
-                color: _muted,
-                fontSize: 11.5,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.4,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Card 1 — What would you like to do?
+        AppCard.flat(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(18, 16, 18, 12),
+                child: Text(
+                  'What would you like to do?',
+                  style: TextStyle(
+                    color: _muted,
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.4,
+                  ),
+                ),
               ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: _PrimaryActionTile(
-              label: 'Scan a Problem',
-              description: 'Solve any equation instantly',
-              icon: Icons.document_scanner_rounded,
-              onTap: onScanTap,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _ActionTile(
-                    label: 'Practice',
-                    icon: Icons.edit_note_rounded,
-                    onTap: onPracticeTap,
-                  ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: _PrimaryActionTile(
+                  label: 'Scan a Problem',
+                  description: 'Solve any equation instantly',
+                  icon: Icons.document_scanner_rounded,
+                  onTap: onScanTap,
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _ActionTile(
-                    label: 'Progress',
-                    icon: Icons.trending_up_rounded,
-                    onTap: onProgressTap,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _ActionTile(
-                    label: 'Awards',
-                    icon: Icons.emoji_events_rounded,
-                    onTap: onAwardsTap,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(18, 18, 18, 0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Divider(color: _border, height: 1, thickness: 1),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: Text(
-                    'Recent',
-                    style: TextStyle(
-                      color: _muted,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 0.3,
+              ),
+              const SizedBox(height: 10),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _ActionTile(
+                        label: 'Practice',
+                        icon: Icons.edit_note_rounded,
+                        onTap: onPracticeTap,
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _ActionTile(
+                        label: 'Progress',
+                        icon: Icons.trending_up_rounded,
+                        onTap: onProgressTap,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _ActionTile(
+                        label: 'Awards',
+                        icon: Icons.emoji_events_rounded,
+                        onTap: onAwardsTap,
+                      ),
+                    ),
+                  ],
                 ),
-                Expanded(
-                  child: Divider(color: _border, height: 1, thickness: 1),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 20),
+
+        // Card 2 — Recent
+        AppCard.flat(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(18, 16, 18, 0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Divider(color: _border, height: 1, thickness: 1),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: Text(
+                        'Recent',
+                        style: TextStyle(
+                          color: _muted,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Divider(color: _border, height: 1, thickness: 1),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+              _RecentScanRow(
+                title: '2x² + 5x + 3 = 0',
+                subtitle: 'Quadratic equation · solved today',
+                onTap: onScan1Tap,
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 18),
+                child: Divider(color: _border, height: 1, thickness: 1),
+              ),
+              _RecentScanRow(
+                title: 'f(x) = 2x + 1',
+                subtitle: 'Functions · reviewed yesterday',
+                onTap: onScan2Tap,
+                isLast: true,
+              ),
+            ],
           ),
-          _RecentScanRow(
-            title: '2x² + 5x + 3 = 0',
-            subtitle: 'Quadratic equation · solved today',
-            onTap: onScan1Tap,
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18),
-            child: Divider(color: _border, height: 1, thickness: 1),
-          ),
-          _RecentScanRow(
-            title: 'f(x) = 2x + 1',
-            subtitle: 'Functions · reviewed yesterday',
-            onTap: onScan2Tap,
-            isLast: true,
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -350,44 +354,6 @@ class _RecentScanRow extends StatelessWidget {
   }
 }
 
-// ─── White Card Base ──────────────────────────────────────────────────────────
-
-class _WhiteCard extends StatelessWidget {
-  final Widget child;
-  final VoidCallback? onTap;
-  final EdgeInsets padding;
-
-  const _WhiteCard({
-    required this.child,
-    this.onTap,
-    this.padding = const EdgeInsets.all(20),
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final card = Container(
-      width: double.infinity,
-      padding: padding,
-      decoration: BoxDecoration(
-        color: _surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _border, width: 1),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x08000000),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: child,
-    );
-
-    if (onTap == null) return card;
-    return TapScale(onTap: onTap, child: card);
-  }
-}
-
 // ─── Continue Learning Hero ───────────────────────────────────────────────────
 
 class _ContinueLearningHero extends StatelessWidget {
@@ -407,100 +373,102 @@ class _ContinueLearningHero extends StatelessWidget {
   Widget build(BuildContext context) {
     final primary = AppPreferences.palette.value.primary;
 
-    return _WhiteCard(
+    return TapScale(
       onTap: onTap,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 46,
-                height: 46,
-                decoration: BoxDecoration(
-                  color: primary.withOpacity(0.08),
-                  borderRadius: BorderRadius.circular(14),
+      child: AppCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    color: primary.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(Icons.auto_awesome_rounded, color: primary, size: 22),
                 ),
-                child: Icon(Icons.auto_awesome_rounded, color: primary, size: 22),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "Today's Focus",
-                      style: TextStyle(
-                        color: _muted,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Today's Focus",
+                        style: TextStyle(
+                          color: _muted,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      lesson,
-                      style: const TextStyle(
-                        color: _ink,
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700,
+                      const SizedBox(height: 3),
+                      Text(
+                        lesson,
+                        style: const TextStyle(
+                          color: _ink,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subject,
-                      style: const TextStyle(color: _muted, fontSize: 12.5),
-                    ),
-                  ],
+                      const SizedBox(height: 2),
+                      Text(
+                        subject,
+                        style: const TextStyle(color: _muted, fontSize: 12.5),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: primary.withOpacity(0.07),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: primary.withOpacity(0.12)),
+                const SizedBox(width: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: primary.withOpacity(0.07),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: primary.withOpacity(0.12)),
+                  ),
+                  child: Text(
+                    '$progress%',
+                    style: TextStyle(
+                      color: primary,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
+                  ),
                 ),
-                child: Text(
-                  '$progress%',
+              ],
+            ),
+            const SizedBox(height: 18),
+            Row(
+              children: [
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(99),
+                    child: LinearProgressIndicator(
+                      value: (progress / 100).clamp(0.0, 1.0),
+                      minHeight: 6,
+                      backgroundColor: _border,
+                      valueColor: AlwaysStoppedAnimation<Color>(primary),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Text(
+                  'Continue',
                   style: TextStyle(
                     color: primary,
-                    fontWeight: FontWeight.w700,
                     fontSize: 13,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          Row(
-            children: [
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(99),
-                  child: LinearProgressIndicator(
-                    value: (progress / 100).clamp(0.0, 1.0),
-                    minHeight: 6,
-                    backgroundColor: _border,
-                    valueColor: AlwaysStoppedAnimation<Color>(primary),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 14),
-              Text(
-                'Continue',
-                style: TextStyle(
-                  color: primary,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(width: 2),
-              Icon(Icons.arrow_forward_rounded, color: primary, size: 14),
-            ],
-          ),
-        ],
+                const SizedBox(width: 2),
+                Icon(Icons.arrow_forward_rounded, color: primary, size: 14),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

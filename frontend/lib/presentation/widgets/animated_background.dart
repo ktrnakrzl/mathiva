@@ -3,9 +3,16 @@ import 'package:flutter/material.dart';
 
 import '../../services/app_preferences.dart';
 
-/// FULL REDESIGN: premium animated mesh background with floating symbols.
-/// Colors are always derived from the active [MathiviaPalette], so it
-/// automatically follows the user's color preference.
+/// Ambient animated background used by all main-app screens.
+///
+/// Two radial blobs drift slowly using palette.primary and palette.secondary
+/// at low opacity, over the scaffold background (which is now the palette's
+/// faint background tint from AppTheme). The base layer is transparent so
+/// the scaffold's own background color shows through cleanly.
+///
+/// With the palette background tints restored in AppPreferences, the blobs
+/// are now subtly visible — a soft colored atmosphere rather than invisible
+/// motion on a white canvas.
 class AnimatedBackground extends StatefulWidget {
   final Widget child;
   const AnimatedBackground({super.key, required this.child});
@@ -38,9 +45,6 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
     return ValueListenableBuilder<MathiviaPalette>(
       valueListenable: AppPreferences.palette,
       builder: (context, palette, _) {
-        final bg = palette.background;
-        final colors = bg.length >= 2 ? bg : [bg.first, bg.first];
-
         return AnimatedBuilder(
           animation: _controller,
           builder: (context, _) {
@@ -49,32 +53,29 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
             return Stack(
               fit: StackFit.expand,
               children: [
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                  ),
-                ),
+                // Primary blob — upper-left, drifts gently
                 Positioned.fill(
                   child: Align(
                     alignment: Alignment(
-                      -0.7 + 0.25 * math.sin(t),
-                      -0.9 + 0.18 * math.cos(t * 0.8),
+                      -0.7 + 0.22 * math.sin(t),
+                      -0.9 + 0.16 * math.cos(t * 0.8),
                     ),
                     child: _Blob(
-                      color: palette.primary.withOpacity(0.12),
-                      size: 280,
+                      color: palette.primary.withOpacity(0.10),
+                      size: 300,
                     ),
                   ),
                 ),
+                // Secondary blob — lower-right, counter-drifts
                 Positioned.fill(
                   child: Align(
                     alignment: Alignment(
-                      0.8 + 0.20 * math.cos(t * 0.7),
-                      0.95 + 0.15 * math.sin(t * 0.9),
+                      0.85 + 0.18 * math.cos(t * 0.7),
+                      0.90 + 0.14 * math.sin(t * 0.9),
                     ),
                     child: _Blob(
-                      color: palette.secondary.withOpacity(0.14),
-                      size: 240,
+                      color: palette.secondary.withOpacity(0.08),
+                      size: 260,
                     ),
                   ),
                 ),
@@ -109,5 +110,3 @@ class _Blob extends StatelessWidget {
     );
   }
 }
-
-// FULL REDESIGN PATCH APPLIED

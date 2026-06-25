@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../presentation/widgets/animated_background.dart';
+import '../presentation/widgets/atmosphere_background.dart';
 import '../presentation/widgets/fade_slide_in.dart';
+import '../presentation/widgets/primary_button.dart';
 import '../services/app_preferences.dart';
 import 'package:go_router/go_router.dart';
 
@@ -23,7 +24,7 @@ class RegisterScreen extends StatelessWidget {
     final primary = AppPreferences.palette.value.primary;
 
     return Scaffold(
-      backgroundColor: _pageBg,
+      backgroundColor: Colors.transparent,
       appBar: MathivaAppBar(
         title: 'Create Account',
         subtitle: 'Join Mathivia today',
@@ -31,7 +32,7 @@ class RegisterScreen extends StatelessWidget {
         showBack: true,
         onBack: () => context.canPop() ? context.pop() : context.go('/login'),
       ),
-      body: AnimatedBackground(
+      body: AtmosphereBackground(
         child: SafeArea(
           top: false,
           child: ListView(
@@ -102,10 +103,11 @@ class RegisterScreen extends StatelessWidget {
                         primary: primary,
                       ),
                       const SizedBox(height: 18),
-                      _PrimaryButton(
+                      PrimaryButton(
                         label: 'Create Account',
-                        primary: primary,
                         onPressed: () => context.go(RouteNames.home),
+                        height: 50,
+                        borderRadius: 13,
                       ),
                     ],
                   ),
@@ -189,45 +191,6 @@ class _Field extends StatelessWidget {
           borderSide: BorderSide(color: primary, width: 1.5),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
-      ),
-    );
-  }
-}
-
-// ─── Primary Button ───────────────────────────────────────────────────────────
-
-class _PrimaryButton extends StatelessWidget {
-  final String label;
-  final Color primary;
-  final VoidCallback onPressed;
-
-  const _PrimaryButton({
-    required this.label,
-    required this.primary,
-    required this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 50,
-      child: OutlinedButton(
-        onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          foregroundColor: primary,
-          side: BorderSide(color: primary, width: 1),
-          elevation: 0,
-          shadowColor: Colors.transparent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(13),
-          ),
-        ),
-        child: Text(
-          label,
-          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5),
-        ),
       ),
     );
   }

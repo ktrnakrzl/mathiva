@@ -3,14 +3,15 @@ import '../services/app_preferences.dart';
 import 'package:go_router/go_router.dart';
 
 import '../utils/route_names.dart';
-import '../presentation/widgets/animated_background.dart';
+import '../presentation/widgets/atmosphere_background.dart';
 import '../presentation/widgets/fade_slide_in.dart';
+import '../presentation/widgets/primary_button.dart';
+import '../presentation/widgets/ghost_button.dart';
 
 const _ink = Color(0xFF111827);
 const _muted = Color(0xFF6B7280);
 const _border = Color(0xFFE5E7EB);
 const _surface = Color(0xFFFFFFFF);
-const _pageBg = Color(0xFFF8F9FB);
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -35,8 +36,8 @@ class _LoginScreenState extends State<LoginScreen> {
     final primary = AppPreferences.palette.value.primary;
 
     return Scaffold(
-      backgroundColor: _pageBg,
-      body: AnimatedBackground(
+      backgroundColor: Colors.transparent,
+      body: AtmosphereBackground(
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
@@ -115,15 +116,26 @@ class _LoginScreenState extends State<LoginScreen> {
                             obscureText: true,
                           ),
                           const SizedBox(height: 18),
-                          _PrimaryButton(
+                          PrimaryButton(
                             label: 'Log In',
                             onPressed: () => context.go(RouteNames.home),
+                            height: 50,
+                            borderRadius: 13,
                           ),
                           const SizedBox(height: 20),
                           const _DividerOr(),
                           const SizedBox(height: 20),
-                          _GoogleButton(
+                          GhostButton(
+                            label: 'Continue with Google',
                             onPressed: () => context.go(RouteNames.home),
+                            height: 50,
+                            borderRadius: 13,
+                            icon: Image.asset(
+                              'assets/google.png',
+                              height: 18,
+                              width: 18,
+                              fit: BoxFit.contain,
+                            ),
                           ),
                         ],
                       ),
@@ -212,7 +224,7 @@ class _AuthField extends StatelessWidget {
         ),
         prefixIcon: Icon(icon, color: _muted, size: 19),
         filled: true,
-        fillColor: _pageBg,
+        fillColor: const Color(0xFFF8F9FB),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(13),
           borderSide: BorderSide(color: _border, width: 1),
@@ -226,80 +238,6 @@ class _AuthField extends StatelessWidget {
           borderSide: BorderSide(color: primary, width: 1.5),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
-      ),
-    );
-  }
-}
-
-// ─── Primary Button (Log In) ──────────────────────────────────────────────────
-
-class _PrimaryButton extends StatelessWidget {
-  final String label;
-  final VoidCallback onPressed;
-
-  const _PrimaryButton({required this.label, required this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    final primary = AppPreferences.palette.value.primary;
-
-    return SizedBox(
-      width: double.infinity,
-      height: 50,
-      child: OutlinedButton(
-        onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          foregroundColor: primary,
-          side: BorderSide(color: primary, width: 1),
-          elevation: 0,
-          shadowColor: Colors.transparent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(13),
-          ),
-        ),
-        child: Text(
-          label,
-          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5),
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Google Button ────────────────────────────────────────────────────────────
-
-class _GoogleButton extends StatelessWidget {
-  final VoidCallback onPressed;
-
-  const _GoogleButton({required this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 50,
-      child: OutlinedButton.icon(
-        onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          backgroundColor: _surface,
-          foregroundColor: _ink,
-          side: const BorderSide(color: _border, width: 1),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(13),
-          ),
-          elevation: 0,
-        ),
-        icon: Image.asset(
-          'assets/google.png',
-          height: 18,
-          width: 18,
-          fit: BoxFit.contain,
-        ),
-        label: const Text(
-          'Continue with Google',
-          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-        ),
       ),
     );
   }

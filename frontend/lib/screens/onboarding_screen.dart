@@ -3,12 +3,9 @@ import '../services/app_preferences.dart';
 import 'package:go_router/go_router.dart';
 
 import '../utils/route_names.dart';
-import '../presentation/widgets/animated_background.dart';
+import '../presentation/widgets/atmosphere_background.dart';
 import '../presentation/widgets/fade_slide_in.dart';
-
-final _primary = Color(0xFF2563EB);
-final _secondary = Color(0xFF14B8A6);
-final _chip = Color(0xFFEFF6FF);
+import '../presentation/widgets/primary_button.dart';
 
 final _ink = Color(0xFF242033);
 final _muted = Color(0xFF8C879A);
@@ -26,21 +23,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   static const _slides = [
     _OnboardingSlide(
-      title: 'Scan Any Math Problem',
-      subtitle:
-          'Snap a photo of equations, word problems, or handwritten work and let Mathiva detect what you need.',
+      title: 'Scan Any Problem',
+      subtitle: 'AI-powered solving in seconds.',
       icon: Icons.document_scanner_rounded,
     ),
     _OnboardingSlide(
-      title: 'Step-by-Step Solutions',
-      subtitle:
-          'Understand every move with clean explanations, visual cards, and final answers you can trust.',
+      title: 'Understand Every Step',
+      subtitle: 'Clear explanations that make sense.',
       icon: Icons.lightbulb_outline_rounded,
     ),
     _OnboardingSlide(
-      title: 'Track Your Growth',
-      subtitle:
-          'Build streaks, monitor topic mastery, and keep practicing exactly where you need support.',
+      title: 'Track Your Progress',
+      subtitle: 'Build confidence every day.',
       icon: Icons.trending_up_rounded,
     ),
   ];
@@ -66,13 +60,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget build(BuildContext context) {
     final _palette = AppPreferences.palette.value;
     final _primary = _palette.primary;
-    final _secondary = _palette.secondary;
-    final _gBackgroundStart = _palette.background.first;
     final _chip = Color.alphaBlend(_primary.withOpacity(0.05), const Color(0xFFF7F9FC));
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: AnimatedBackground(
+      body: AtmosphereBackground(
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(24, 14, 24, 28),
@@ -130,30 +122,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
                 ),
                 const SizedBox(height: 32),
-                SizedBox(
-                  width: double.infinity,
+                PrimaryButton(
+                  label: _index == _slides.length - 1 ? 'Get Started' : 'Next',
+                  onPressed: _next,
                   height: 56,
-                  child: OutlinedButton(
-                    onPressed: _next,
-                    style: OutlinedButton.styleFrom(
-                      backgroundColor: Colors.transparent,
-                      foregroundColor: _primary,
-                      side: BorderSide(color: _primary, width: 1),
-                      elevation: 0,
-                      shadowColor: Colors.transparent,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    child: Text(
-                      _index == _slides.length - 1 ? 'Get Started' : 'Next',
-                      style: const TextStyle(
-                        fontSize: 15.5,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.2,
-                      ),
-                    ),
-                  ),
                 ),
               ],
             ),
@@ -180,34 +152,31 @@ class _SlidePage extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           _Hero(slide: slide, primary: _primary),
-          const SizedBox(height: 30),
+          const SizedBox(height: 48),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Text(
               slide.title,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: _ink,
-                fontSize: 26,
-                height: 1.22,
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.3,
+                fontSize: 35,
+                height: 1.16,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.6,
               ),
             ),
           ),
-          const SizedBox(height: 14),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18),
-            child: Text(
-              slide.subtitle,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: _muted,
-                fontSize: 14.5,
-                height: 1.65,
-                fontWeight: FontWeight.w400,
-                letterSpacing: 0.1,
-              ),
+          const SizedBox(height: 12),
+          Text(
+            slide.subtitle,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: _muted,
+              fontSize: 15,
+              height: 1.4,
+              fontWeight: FontWeight.w500,
+              letterSpacing: 0.1,
             ),
           ),
         ],
@@ -216,9 +185,9 @@ class _SlidePage extends StatelessWidget {
   }
 }
 
-/// Hero section: one calm focal plate behind the icon, framed by a thin
-/// outer ring for quiet depth. No competing shapes, no extra ornament —
-/// just enough structure that the circle reads as designed, not dropped in.
+/// Hero section: the icon itself is the focal point — no card, no ring,
+/// no drop shadow. Just a very soft, wide, low-opacity glow behind it so
+/// the icon has air to breathe without competing visual weight.
 class _Hero extends StatelessWidget {
   final _OnboardingSlide slide;
   final Color primary;
@@ -230,34 +199,30 @@ class _Hero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       width: double.infinity,
-      height: 220,
-      alignment: Alignment.center,
-      child: Container(
-        width: 152,
-        height: 152,
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: primary.withOpacity(0.14),
-            width: 1.2,
-          ),
-        ),
-        child: Container(
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Color.alphaBlend(primary.withOpacity(0.10), Colors.white),
-            boxShadow: [
-              BoxShadow(
-                color: primary.withOpacity(0.14),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
+      height: 200,
+      child: Center(
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            // Subtle wide glow — soft and translucent, never a hard-edged
+            // shape competing with the icon.
+            Container(
+              width: 220,
+              height: 220,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    primary.withOpacity(0.16),
+                    primary.withOpacity(0.0),
+                  ],
+                ),
               ),
-            ],
-          ),
-          child: Icon(slide.icon, color: primary, size: 52),
+            ),
+            Icon(slide.icon, color: primary, size: 96),
+          ],
         ),
       ),
     );

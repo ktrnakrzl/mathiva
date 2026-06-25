@@ -36,7 +36,19 @@ class LessonListScreen extends StatelessWidget {
       extendBody: true,
       backgroundColor: _pageBg,
       appBar: AppBar(
-        backgroundColor: _chromeSurface,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                primary.withOpacity(0.22),
+                primary.withOpacity(0.05),
+              ],
+            ),
+          ),
+        ),
+        backgroundColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 1,
