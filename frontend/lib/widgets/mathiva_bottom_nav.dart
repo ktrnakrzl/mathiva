@@ -12,17 +12,15 @@ enum MathivaTab {
   settings,
 }
 
-// Shared tokens — mirrors the palette established on HomeScreen so the nav
-// reads as part of the same surface system rather than a separate component.
-const _muted = Color(0xFF6B7280);
-const _border = Color(0xFFE5E7EB);
-const _surface = Color(0xFFFFFFFF);
+// The bar's surface — flat and opaque, no glassmorphism, no blur. A
+// near-white surface with a hairline border, matching the calm, minimal
+// chrome language used by the header and onboarding/login screens.
+const _navSurface = Color(0xFFFFFFFF);
+const _navBorder = Color(0xFFEFEDF7);
 
-// Shared app-chrome surface — same very light lavender tint used by the
-// HomeScreen header, so header and bottom nav read as one "chrome" layer
-// distinct from the white content surfaces between them.
-const _chromeSurface = Color(0xFFF6F5FB);
-const _chromeBorder = Color(0xFFEAE8F5);
+// Inactive icons/labels stay a neutral gray rather than a tinted purple, so
+// the single active item is the only thing carrying color.
+const _navInactive = Color(0xFF9CA3AF);
 
 class MathivaBottomNav extends StatelessWidget {
   final MathivaTab selected;
@@ -49,61 +47,64 @@ class MathivaBottomNav extends StatelessWidget {
     return ValueListenableBuilder<MathiviaPalette>(
       valueListenable: AppPreferences.palette,
       builder: (context, palette, _) {
-        final primary = palette.primary;
+        // Softer purple for the active state — the brand primary blended
+        // toward white, so it reads as gentle rather than the saturated
+        // brand color used for primary CTAs elsewhere.
+        final activeColor = Color.lerp(palette.primary, Colors.white, 0.30)!;
 
         return SafeArea(
-          minimum: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+          minimum: const EdgeInsets.fromLTRB(16, 0, 16, 10),
           child: Container(
-            height: 68,
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            height: 72,
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
             decoration: BoxDecoration(
-              color: _chromeSurface,
+              color: _navSurface,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: _chromeBorder, width: 1),
-              boxShadow: const [
+              border: Border.all(color: _navBorder, width: 1),
+              boxShadow: [
                 BoxShadow(
-                  color: Color(0x08000000),
-                  blurRadius: 12,
-                  offset: Offset(0, 3),
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
                 ),
               ],
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 _NavItem(
                   icon: Icons.home_rounded,
                   label: 'Home',
                   selected: selected == MathivaTab.home,
-                  primary: primary,
+                  activeColor: activeColor,
                   onTap: () => _go(context, MathivaTab.home),
                 ),
                 _NavItem(
                   icon: Icons.menu_book_rounded,
                   label: 'Lessons',
                   selected: selected == MathivaTab.lessons,
-                  primary: primary,
+                  activeColor: activeColor,
                   onTap: () => _go(context, MathivaTab.lessons),
                 ),
                 _NavItem(
                   icon: Icons.document_scanner_rounded,
                   label: 'Scan',
                   selected: selected == MathivaTab.scan,
-                  primary: primary,
+                  activeColor: activeColor,
                   onTap: () => _go(context, MathivaTab.scan),
                 ),
                 _NavItem(
                   icon: Icons.bar_chart_rounded,
                   label: 'Progress',
                   selected: selected == MathivaTab.progress,
-                  primary: primary,
+                  activeColor: activeColor,
                   onTap: () => _go(context, MathivaTab.progress),
                 ),
                 _NavItem(
                   icon: Icons.settings_rounded,
                   label: 'Settings',
                   selected: selected == MathivaTab.settings,
-                  primary: primary,
+                  activeColor: activeColor,
                   onTap: () => _go(context, MathivaTab.settings),
                 ),
               ],
@@ -116,65 +117,63 @@ class MathivaBottomNav extends StatelessWidget {
 }
 
 // ─── Nav Item ─────────────────────────────────────────────────────────────
-// Every tab — including Scan — shares this exact treatment: an icon inside
-// a soft primary-tinted chip when active, muted and unadorned at rest. This
-// is the same icon-container motif HomeScreen uses everywhere (action
-// tiles, recent scan rows, the focus card), so the bar reads as one surface
-// in the same system rather than a generic Material nav with a CTA bolted
-// onto it.
+// The previous version overflowed because the outer bar had a hard 72 px
+// height while each item's content (padding + icon + gap + label +
+// padding) added up to more than the space that left after the bar's own
+// padding — increasing icon/label size without rebalancing the padding
+// pushed it over. Padding and gap are now trimmed so everything fits
+// comfortably inside the same 72 px ceiling, with a bit more width per
+// item (wider margin) for breathing room between tabs.
 
 class _NavItem extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool selected;
-  final Color primary;
+  final Color activeColor;
   final VoidCallback onTap;
 
   const _NavItem({
     required this.icon,
     required this.label,
     required this.onTap,
-    required this.primary,
+    required this.activeColor,
     this.selected = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? primary : _muted;
+    final color = selected ? activeColor : _navInactive;
 
-    return InkWell(
-      borderRadius: BorderRadius.circular(14),
-      onTap: onTap,
-      child: SizedBox(
-        width: 60,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              curve: Curves.easeOut,
-              width: 38,
-              height: 30,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: selected ? primary.withOpacity(0.08) : Colors.transparent,
-                borderRadius: BorderRadius.circular(11),
+    return Expanded(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 5),
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          decoration: BoxDecoration(
+            color: selected ? activeColor.withOpacity(0.14) : Colors.transparent,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: color, size: 22.5),
+              const SizedBox(height: 3),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 12,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  letterSpacing: 0.1,
+                ),
               ),
-              child: Icon(icon, color: color, size: selected ? 22 : 21),
-            ),
-            const SizedBox(height: 3),
-            Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: color,
-                fontSize: 10.5,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                letterSpacing: 0.1,
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

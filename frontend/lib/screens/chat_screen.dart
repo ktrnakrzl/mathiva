@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../presentation/notifiers/tutor_notifier.dart';
-import '../presentation/widgets/animated_background.dart';
+import '../presentation/widgets/atmosphere_background.dart';
 import '../services/app_preferences.dart';
 
 // ── Design tokens (mirrors HomeScreen exactly) ────────────────────────────────
@@ -142,13 +142,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     return Scaffold(
       backgroundColor: _pageBg,
       appBar: AppBar(
-        backgroundColor: _surface,
+        backgroundColor: const Color(0xFFF6F2FF),
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        scrolledUnderElevation: 0,
-        shadowColor: Colors.transparent,
+        scrolledUnderElevation: 1,
+        shadowColor: Colors.black.withOpacity(0.05),
         centerTitle: false,
-        toolbarHeight: 58,
+        toolbarHeight: 56,
         titleSpacing: 4,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: _ink, size: 22),
@@ -172,7 +172,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
               'Math Tutor',
               style: TextStyle(
                 color: Color(0xFF312E81),
-                fontSize: 19,
+                fontSize: 18,
                 fontWeight: FontWeight.w600,
                 letterSpacing: -0.2,
                 height: 1,
@@ -180,12 +180,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
             ),
           ],
         ),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: const Color(0xFFF1F0F8)),
-        ),
       ),
-      body: AnimatedBackground(
+      body: AtmosphereBackground(
         child: SafeArea(
           child: Column(
             children: [
@@ -496,13 +492,11 @@ class _InputBar extends StatelessWidget {
               SizedBox(
                 width: 44,
                 height: 44,
-                child: OutlinedButton(
+                child: ElevatedButton(
                   onPressed: enabled ? onSend : null,
-                  style: OutlinedButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                    foregroundColor: primary,
-                    disabledForegroundColor: _border,
-                    side: BorderSide(color: enabled ? primary : _border, width: 1),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primary,
+                    disabledBackgroundColor: _border,
                     elevation: 0,
                     shadowColor: Colors.transparent,
                     padding: EdgeInsets.zero,
@@ -510,8 +504,11 @@ class _InputBar extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Icon(
-                      Icons.arrow_upward_rounded, size: 20),
+                  child: Icon(
+                    Icons.arrow_upward_rounded,
+                    size: 20,
+                    color: enabled ? Colors.white : _muted,
+                  ),
                 ),
               ),
             ],

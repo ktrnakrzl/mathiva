@@ -5,7 +5,10 @@ import '../services/app_preferences.dart';
 import '../services/local_content_service.dart';
 import '../utils/route_names.dart';
 import '../widgets/mathiva_bottom_nav.dart';
-import '../presentation/widgets/animated_background.dart';
+// Swapped from AnimatedBackground to AtmosphereBackground to match
+// HomeScreen's reference design — same painted gradient + soft orbs body
+// treatment used across the app now.
+import '../presentation/widgets/atmosphere_background.dart';
 import '../presentation/widgets/fade_slide_in.dart';
 import '../presentation/widgets/tap_scale.dart';
 
@@ -15,6 +18,10 @@ const _muted = Color(0xFF6B7280);
 const _border = Color(0xFFE5E7EB);
 const _surface = Color(0xFFFFFFFF);
 const _pageBg = Color(0xFFF8F9FB);
+
+// Header tint — matches HomeScreen's reference header exactly: a flat,
+// solid lavender tint, no glassmorphism, no hairline border underneath.
+const _headerTint = Color(0xFFF6F2FF);
 
 class MathSubjectsScreen extends StatelessWidget {
   const MathSubjectsScreen({super.key});
@@ -31,43 +38,37 @@ class MathSubjectsScreen extends StatelessWidget {
           extendBody: true,
           backgroundColor: _pageBg,
           appBar: AppBar(
-            backgroundColor: _surface,
+            backgroundColor: _headerTint,
             surfaceTintColor: Colors.transparent,
             elevation: 0,
-            scrolledUnderElevation: 0,
-            shadowColor: Colors.transparent,
+            scrolledUnderElevation: 1,
+            shadowColor: Colors.black.withOpacity(0.05),
             automaticallyImplyLeading: false,
             centerTitle: false,
-            toolbarHeight: 58,
-            titleSpacing: 20,
+            toolbarHeight: 56,
+            titleSpacing: 22,
             title: const Text(
               'Lessons',
               style: TextStyle(
                 color: Color(0xFF312E81),
-                fontSize: 19,
+                fontSize: 18,
                 fontWeight: FontWeight.w600,
                 letterSpacing: -0.2,
                 height: 1,
               ),
             ),
             actions: [
-              IconButton(
-                tooltip: 'Ask Math Tutor',
-                onPressed: () => context.push(RouteNames.chat),
-                icon: Icon(
-                  Icons.chat_bubble_outline_rounded,
-                  color: primary,
-                  size: 22,
+              Padding(
+                padding: const EdgeInsets.only(right: 18),
+                child: _HeaderIconAction(
+                  icon: Icons.chat_bubble_outline_rounded,
+                  tooltip: 'Ask Math Tutor',
+                  onTap: () => context.push(RouteNames.chat),
                 ),
               ),
-              const SizedBox(width: 8),
             ],
-            bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(1),
-              child: Container(height: 1, color: const Color(0xFFF1F0F8)),
-            ),
           ),
-          body: AnimatedBackground(
+          body: AtmosphereBackground(
             child: SafeArea(
               top: false,
               child: ListView.separated(
@@ -118,6 +119,44 @@ class MathSubjectsScreen extends StatelessWidget {
   }
 }
 
+// ── Header Icon Action ────────────────────────────────────────────────────
+// Same tinted icon-chip treatment HomeScreen uses for its chat action,
+// replacing the bare IconButton this screen used before, so both headers
+// read as the same component family.
+
+class _HeaderIconAction extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  const _HeaderIconAction({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = AppPreferences.palette.value.primary;
+
+    return TapScale(
+      onTap: onTap,
+      child: Tooltip(
+        message: tooltip,
+        child: Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: primary.withOpacity(0.09),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, color: primary, size: 19),
+        ),
+      ),
+    );
+  }
+}
+
 // ── Subject Card ──────────────────────────────────────────────────────────────
 
 class _SubjectCard extends StatelessWidget {
@@ -142,13 +181,13 @@ class _SubjectCard extends StatelessWidget {
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
           color: _surface,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(color: _border, width: 1),
           boxShadow: const [
             BoxShadow(
-              color: Color(0x08000000),
-              blurRadius: 8,
-              offset: Offset(0, 2),
+              color: Color(0x0A000000),
+              blurRadius: 16,
+              offset: Offset(0, 4),
             ),
           ],
         ),

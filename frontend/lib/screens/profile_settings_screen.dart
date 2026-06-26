@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../presentation/widgets/animated_background.dart';
+import '../presentation/widgets/atmosphere_background.dart';
+import '../presentation/widgets/tap_scale.dart';
 import 'package:go_router/go_router.dart';
 
 import '../services/app_preferences.dart';
@@ -17,11 +18,9 @@ const _kDivider = Color(0xFFE5E7EB); // borders / separators
 const _kSurface = Color(0xFFFFFFFF); // card background
 const _kBg      = Color(0xFFF8F9FB); // subtle off-white fill
 
-// Shared app-chrome surface — matches the header treatment on HomeScreen
-// (and MathivaBottomNav) so this screen's header reads as the same layer
-// of app chrome, sitting just above the white content surfaces below.
-const _chromeSurface = Color(0xFFF6F5FB);
-const _chromeBorder = Color(0xFFEAE8F5);
+// Flat lavender tint — pixel-identical to HomeScreen's _headerTint so the
+// app bar reads as the same app-chrome layer across all screens.
+const _headerTint = Color(0xFFF6F2FF);
 
 class ProfileSettingsScreen extends StatelessWidget {
   const ProfileSettingsScreen({super.key});
@@ -38,46 +37,38 @@ class ProfileSettingsScreen extends StatelessWidget {
           backgroundColor: _kBg,
           extendBody: true,
           appBar: AppBar(
-            backgroundColor: _chromeSurface,
+            backgroundColor: _headerTint,
             surfaceTintColor: Colors.transparent,
             elevation: 0,
             scrolledUnderElevation: 1,
-            shadowColor: Colors.black.withOpacity(0.04),
+            shadowColor: Colors.black.withOpacity(0.05),
             automaticallyImplyLeading: false,
             centerTitle: false,
-            toolbarHeight: 58,
-            titleSpacing: 20,
+            toolbarHeight: 56,
+            titleSpacing: 22,
             title: const Text(
               'Settings',
               style: TextStyle(
                 color: Color(0xFF312E81),
-                fontSize: 19,
+                fontSize: 18,
                 fontWeight: FontWeight.w600,
                 letterSpacing: -0.2,
                 height: 1,
               ),
             ),
             actions: [
-              IconButton(
-                tooltip: 'Ask Math Tutor',
-                onPressed: () => context.push(RouteNames.chat),
-                icon: Icon(
-                  Icons.chat_bubble_outline_rounded,
-                  color: primary,
-                  size: 22,
+              Padding(
+                padding: const EdgeInsets.only(right: 18),
+                child: _HeaderIconAction(
+                  icon: Icons.chat_bubble_outline_rounded,
+                  tooltip: 'Ask Math Tutor',
+                  onTap: () => context.push(RouteNames.chat),
+                  primary: primary,
                 ),
               ),
-              const SizedBox(width: 8),
             ],
-            bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(1),
-              child: Container(
-                height: 1,
-                color: _chromeBorder,
-              ),
-            ),
           ),
-          body: AnimatedBackground(
+          body: AtmosphereBackground(
             child: SafeArea(
               top: true,
               child: ListView(
@@ -332,6 +323,41 @@ class ProfileSettingsScreen extends StatelessWidget {
   }
 }
 
+// ─── Header Icon Action ───────────────────────────────────────────────────────
+// Matches the tinted icon-container treatment used in HomeScreen's AppBar.
+class _HeaderIconAction extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+  final Color primary;
+
+  const _HeaderIconAction({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+    required this.primary,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TapScale(
+      onTap: onTap,
+      child: Tooltip(
+        message: tooltip,
+        child: Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: primary.withOpacity(0.09),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, color: primary, size: 19),
+        ),
+      ),
+    );
+  }
+}
+
 // ─── About section block ──────────────────────────────────────────────────────
 class _AboutSection extends StatelessWidget {
   final String title;
@@ -513,7 +539,15 @@ class _SectionTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.only(left: 2),
-        child: Text(title, style: const TextStyle(color: _kInk, fontSize: 13, fontWeight: FontWeight.w700, letterSpacing: 0.4)),
+        child: Text(
+          title,
+          style: const TextStyle(
+            color: _kSub,
+            fontSize: 11.5,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.4,
+          ),
+        ),
       );
 }
 
@@ -628,19 +662,20 @@ class _LogOutButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final primary = AppPreferences.palette.value.primary;
     return SizedBox(
       width: double.infinity,
       height: 52,
-      child: OutlinedButton(
+      child: ElevatedButton(
         onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          backgroundColor: _kSurface,
-          foregroundColor: _kSub,
-          side: const BorderSide(color: _kDivider),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: primary,
+          foregroundColor: Colors.white,
           elevation: 0,
+          shadowColor: Colors.transparent,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         ),
-        child: const Text('Log Out', style: TextStyle(fontWeight: FontWeight.w600, color: _kSub)),
+        child: const Text('Log Out', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
       ),
     );
   }

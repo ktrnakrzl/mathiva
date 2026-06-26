@@ -22,8 +22,7 @@ class MathivaAppBar extends StatelessWidget implements PreferredSizeWidget {
   final List<Widget>? actions;
   final VoidCallback? onBack;
 
-  static const _chromeSurface = Color(0xFFF6F5FB);
-  static const _chromeBorder = Color(0xFFEAE8F5);
+  static const _headerTint = Color(0xFFF6F2FF);
   static const _titleColor = Color(0xFF312E81);
   static const _muted = Color(0xFF6B7280);
 
@@ -39,20 +38,20 @@ class MathivaAppBar extends StatelessWidget implements PreferredSizeWidget {
   });
 
   @override
-  Size get preferredSize => Size.fromHeight(subtitle != null ? 74 : 58);
+  Size get preferredSize => Size.fromHeight(subtitle != null ? 68 : 56);
 
   @override
   Widget build(BuildContext context) {
     final primary = AppPreferences.palette.value.primary;
 
     return AppBar(
-      backgroundColor: _chromeSurface,
+      backgroundColor: _headerTint,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       scrolledUnderElevation: 1,
-      shadowColor: Colors.black.withOpacity(0.04),
+      shadowColor: Colors.black.withOpacity(0.05),
       automaticallyImplyLeading: automaticallyImplyLeading,
-      toolbarHeight: subtitle != null ? 74 : 58,
+      toolbarHeight: subtitle != null ? 68 : 56,
       leadingWidth: showBack ? 52 : 0,
       leading: showBack
           ? IconButton(
@@ -60,11 +59,9 @@ class MathivaAppBar extends StatelessWidget implements PreferredSizeWidget {
               onPressed: onBack ?? () => Navigator.of(context).maybePop(),
             )
           : null,
-      titleSpacing: showBack ? 0 : 20,
+      titleSpacing: showBack ? 0 : 22,
       title: Row(
         children: [
-          // Icon badge — soft primary-tinted chip matching the icon
-          // treatment used in HomeScreen action tiles and stat cards.
           Container(
             width: 32,
             height: 32,
@@ -84,18 +81,18 @@ class MathivaAppBar extends StatelessWidget implements PreferredSizeWidget {
                   title,
                   style: const TextStyle(
                     color: _titleColor,
-                    fontSize: 19,
+                    fontSize: 18,
                     fontWeight: FontWeight.w600,
                     letterSpacing: -0.2,
                     height: 1,
                   ),
                 ),
                 if (subtitle != null) ...[
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 3),
                   Text(
                     subtitle!,
                     style: const TextStyle(
-                      fontSize: 12.5,
+                      fontSize: 12,
                       color: _muted,
                       fontWeight: FontWeight.w500,
                       letterSpacing: 0.1,
@@ -109,10 +106,6 @@ class MathivaAppBar extends StatelessWidget implements PreferredSizeWidget {
         ],
       ),
       actions: actions,
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(1),
-        child: Container(height: 1, color: _chromeBorder),
-      ),
     );
   }
 }

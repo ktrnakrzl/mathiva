@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../presentation/widgets/animated_background.dart';
+import '../presentation/widgets/atmosphere_background.dart';
 import '../presentation/widgets/fade_slide_in.dart';
 import '../presentation/widgets/tap_scale.dart';
 import '../services/app_preferences.dart';
@@ -19,10 +19,8 @@ const _border = Color(0xFFE5E7EB);
 const _surface = Color(0xFFFFFFFF);
 const _pageBg = Color(0xFFF8F9FB);
 
-// Shared app-chrome surface — matches the HomeScreen header tint so this
-// screen's AppBar reads as the same chrome layer, not a separate white bar.
-const _chromeSurface = Color(0xFFF6F5FB);
-const _chromeBorder = Color(0xFFEAE8F5);
+// Flat lavender tint — pixel-identical to HomeScreen's _headerTint.
+const _headerTint = Color(0xFFF6F2FF);
 
 /// The three steps of the scan → solve workflow. Kept private to this file
 /// since navigation/routing elsewhere is untouched — only what happens
@@ -137,13 +135,15 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
       backgroundColor: _step == _SolverStep.crop ? Colors.black : _pageBg,
       appBar: AppBar(
         backgroundColor:
-            _step == _SolverStep.crop ? Colors.black : _chromeSurface,
+            _step == _SolverStep.crop ? Colors.black : _headerTint,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        scrolledUnderElevation: 0,
-        shadowColor: Colors.transparent,
+        scrolledUnderElevation: _step == _SolverStep.crop ? 0 : 1,
+        shadowColor: _step == _SolverStep.crop
+            ? Colors.transparent
+            : Colors.black.withOpacity(0.05),
         centerTitle: false,
-        toolbarHeight: 58,
+        toolbarHeight: 56,
         titleSpacing: 4,
         leading: IconButton(
           icon: Icon(
@@ -159,7 +159,7 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
             color: _step == _SolverStep.crop
                 ? Colors.white
                 : const Color(0xFF312E81),
-            fontSize: 19,
+            fontSize: 18,
             fontWeight: FontWeight.w600,
             letterSpacing: -0.2,
             height: 1,
@@ -167,24 +167,17 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
         ),
         actions: _step == _SolverStep.scan
             ? [
-                IconButton(
-                  tooltip: 'Ask Math Tutor',
-                  onPressed: () => context.push(RouteNames.chat),
-                  icon: Icon(
-                    Icons.chat_bubble_outline_rounded,
-                    color: primary,
-                    size: 22,
+                Padding(
+                  padding: const EdgeInsets.only(right: 18),
+                  child: _HeaderIconAction(
+                    icon: Icons.chat_bubble_outline_rounded,
+                    tooltip: 'Ask Math Tutor',
+                    onTap: () => context.push(RouteNames.chat),
+                    primary: primary,
                   ),
                 ),
-                const SizedBox(width: 8),
               ]
             : null,
-        bottom: _step == _SolverStep.crop
-            ? null
-            : PreferredSize(
-                preferredSize: const Size.fromHeight(1),
-                child: Container(height: 1, color: _chromeBorder),
-              ),
       ),
       body: AnimatedSwitcher(
         duration: const Duration(milliseconds: 220),
@@ -273,7 +266,7 @@ class _ScanStage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBackground(
+    return AtmosphereBackground(
       child: SafeArea(
         top: false,
         child: LayoutBuilder(
@@ -896,6 +889,41 @@ class _PickedImageView extends StatelessWidget {
   }
 }
 
+// ── Header Icon Action ────────────────────────────────────────────────────────
+// Matches the tinted icon-container treatment used in HomeScreen's AppBar.
+class _HeaderIconAction extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+  final Color primary;
+
+  const _HeaderIconAction({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+    required this.primary,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TapScale(
+      onTap: onTap,
+      child: Tooltip(
+        message: tooltip,
+        child: Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: primary.withOpacity(0.09),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, color: primary, size: 19),
+        ),
+      ),
+    );
+  }
+}
+
 // ── Scan Action Button ────────────────────────────────────────────────────────
 
 // Minimal outline button. No fill, no shadow — every action (primary or
@@ -924,10 +952,11 @@ class _ScanActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Primary actions get the accent color outline/text; secondary actions
-    // get a neutral outline/text. `dark` (used on the black crop screen)
-    // swaps the neutral tone for a white-on-black equivalent.
-    final accentColor = filled ? primary : (dark ? Colors.white : _ink);
+    // Filled (primary CTA): solid primary background, white text/icon.
+    // Outline (secondary): transparent background, accent or neutral border.
+    // Dark (crop screen secondary): white-on-black outline equivalent.
+    final bgColor = filled ? primary : Colors.transparent;
+    final accentColor = filled ? Colors.white : (dark ? Colors.white : _ink);
     final outlineColor = filled
         ? primary
         : (dark ? Colors.white24 : _border);
@@ -937,7 +966,7 @@ class _ScanActionButton extends StatelessWidget {
       child: Container(
         height: 52,
         decoration: BoxDecoration(
-          color: Colors.transparent,
+          color: bgColor,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: outlineColor, width: 1),
         ),

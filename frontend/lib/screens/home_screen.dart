@@ -6,7 +6,13 @@ import 'package:go_router/go_router.dart';
 import '../services/local_content_service.dart';
 import '../utils/route_names.dart';
 import '../widgets/mathiva_bottom_nav.dart';
-import '../presentation/widgets/animated_background.dart';
+// Swapped from AnimatedBackground (moving palette blobs) to
+// AtmosphereBackground (the static painted gradient + soft orbs used by
+// onboarding/login/register) so Home visually continues the auth flow
+// instead of cutting to a different background treatment. AppCard's white
+// surfaces sit on top of this and naturally mute it, which keeps the effect
+// subtle rather than as strong as it reads on the auth screens.
+import '../presentation/widgets/atmosphere_background.dart';
 import '../presentation/widgets/fade_slide_in.dart';
 import '../presentation/widgets/tap_scale.dart';
 import '../presentation/widgets/app_card.dart';
@@ -16,11 +22,11 @@ const _muted = Color(0xFF6B7280);
 const _border = Color(0xFFE5E7EB);
 const _pageBg = Color(0xFFF8F9FB);
 
-// Shared app-chrome surface — a very light lavender tint used by the header
-// (and mirrored in MathivaBottomNav) so both pieces of app chrome read as
-// one distinct layer, sitting just above the white content surfaces below.
-const _chromeSurface = Color(0xFFF6F5FB);
-const _chromeBorder = Color(0xFFEAE8F5);
+// Solid, subtle lavender tint for the header — replaces the previous
+// translucent glass surface entirely. No blur, no glassmorphism: just a
+// flat, premium-minimal color that softly echoes the purple atmosphere
+// without competing with it.
+const _headerTint = Color(0xFFF6F2FF);
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -34,34 +40,40 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
       extendBody: true,
-      // No explicit backgroundColor — the Scaffold now inherits AppTheme's
+      // No explicit backgroundColor — the Scaffold inherits AppTheme's
       // scaffoldBackgroundColor, which is the active palette's faint tint.
       // Switching palettes (Settings) recolors this screen automatically.
+
+      // ── Header ────────────────────────────────────────────────────────────
+      // No glassmorphism, no blur — a flat, solid lavender tint
+      // (Color(0xFFF6F2FF)) instead. Height unchanged at 56 px. Just the
+      // logo, wordmark, and chat action; only a hairline-level shadow
+      // appears once content scrolls underneath, nothing large or dramatic.
       appBar: AppBar(
-        backgroundColor: _chromeSurface,
+        backgroundColor: _headerTint,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 1,
-        shadowColor: Colors.black.withOpacity(0.04),
+        shadowColor: Colors.black.withOpacity(0.05),
         automaticallyImplyLeading: false,
         centerTitle: false,
-        toolbarHeight: 58,
-        titleSpacing: 20,
+        toolbarHeight: 56,
+        titleSpacing: 22,
         title: Row(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Image.asset(
               'assets/mathiva_logo.png',
-              height: 26,
+              height: 28,
               fit: BoxFit.contain,
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
             const Text(
               'Mathivia',
               style: TextStyle(
                 color: Color(0xFF312E81),
-                fontSize: 19,
+                fontSize: 18,
                 fontWeight: FontWeight.w600,
                 letterSpacing: -0.2,
                 height: 1,
@@ -70,26 +82,17 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
         actions: [
-          IconButton(
-            tooltip: 'Ask Math Tutor',
-            onPressed: () => context.push(RouteNames.chat),
-            icon: Icon(
-              Icons.chat_bubble_outline_rounded,
-              color: AppPreferences.palette.value.primary,
-              size: 22,
+          Padding(
+            padding: const EdgeInsets.only(right: 18),
+            child: _HeaderIconAction(
+              icon: Icons.chat_bubble_outline_rounded,
+              tooltip: 'Ask Math Tutor',
+              onTap: () => context.push(RouteNames.chat),
             ),
           ),
-          const SizedBox(width: 8),
         ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(
-            height: 1,
-            color: _chromeBorder,
-          ),
-        ),
       ),
-      body: AnimatedBackground(
+      body: AtmosphereBackground(
         child: SafeArea(
           top: false,
           child: ListView(
@@ -143,6 +146,45 @@ class HomeScreen extends StatelessWidget {
         ),
       ),
       bottomNavigationBar: const MathivaBottomNav(selected: MathivaTab.home),
+    );
+  }
+}
+
+// ─── Header Icon Action ───────────────────────────────────────────────────
+// Gives app-bar actions the same soft, tinted icon-container treatment used
+// throughout Home (action tiles, recent rows, the focus card) instead of a
+// bare IconButton, so the header reads as part of the same component
+// family as the content below it rather than generic Material chrome.
+
+class _HeaderIconAction extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  const _HeaderIconAction({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = AppPreferences.palette.value.primary;
+
+    return TapScale(
+      onTap: onTap,
+      child: Tooltip(
+        message: tooltip,
+        child: Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: primary.withOpacity(0.09),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, color: primary, size: 19),
+        ),
+      ),
     );
   }
 }

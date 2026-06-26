@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../services/app_preferences.dart';
 import '../services/local_content_service.dart';
 import '../utils/route_names.dart';
-import '../presentation/widgets/animated_background.dart';
+import '../presentation/widgets/atmosphere_background.dart';
 import '../presentation/widgets/fade_slide_in.dart';
 import '../presentation/widgets/tap_scale.dart';
 
@@ -15,10 +15,7 @@ const _border = Color(0xFFE5E7EB);
 const _surface = Color(0xFFFFFFFF);
 const _pageBg = Color(0xFFF8F9FB);
 
-// Shared app-chrome surface — matches HomeScreen's AppBar treatment so the
-// header reads as the same layer of chrome across screens.
-const _chromeSurface = Color(0xFFF6F5FB);
-const _chromeBorder = Color(0xFFEAE8F5);
+const _headerTint = Color(0xFFF6F2FF);
 
 class LessonListScreen extends StatelessWidget {
   final String subjectId;
@@ -36,27 +33,15 @@ class LessonListScreen extends StatelessWidget {
       extendBody: true,
       backgroundColor: _pageBg,
       appBar: AppBar(
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                primary.withOpacity(0.22),
-                primary.withOpacity(0.05),
-              ],
-            ),
-          ),
-        ),
-        backgroundColor: Colors.transparent,
+        backgroundColor: _headerTint,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 1,
-        shadowColor: Colors.black.withOpacity(0.04),
+        shadowColor: Colors.black.withOpacity(0.05),
         automaticallyImplyLeading: false,
         centerTitle: false,
-        toolbarHeight: 58,
-        titleSpacing: 20,
+        toolbarHeight: 56,
+        titleSpacing: 4,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: _ink, size: 22),
           onPressed: () =>
@@ -66,30 +51,25 @@ class LessonListScreen extends StatelessWidget {
           subject.title,
           style: const TextStyle(
             color: Color(0xFF312E81),
-            fontSize: 19,
+            fontSize: 18,
             fontWeight: FontWeight.w600,
             letterSpacing: -0.2,
             height: 1,
           ),
         ),
         actions: [
-          IconButton(
-            tooltip: 'Ask Math Tutor',
-            onPressed: () => context.push(RouteNames.chat),
-            icon: Icon(
-              Icons.chat_bubble_outline_rounded,
-              color: primary,
-              size: 22,
+          Padding(
+            padding: const EdgeInsets.only(right: 18),
+            child: _HeaderIconAction(
+              icon: Icons.chat_bubble_outline_rounded,
+              tooltip: 'Ask Math Tutor',
+              onTap: () => context.push(RouteNames.chat),
+              primary: primary,
             ),
           ),
-          const SizedBox(width: 8),
         ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: _chromeBorder),
-        ),
       ),
-      body: AnimatedBackground(
+      body: AtmosphereBackground(
         child: SafeArea(
           top: false,
           child: ListView.separated(
@@ -233,5 +213,39 @@ class _LessonCard extends StatelessWidget {
 
     if (isLocked) return card;
     return TapScale(onTap: onTap, child: card);
+  }
+}
+
+// ── Header Icon Action ────────────────────────────────────────────────────────
+class _HeaderIconAction extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+  final Color primary;
+
+  const _HeaderIconAction({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+    required this.primary,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TapScale(
+      onTap: onTap,
+      child: Tooltip(
+        message: tooltip,
+        child: Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: primary.withOpacity(0.09),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, color: primary, size: 19),
+        ),
+      ),
+    );
   }
 }

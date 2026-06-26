@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
-import '../presentation/widgets/animated_background.dart';
+import '../presentation/widgets/atmosphere_background.dart';
+import '../presentation/widgets/tap_scale.dart';
+import '../presentation/widgets/primary_button.dart';
 import '../services/app_preferences.dart';
 import 'package:go_router/go_router.dart';
 
 import '../utils/route_names.dart';
 
-final _primary = Color(0xFF2563EB);
-final _secondary = Color(0xFF14B8A6);
-final _chip = Color(0xFFEFF6FF);
-
-final _ink = Color(0xFF242033);
-final _muted = Color(0xFF8C879A);
+// ── Design tokens (mirrors HomeScreen exactly) ────────────────────────────────
+const _ink = Color(0xFF111827);
+const _muted = Color(0xFF6B7280);
+const _border = Color(0xFFE5E7EB);
+const _surface = Color(0xFFFFFFFF);
+const _pageBg = Color(0xFFF8F9FB);
+const _headerTint = Color(0xFFF6F2FF);
 
 class ConceptProgressScreen extends StatelessWidget {
   final String subjectId;
@@ -20,59 +23,78 @@ class ConceptProgressScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _palette = AppPreferences.palette.value;
-    final _primary = _palette.primary;
-    final _chip = Color.alphaBlend(_primary.withOpacity(0.05), const Color(0xFFF7F9FC));
+    final palette = AppPreferences.palette.value;
+    final primary = palette.primary;
 
     return Scaffold(
-      body: AnimatedBackground(
+      backgroundColor: _pageBg,
+      appBar: AppBar(
+        backgroundColor: _headerTint,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 1,
+        shadowColor: Colors.black.withOpacity(0.05),
+        centerTitle: false,
+        toolbarHeight: 56,
+        titleSpacing: 4,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: _ink, size: 22),
+          onPressed: () => context.canPop() ? context.pop() : context.go('/lesson-detail'),
+        ),
+        title: const Text(
+          'Concept Progress',
+          style: TextStyle(
+            color: Color(0xFF312E81),
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.2,
+            height: 1,
+          ),
+        ),
+      ),
+      body: AtmosphereBackground(
         child: SafeArea(
-          child: Column(
+          top: false,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+            physics: const BouncingScrollPhysics(),
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-                child: Row(
+              _SoftCard(
+                child: Column(
                   children: [
-                    IconButton(
-                      icon: Icon(Icons.arrow_back_ios_new_rounded, color: _primary),
-                      onPressed: () => context.canPop() ? context.pop() : context.go('/lesson-detail'),
+                    Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: primary.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Icon(Icons.rocket_launch_rounded, color: primary, size: 26),
                     ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Concept Progress',
+                      style: TextStyle(color: _ink, fontSize: 22, fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 6),
+                    const Text('28% Completed', style: TextStyle(color: _muted, fontSize: 13)),
+                    const SizedBox(height: 18),
+                    _ProgressBar(value: .28, primary: primary),
                   ],
                 ),
               ),
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
-                  physics: const BouncingScrollPhysics(),
-                  children: [
-                    _SoftCard(
-                      child: Column(
-                        children: [
-                          Icon(Icons.rocket_launch_rounded, color: _primary, size: 72),
-                          SizedBox(height: 16),
-                          Text('Concept Progress', style: TextStyle(color: _ink, fontSize: 28, fontWeight: FontWeight.w700)),
-                          SizedBox(height: 8),
-                          Text('28% Completed', style: TextStyle(color: _muted)),
-                          SizedBox(height: 18),
-                          _ProgressBar(value: .28),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    Row(
-                      children: const [
-                        Expanded(child: _Metric(label: 'Best Time', value: '1m 58s', icon: Icons.timer_rounded)),
-                        SizedBox(width: 12),
-                        Expanded(child: _Metric(label: 'Accuracy', value: '100%', icon: Icons.check_circle_rounded)),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    _GradientButton(
-                      label: 'Back to Concepts',
-                      onPressed: () => context.canPop() ? context.pop() : context.go('/lesson-detail'),
-                    ),
-                  ],
-                ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(child: _Metric(label: 'Best Time', value: '1m 58s', icon: Icons.timer_rounded, primary: primary)),
+                  const SizedBox(width: 12),
+                  Expanded(child: _Metric(label: 'Accuracy', value: '100%', icon: Icons.check_circle_rounded, primary: primary)),
+                ],
+              ),
+              const SizedBox(height: 20),
+              PrimaryButton(
+                label: 'Back to Concepts',
+                onPressed: () => context.canPop() ? context.pop() : context.go('/lesson-detail'),
               ),
             ],
           ),
@@ -82,61 +104,57 @@ class ConceptProgressScreen extends StatelessWidget {
   }
 }
 
+// ── Metric card ───────────────────────────────────────────────────────────────
+
 class _Metric extends StatelessWidget {
   final String label;
   final String value;
   final IconData icon;
-  const _Metric({required this.label, required this.value, required this.icon});
+  final Color primary;
+  const _Metric({required this.label, required this.value, required this.icon, required this.primary});
 
   @override
   Widget build(BuildContext context) => _SoftCard(
         child: Column(
           children: [
-            Icon(icon, color: _primary),
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: primary.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(11),
+              ),
+              child: Icon(icon, color: primary, size: 18),
+            ),
             const SizedBox(height: 10),
-            Text(value, style: TextStyle(color: _ink, fontSize: 22, fontWeight: FontWeight.w700)),
-            Text(label, style: TextStyle(color: _muted, fontSize: 12)),
+            Text(value, style: const TextStyle(color: _ink, fontSize: 20, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 3),
+            Text(label, style: const TextStyle(color: _muted, fontSize: 11.5)),
           ],
         ),
       );
 }
 
+// ── Progress bar ──────────────────────────────────────────────────────────────
+
 class _ProgressBar extends StatelessWidget {
   final double value;
-  const _ProgressBar({required this.value});
+  final Color primary;
+  const _ProgressBar({required this.value, required this.primary});
 
   @override
   Widget build(BuildContext context) => ClipRRect(
+        borderRadius: BorderRadius.circular(99),
         child: LinearProgressIndicator(
           value: value,
-          minHeight: 12,
-          backgroundColor: _chip,
-          valueColor: AlwaysStoppedAnimation<Color>(_primary),
+          minHeight: 6,
+          backgroundColor: _border,
+          valueColor: AlwaysStoppedAnimation<Color>(primary),
         ),
       );
 }
 
-class _GradientButton extends StatelessWidget {
-  final String label;
-  final VoidCallback onPressed;
-  const _GradientButton({required this.label, required this.onPressed});
-
-  @override
-  Widget build(BuildContext context) => SizedBox(
-        height: 54,
-        child: OutlinedButton(
-          onPressed: onPressed,
-          style: OutlinedButton.styleFrom(
-            backgroundColor: Colors.transparent,
-            foregroundColor: _primary,
-            side: BorderSide(color: _primary, width: 1),
-            shadowColor: Colors.transparent,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          ),
-          child: Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
-        ),
-      );
-}
+// ── Soft card ─────────────────────────────────────────────────────────────────
 
 class _SoftCard extends StatelessWidget {
   final Widget child;
@@ -144,14 +162,20 @@ class _SoftCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
+        width: double.infinity,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: const Color(0xFFF7F9FC),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: Offset(0, 8))],
+          color: _surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: _border, width: 1),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x08000000),
+              blurRadius: 8,
+              offset: Offset(0, 2),
+            ),
+          ],
         ),
         child: child,
       );
 }
-
-// REDESIGNED SCREEN MARKER

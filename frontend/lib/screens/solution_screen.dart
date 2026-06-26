@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../presentation/widgets/animated_background.dart';
+import '../presentation/widgets/atmosphere_background.dart';
+import '../presentation/widgets/primary_button.dart';
+import '../presentation/widgets/tap_scale.dart';
 import '../services/app_preferences.dart';
 import 'package:go_router/go_router.dart';
 
@@ -31,16 +33,18 @@ class SolutionScreen extends StatelessWidget {
         showBack: true,
         onBack: () => context.canPop() ? context.pop() : context.go('/home'),
         actions: [
-          IconButton(
-            tooltip: 'Ask Math Tutor',
-            onPressed: () => context.push(RouteNames.chat),
-            icon: const Icon(Icons.chat_bubble_outline_rounded),
-            color: primary,
+          Padding(
+            padding: const EdgeInsets.only(right: 18),
+            child: _HeaderIconAction(
+              icon: Icons.chat_bubble_outline_rounded,
+              tooltip: 'Ask Math Tutor',
+              onTap: () => context.push(RouteNames.chat),
+              primary: primary,
+            ),
           ),
-          const SizedBox(width: 4),
         ],
       ),
-      body: AnimatedBackground(
+      body: AtmosphereBackground(
         child: SafeArea(
           child: ListView(
             physics: const BouncingScrollPhysics(),
@@ -132,7 +136,7 @@ class SolutionScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 28),
-              _GradientButton(
+              PrimaryButton(
                 label: 'Practice Similar Problem',
                 onPressed: () => context.push(RouteNames.subjects),
               ),
@@ -228,34 +232,35 @@ class _SoftCard extends StatelessWidget {
   }
 }
 
-class _GradientButton extends StatelessWidget {
-  final String label;
-  final VoidCallback onPressed;
+// ── Header Icon Action ────────────────────────────────────────────────────────
 
-  const _GradientButton({required this.label, required this.onPressed});
+class _HeaderIconAction extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+  final Color primary;
+
+  const _HeaderIconAction({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+    required this.primary,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final primary = AppPreferences.palette.value.primary;
-
-    return SizedBox(
-      width: double.infinity,
-      height: 54,
-      child: OutlinedButton(
-        onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          foregroundColor: primary,
-          side: BorderSide(color: primary, width: 1),
-          elevation: 0,
-          shadowColor: Colors.transparent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+    return TapScale(
+      onTap: onTap,
+      child: Tooltip(
+        message: tooltip,
+        child: Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: primary.withOpacity(0.09),
+            borderRadius: BorderRadius.circular(12),
           ),
-        ),
-        child: Text(
-          label,
-          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+          child: Icon(icon, color: primary, size: 19),
         ),
       ),
     );

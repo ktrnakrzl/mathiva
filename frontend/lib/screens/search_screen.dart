@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../presentation/widgets/animated_background.dart';
+import '../presentation/widgets/atmosphere_background.dart';
+import '../presentation/widgets/tap_scale.dart';
 import '../services/app_preferences.dart';
 import 'package:go_router/go_router.dart';
 
@@ -42,16 +43,31 @@ class _SearchScreenState extends State<SearchScreen> {
         showBack: true,
         onBack: () => context.canPop() ? context.pop() : context.go('/home'),
         actions: [
-          IconButton(
-            tooltip: 'Ask Math Tutor',
-            onPressed: () => context.push(RouteNames.chat),
-            icon: const Icon(Icons.chat_bubble_outline_rounded),
-            color: primary,
+          Padding(
+            padding: const EdgeInsets.only(right: 18),
+            child: TapScale(
+              onTap: () => context.push(RouteNames.chat),
+              child: Tooltip(
+                message: 'Ask Math Tutor',
+                child: Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: primary.withOpacity(0.09),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.chat_bubble_outline_rounded,
+                    color: primary,
+                    size: 19,
+                  ),
+                ),
+              ),
+            ),
           ),
-          const SizedBox(width: 4),
         ],
       ),
-      body: AnimatedBackground(
+      body: AtmosphereBackground(
         child: SafeArea(
           top: false,
           child: ListView(
