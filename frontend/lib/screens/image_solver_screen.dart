@@ -10,6 +10,7 @@ import '../presentation/widgets/fade_slide_in.dart';
 import '../presentation/widgets/tap_scale.dart';
 import '../services/app_preferences.dart';
 import '../utils/route_names.dart';
+import '../widgets/mathiva_app_bar.dart';
 import '../widgets/mathiva_bottom_nav.dart';
 
 // ── Design tokens (mirrors HomeScreen exactly) ────────────────────────────────
@@ -133,48 +134,15 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
     return Scaffold(
       extendBody: _step == _SolverStep.scan,
       backgroundColor: _step == _SolverStep.crop ? Colors.black : _pageBg,
-      appBar: AppBar(
-        backgroundColor:
-            _step == _SolverStep.crop ? Colors.black : _headerTint,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: _step == _SolverStep.crop ? 0 : 1,
-        shadowColor: _step == _SolverStep.crop
-            ? Colors.transparent
-            : Colors.black.withOpacity(0.05),
-        centerTitle: false,
-        toolbarHeight: 56,
-        titleSpacing: 4,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_rounded,
-            color: _step == _SolverStep.crop ? Colors.white : _ink,
-            size: 22,
-          ),
-          onPressed: () => _onBack(),
-        ),
-        title: Text(
-          _titleFor(_step),
-          style: TextStyle(
-            color: _step == _SolverStep.crop
-                ? Colors.white
-                : const Color(0xFF312E81),
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            letterSpacing: -0.2,
-            height: 1,
-          ),
-        ),
+      appBar: MathivaAppBar(
+        title: _titleFor(_step),
+        onBack: () => _onBack(),
         actions: _step == _SolverStep.scan
             ? [
-                Padding(
-                  padding: const EdgeInsets.only(right: 18),
-                  child: _HeaderIconAction(
-                    icon: Icons.chat_bubble_outline_rounded,
-                    tooltip: 'Ask Math Tutor',
-                    onTap: () => context.push(RouteNames.chat),
-                    primary: primary,
-                  ),
+                AppBarAction(
+                  icon: Icons.chat_bubble_outline_rounded,
+                  tooltip: 'Ask Math Tutor',
+                  onTap: () => context.push(RouteNames.chat),
                 ),
               ]
             : null,

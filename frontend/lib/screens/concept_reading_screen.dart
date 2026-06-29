@@ -8,6 +8,7 @@ import '../presentation/widgets/atmosphere_background.dart';
 import '../presentation/widgets/fade_slide_in.dart';
 import '../presentation/widgets/tap_scale.dart';
 import '../presentation/widgets/primary_button.dart';
+import '../widgets/mathiva_app_bar.dart';
 
 // ── Design tokens (mirrors HomeScreen exactly) ────────────────────────────────
 const _ink = Color(0xFF111827);
@@ -40,39 +41,15 @@ class ConceptReadingScreen extends StatelessWidget {
     return Scaffold(
       extendBody: true,
       backgroundColor: _pageBg,
-      appBar: AppBar(
-        backgroundColor: _headerTint,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 1,
-        shadowColor: Colors.black.withOpacity(0.05),
-        centerTitle: false,
-        toolbarHeight: 56,
-        titleSpacing: 4,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: _ink, size: 22),
-          onPressed: () =>
-              context.canPop() ? context.pop() : context.go('/lesson-detail'),
-        ),
-        title: Text(
-          concept.title,
-          style: const TextStyle(
-            color: Color(0xFF312E81),
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            letterSpacing: -0.2,
-            height: 1,
-          ),
-        ),
+      appBar: MathivaAppBar(
+        title: concept.title,
+        onBack: () =>
+            context.canPop() ? context.pop() : context.go('/lesson-detail'),
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 18),
-            child: _HeaderIconAction(
-              icon: Icons.chat_bubble_outline_rounded,
-              tooltip: 'Ask Math Tutor',
-              onTap: () => context.push(RouteNames.chat),
-              primary: primary,
-            ),
+          AppBarAction(
+            icon: Icons.chat_bubble_outline_rounded,
+            tooltip: 'Ask Math Tutor',
+            onTap: () => context.push(RouteNames.chat),
           ),
         ],
       ),

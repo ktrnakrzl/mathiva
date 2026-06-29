@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../presentation/notifiers/tutor_notifier.dart';
 import '../presentation/widgets/atmosphere_background.dart';
 import '../services/app_preferences.dart';
+import '../widgets/mathiva_app_bar.dart';
 
 // ── Design tokens (mirrors HomeScreen exactly) ────────────────────────────────
 const _ink = Color(0xFF111827);
@@ -141,45 +142,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
 
     return Scaffold(
       backgroundColor: _pageBg,
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFF6F2FF),
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 1,
-        shadowColor: Colors.black.withOpacity(0.05),
-        centerTitle: false,
-        toolbarHeight: 56,
-        titleSpacing: 4,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: _ink, size: 22),
-          onPressed: () =>
-              context.canPop() ? context.pop() : context.go('/home'),
-        ),
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 30,
-              height: 30,
-              decoration: BoxDecoration(
-                color: primary.withOpacity(0.08),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(Icons.smart_toy_rounded, color: primary, size: 16),
-            ),
-            const SizedBox(width: 10),
-            const Text(
-              'Math Tutor',
-              style: TextStyle(
-                color: Color(0xFF312E81),
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.2,
-                height: 1,
-              ),
-            ),
-          ],
-        ),
+      appBar: MathivaAppBar(
+        title: 'Math Tutor',
+        onBack: () => context.canPop() ? context.pop() : context.go('/home'),
       ),
       body: AtmosphereBackground(
         child: SafeArea(

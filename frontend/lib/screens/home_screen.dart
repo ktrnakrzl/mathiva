@@ -6,12 +6,6 @@ import 'package:go_router/go_router.dart';
 import '../services/local_content_service.dart';
 import '../utils/route_names.dart';
 import '../widgets/mathiva_bottom_nav.dart';
-// Swapped from AnimatedBackground (moving palette blobs) to
-// AtmosphereBackground (the static painted gradient + soft orbs used by
-// onboarding/login/register) so Home visually continues the auth flow
-// instead of cutting to a different background treatment. AppCard's white
-// surfaces sit on top of this and naturally mute it, which keeps the effect
-// subtle rather than as strong as it reads on the auth screens.
 import '../presentation/widgets/atmosphere_background.dart';
 import '../presentation/widgets/fade_slide_in.dart';
 import '../presentation/widgets/tap_scale.dart';
@@ -21,15 +15,33 @@ const _ink = Color(0xFF111827);
 const _muted = Color(0xFF6B7280);
 const _border = Color(0xFFE5E7EB);
 const _pageBg = Color(0xFFF8F9FB);
-
-// Solid, subtle lavender tint for the header — replaces the previous
-// translucent glass surface entirely. No blur, no glassmorphism: just a
-// flat, premium-minimal color that softly echoes the purple atmosphere
-// without competing with it.
 const _headerTint = Color(0xFFF6F2FF);
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final _scrollController = ScrollController();
+  bool _headerVisible = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(() {
+      final show = _scrollController.offset > 80;
+      if (show != _headerVisible) setState(() => _headerVisible = show);
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,65 +52,22 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
       extendBody: true,
-      // No explicit backgroundColor — the Scaffold inherits AppTheme's
-      // scaffoldBackgroundColor, which is the active palette's faint tint.
-      // Switching palettes (Settings) recolors this screen automatically.
-
-      // ── Header ────────────────────────────────────────────────────────────
-      // No glassmorphism, no blur — a flat, solid lavender tint
-      // (Color(0xFFF6F2FF)) instead. Height unchanged at 56 px. Just the
-      // logo, wordmark, and chat action; only a hairline-level shadow
-      // appears once content scrolls underneath, nothing large or dramatic.
-      appBar: AppBar(
-        backgroundColor: _headerTint,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 1,
-        shadowColor: Colors.black.withOpacity(0.05),
-        automaticallyImplyLeading: false,
-        centerTitle: false,
-        toolbarHeight: 56,
-        titleSpacing: 22,
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Image.asset(
-              'assets/mathiva_logo.png',
-              height: 28,
-              fit: BoxFit.contain,
-            ),
-            const SizedBox(width: 10),
-            const Text(
-              'Mathivia',
-              style: TextStyle(
-                color: Color(0xFF312E81),
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.2,
-                height: 1,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 18),
-            child: _HeaderIconAction(
-              icon: Icons.chat_bubble_outline_rounded,
-              tooltip: 'Ask Math Tutor',
-              onTap: () => context.push(RouteNames.chat),
-            ),
-          ),
-        ],
-      ),
       body: AtmosphereBackground(
-        child: SafeArea(
-          top: false,
-          child: ListView(
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 112),
-            children: [
+        child: Stack(
+          children: [
+            SafeArea(
+              top: true,
+              child: ListView(
+                controller: _scrollController,
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 112),
+                children: [
+              // ── Inline header (visible when not scrolled) ──────────────
+              _InlineHeader(
+                onChatTap: () => context.push(RouteNames.chat),
+              ),
+              const SizedBox(height: 20),
+
               // ① Continue Learning
               FadeSlideIn(
                 child: _ContinueLearningHero(
@@ -142,7 +111,63 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
             ],
-          ),
+              ),
+            ),
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: SafeArea(
+                bottom: false,
+                child: IgnorePointer(
+                  ignoring: !_headerVisible,
+                  child: AnimatedSlide(
+                    duration: const Duration(milliseconds: 260),
+                    curve: Curves.easeOutCubic,
+                    offset:
+                        _headerVisible ? Offset.zero : const Offset(0, -0.35),
+                    child: AnimatedOpacity(
+                      duration: const Duration(milliseconds: 220),
+                      curve: Curves.easeOut,
+                      opacity: _headerVisible ? 1.0 : 0.0,
+                      child: AppBar(
+                        backgroundColor: _headerTint,
+                        surfaceTintColor: Colors.transparent,
+                        elevation: 0,
+                        scrolledUnderElevation: 1,
+                        shadowColor: Colors.black.withOpacity(0.05),
+                        automaticallyImplyLeading: false,
+                        centerTitle: true,
+                        toolbarHeight: 52,
+                        title: const Text(
+                          'Mathivia',
+                          style: TextStyle(
+                            color: Color(0xFF312E81),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: -0.2,
+                          ),
+                        ),
+                        actions: [
+                          IconButton(
+                            icon: const Icon(
+                              Icons.chat_bubble_outline_rounded,
+                              color: Color(0xFF312E81),
+                              size: 21,
+                            ),
+                            tooltip: 'Ask Math Tutor',
+                            splashRadius: 20,
+                            onPressed: () => context.push(RouteNames.chat),
+                          ),
+                          const SizedBox(width: 4),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
       bottomNavigationBar: const MathivaBottomNav(selected: MathivaTab.home),
@@ -150,40 +175,56 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-// ─── Header Icon Action ───────────────────────────────────────────────────
-// Gives app-bar actions the same soft, tinted icon-container treatment used
-// throughout Home (action tiles, recent rows, the focus card) instead of a
-// bare IconButton, so the header reads as part of the same component
-// family as the content below it rather than generic Material chrome.
+// ─── Inline Header ────────────────────────────────────────────────────────────
+// Logo + wordmark + chat button rendered as part of the scroll content.
+// Disappears as the user scrolls, replaced by the compact AppBar above.
 
-class _HeaderIconAction extends StatelessWidget {
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback onTap;
+class _InlineHeader extends StatelessWidget {
+  final VoidCallback onChatTap;
 
-  const _HeaderIconAction({
-    required this.icon,
-    required this.tooltip,
-    required this.onTap,
-  });
+  const _InlineHeader({required this.onChatTap});
 
   @override
   Widget build(BuildContext context) {
     final primary = AppPreferences.palette.value.primary;
 
-    return TapScale(
-      onTap: onTap,
-      child: Tooltip(
-        message: tooltip,
-        child: Container(
-          width: 38,
-          height: 38,
-          decoration: BoxDecoration(
-            color: primary.withOpacity(0.09),
-            borderRadius: BorderRadius.circular(12),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(0, 14, 0, 0),
+      child: Row(
+        children: [
+          Image.asset(
+            'assets/mathiva_logo.png',
+            height: 30,
+            fit: BoxFit.contain,
           ),
-          child: Icon(icon, color: primary, size: 19),
-        ),
+          const SizedBox(width: 10),
+          const Text(
+            'Mathivia',
+            style: TextStyle(
+              color: Color(0xFF312E81),
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.3,
+            ),
+          ),
+          const Spacer(),
+          TapScale(
+            onTap: onChatTap,
+            child: Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: primary.withOpacity(0.09),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                Icons.chat_bubble_outline_rounded,
+                color: primary,
+                size: 19,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

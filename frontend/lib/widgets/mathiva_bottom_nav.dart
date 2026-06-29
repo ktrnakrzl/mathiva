@@ -12,14 +12,8 @@ enum MathivaTab {
   settings,
 }
 
-// The bar's surface — flat and opaque, no glassmorphism, no blur. A
-// near-white surface with a hairline border, matching the calm, minimal
-// chrome language used by the header and onboarding/login screens.
 const _navSurface = Color(0xFFFFFFFF);
 const _navBorder = Color(0xFFEFEDF7);
-
-// Inactive icons/labels stay a neutral gray rather than a tinted purple, so
-// the single active item is the only thing carrying color.
 const _navInactive = Color(0xFF9CA3AF);
 
 class MathivaBottomNav extends StatelessWidget {
@@ -47,67 +41,95 @@ class MathivaBottomNav extends StatelessWidget {
     return ValueListenableBuilder<MathiviaPalette>(
       valueListenable: AppPreferences.palette,
       builder: (context, palette, _) {
-        // Softer purple for the active state — the brand primary blended
-        // toward white, so it reads as gentle rather than the saturated
-        // brand color used for primary CTAs elsewhere.
-        final activeColor = Color.lerp(palette.primary, Colors.white, 0.30)!;
+        final activeColor = palette.primary;
 
-        return SafeArea(
-          minimum: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-          child: Container(
-            height: 72,
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-            decoration: BoxDecoration(
-              color: _navSurface,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: _navBorder, width: 1),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
-                ),
-              ],
+        return Container(
+          decoration: BoxDecoration(
+            color: _navSurface,
+            border: Border(
+              top: BorderSide(color: _navBorder, width: 1),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _NavItem(
-                  icon: Icons.home_rounded,
-                  label: 'Home',
-                  selected: selected == MathivaTab.home,
-                  activeColor: activeColor,
-                  onTap: () => _go(context, MathivaTab.home),
-                ),
-                _NavItem(
-                  icon: Icons.menu_book_rounded,
-                  label: 'Lessons',
-                  selected: selected == MathivaTab.lessons,
-                  activeColor: activeColor,
-                  onTap: () => _go(context, MathivaTab.lessons),
-                ),
-                _NavItem(
-                  icon: Icons.document_scanner_rounded,
-                  label: 'Scan',
-                  selected: selected == MathivaTab.scan,
-                  activeColor: activeColor,
-                  onTap: () => _go(context, MathivaTab.scan),
-                ),
-                _NavItem(
-                  icon: Icons.bar_chart_rounded,
-                  label: 'Progress',
-                  selected: selected == MathivaTab.progress,
-                  activeColor: activeColor,
-                  onTap: () => _go(context, MathivaTab.progress),
-                ),
-                _NavItem(
-                  icon: Icons.settings_rounded,
-                  label: 'Settings',
-                  selected: selected == MathivaTab.settings,
-                  activeColor: activeColor,
-                  onTap: () => _go(context, MathivaTab.settings),
-                ),
-              ],
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, -3),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            top: false,
+            child: SizedBox(
+              height: 60,
+              child: Stack(
+                clipBehavior: Clip.none,
+                alignment: Alignment.center,
+                children: [
+                  // ── Four flat items ──────────────────────────────────
+                  Row(
+                    children: [
+                      _NavItem(
+                        icon: Icons.home_rounded,
+                        label: 'Home',
+                        selected: selected == MathivaTab.home,
+                        activeColor: activeColor,
+                        onTap: () => _go(context, MathivaTab.home),
+                      ),
+                      _NavItem(
+                        icon: Icons.menu_book_rounded,
+                        label: 'Lessons',
+                        selected: selected == MathivaTab.lessons,
+                        activeColor: activeColor,
+                        onTap: () => _go(context, MathivaTab.lessons),
+                      ),
+                      // Center gap for FAB
+                      const Expanded(child: SizedBox()),
+                      _NavItem(
+                        icon: Icons.bar_chart_rounded,
+                        label: 'Progress',
+                        selected: selected == MathivaTab.progress,
+                        activeColor: activeColor,
+                        onTap: () => _go(context, MathivaTab.progress),
+                      ),
+                      _NavItem(
+                        icon: Icons.more_horiz_rounded,
+                        label: 'More',
+                        selected: selected == MathivaTab.settings,
+                        activeColor: activeColor,
+                        onTap: () => _go(context, MathivaTab.settings),
+                      ),
+                    ],
+                  ),
+
+                  // ── Center FAB ───────────────────────────────────────
+                  Positioned(
+                    top: -20,
+                    child: GestureDetector(
+                      onTap: () => _go(context, MathivaTab.scan),
+                      child: Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          color: activeColor,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: activeColor.withOpacity(0.40),
+                              blurRadius: 14,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.document_scanner_rounded,
+                          color: Colors.white,
+                          size: 26,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -116,14 +138,7 @@ class MathivaBottomNav extends StatelessWidget {
   }
 }
 
-// ─── Nav Item ─────────────────────────────────────────────────────────────
-// The previous version overflowed because the outer bar had a hard 72 px
-// height while each item's content (padding + icon + gap + label +
-// padding) added up to more than the space that left after the bar's own
-// padding — increasing icon/label size without rebalancing the padding
-// pushed it over. Padding and gap are now trimmed so everything fits
-// comfortably inside the same 72 px ceiling, with a bit more width per
-// item (wider margin) for breathing room between tabs.
+// ─── Nav Item ──────────────────────────────────────────────────────────────
 
 class _NavItem extends StatelessWidget {
   final IconData icon;
@@ -146,34 +161,26 @@ class _NavItem extends StatelessWidget {
 
     return Expanded(
       child: InkWell(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(8),
         onTap: onTap,
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 5),
-          padding: const EdgeInsets.symmetric(vertical: 6),
-          decoration: BoxDecoration(
-            color: selected ? activeColor.withOpacity(0.14) : Colors.transparent,
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, color: color, size: 22.5),
-              const SizedBox(height: 3),
-              Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: color,
-                  fontSize: 12,
-                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                  letterSpacing: 0.1,
-                ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: color, size: 22),
+            const SizedBox(height: 3),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: color,
+                fontSize: 11,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                letterSpacing: 0.1,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

@@ -4,6 +4,7 @@ import '../presentation/widgets/tap_scale.dart';
 import '../presentation/widgets/primary_button.dart';
 import '../services/app_preferences.dart';
 import 'package:go_router/go_router.dart';
+import '../widgets/mathiva_app_bar.dart';
 
 import '../utils/route_names.dart';
 
@@ -28,29 +29,10 @@ class ConceptProgressScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: _pageBg,
-      appBar: AppBar(
-        backgroundColor: _headerTint,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 1,
-        shadowColor: Colors.black.withOpacity(0.05),
-        centerTitle: false,
-        toolbarHeight: 56,
-        titleSpacing: 4,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_rounded, color: _ink, size: 22),
-          onPressed: () => context.canPop() ? context.pop() : context.go('/lesson-detail'),
-        ),
-        title: const Text(
-          'Concept Progress',
-          style: TextStyle(
-            color: Color(0xFF312E81),
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            letterSpacing: -0.2,
-            height: 1,
-          ),
-        ),
+      appBar: MathivaAppBar(
+        title: 'Concept Progress',
+        onBack: () =>
+            context.canPop() ? context.pop() : context.go('/lesson-detail'),
       ),
       body: AtmosphereBackground(
         child: SafeArea(
