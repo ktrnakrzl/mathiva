@@ -328,7 +328,15 @@ class _ScanStage extends StatelessWidget {
                   // rather than static.
                   Expanded(
                     child: FadeSlideIn(
-                      child: ClipRRect(
+                      // The viewport doubles as the "open camera" affordance:
+                      // the camera auto-opens on entry, and tapping the frame
+                      // re-opens it if the user backed out -- so there's no
+                      // separate "Open Camera" button to be redundant with the
+                      // automatic open.
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: onOpenCamera,
+                        child: ClipRRect(
                         borderRadius: BorderRadius.circular(20),
                         child: BackdropFilter(
                           filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
@@ -373,7 +381,7 @@ class _ScanStage extends StatelessWidget {
                                 Positioned(
                                   bottom: 18,
                                   child: Text(
-                                    'Align the problem within the frame',
+                                    'Tap to open the camera',
                                     style: TextStyle(
                                       color: primary.withOpacity(0.55),
                                       fontSize: 12.5,
@@ -386,35 +394,24 @@ class _ScanStage extends StatelessWidget {
                           ),
                         ),
                       ),
+                        ),
                     ),
                   ),
                   const SizedBox(height: 16),
 
                   // ── Actions ──────────────────────────────────────────────
+                  // No "Open Camera" button -- the camera opens automatically
+                  // on entry and the viewport above re-opens it on tap. Gallery
+                  // is the only explicit action: pick an existing photo instead
+                  // of taking one.
                   FadeSlideIn(
                     delay: const Duration(milliseconds: 100),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: _ScanActionButton(
-                            label: 'Open Camera',
-                            icon: Icons.camera_alt_rounded,
-                            primary: primary,
-                            filled: true,
-                            onPressed: onOpenCamera,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: _ScanActionButton(
-                            label: 'Gallery',
-                            icon: Icons.image_outlined,
-                            primary: primary,
-                            filled: false,
-                            onPressed: onOpenGallery,
-                          ),
-                        ),
-                      ],
+                    child: _ScanActionButton(
+                      label: 'Choose from Gallery',
+                      icon: Icons.image_outlined,
+                      primary: primary,
+                      filled: false,
+                      onPressed: onOpenGallery,
                     ),
                   ),
                   const SizedBox(height: 16),
