@@ -1,26 +1,19 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../services/app_preferences.dart';
 import '../services/local_content_service.dart';
+import '../services/progress_service.dart';
+import '../services/progress_store.dart';
+import '../utils/progress_calc.dart';
 import '../utils/route_names.dart';
 import '../widgets/mathiva_bottom_nav.dart';
 import '../presentation/widgets/animated_background.dart';
 import '../presentation/widgets/fade_slide_in.dart';
-import '../presentation/widgets/tap_scale.dart';
-
-// ── Design tokens (mirrors HomeScreen exactly) ────────────────────────────────
-const _ink = Color(0xFF111827);
-const _muted = Color(0xFF6B7280);
-const _border = Color(0xFFE5E7EB);
-const _surface = Color(0xFFFFFFFF);
-const _pageBg = Color(0xFFF8F9FB);
-
-// Shared app-chrome surface — matches the header treatment on HomeScreen
-// (and MathivaBottomNav) so this screen's header reads as the same layer
-// of app chrome, sitting just above the white content surfaces below.
-const _chromeSurface = Color(0xFFF6F5FB);
-const _chromeBorder = Color(0xFFEAE8F5);
+import '../presentation/widgets/glass_card.dart';
+import '../theme/app_theme.dart';
 
 class ProgressOverviewScreen extends StatefulWidget {
   final bool scrollToAchievements;
@@ -37,6 +30,7 @@ class _ProgressOverviewScreenState extends State<ProgressOverviewScreen> {
   @override
   void initState() {
     super.initState();
+    ProgressStore.refresh();
     if (widget.scrollToAchievements) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Future.delayed(const Duration(milliseconds: 150), () {
@@ -63,191 +57,197 @@ class _ProgressOverviewScreenState extends State<ProgressOverviewScreen> {
   @override
   Widget build(BuildContext context) {
     final primary = AppPreferences.palette.value.primary;
+    final colors = AppTheme.colorsOf(context);
     final subjects = LocalContentService().getSubjects();
     final topics = subjects.expand((s) => s.topics).toList();
 
     return Scaffold(
       extendBody: true,
-      backgroundColor: _pageBg,
-      appBar: AppBar(
-        backgroundColor: _chromeSurface,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 1,
-        shadowColor: Colors.black.withOpacity(0.04),
-        automaticallyImplyLeading: false,
-        centerTitle: false,
-        toolbarHeight: 58,
-        titleSpacing: 20,
-        title: const Text(
-          'Progress',
-          style: TextStyle(
-            color: Color(0xFF312E81),
-            fontSize: 19,
-            fontWeight: FontWeight.w600,
-            letterSpacing: -0.2,
-            height: 1,
-          ),
-        ),
-        actions: [
-          IconButton(
-            tooltip: 'Ask Math Tutor',
-            onPressed: () => context.push(RouteNames.chat),
-            icon: Icon(
-              Icons.chat_bubble_outline_rounded,
-              color: primary,
-              size: 22,
+      backgroundColor: colors.pageBg,
+      // Frosted-glass header, matching the rest of the app's chrome.
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(58),
+        child: ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+            child: AppBar(
+              backgroundColor: colors.glassFillStart,
+              surfaceTintColor: Colors.transparent,
+              elevation: 0,
+              scrolledUnderElevation: 1,
+              shadowColor: primary.withOpacity(0.12),
+              automaticallyImplyLeading: false,
+              centerTitle: false,
+              toolbarHeight: 58,
+              titleSpacing: 20,
+              title: Text(
+                'Progress',
+                style: TextStyle(
+                  color: colors.titleColor,
+                  fontSize: 19,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: -0.2,
+                  height: 1,
+                ),
+              ),
+              actions: [
+                IconButton(
+                  tooltip: 'Ask Math Tutor',
+                  onPressed: () => context.push(RouteNames.chat),
+                  icon: Icon(
+                    Icons.chat_bubble_outline_rounded,
+                    color: primary,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(1),
+                child: Container(height: 1, color: colors.glassBorder),
+              ),
             ),
           ),
-          const SizedBox(width: 8),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: _chromeBorder),
         ),
       ),
       body: AnimatedBackground(
+        vivid: true,
         child: SafeArea(
           top: false,
-          child: ListView(
-            controller: _scrollController,
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 112),
-            children: [
-              // ── Stat cards ─────────────────────────────────────────────────
-              // Wrapped in IntrinsicHeight so all three Expanded cards share
-              // the height of whichever one is tallest. Without this, each
-              // card sized itself independently — and since "Problems
-              // Solved" wraps to two lines while "Accuracy"/"Streak Days"
-              // stay on one, that card alone grew taller than its siblings.
-              FadeSlideIn(
-                child: IntrinsicHeight(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Expanded(
-                        child: _StatCard(
-                          label: 'Problems Solved',
-                          value: '128',
-                          icon: Icons.check_circle_outline_rounded,
-                          primary: primary,
-                        ),
+          child: ValueListenableBuilder<UserProgress?>(
+            valueListenable: ProgressStore.current,
+            builder: (context, progress, _) {
+              final byConcept = progress?.conceptStats ?? const {};
+              return ListView(
+                controller: _scrollController,
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 112),
+                children: [
+                  // ── Stat cards ─────────────────────────────────────────────
+                  // Wrapped in IntrinsicHeight so all three Expanded cards share
+                  // the height of whichever one is tallest. Without this, each
+                  // card sized itself independently — and since "Problems
+                  // Solved" wraps to two lines while "Accuracy"/"Streak Days"
+                  // stay on one, that card alone grew taller than its siblings.
+                  FadeSlideIn(
+                    child: IntrinsicHeight(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Expanded(
+                            child: _StatCard(
+                              label: 'Problems Solved',
+                              value: '${progress?.totalAttempts ?? 0}',
+                              icon: Icons.check_circle_outline_rounded,
+                              primary: primary,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _StatCard(
+                              label: 'Accuracy',
+                              value:
+                                  '${(progress?.overallAccuracy ?? 0).round()}%',
+                              icon: Icons.track_changes_rounded,
+                              primary: primary,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _StatCard(
+                              label: 'Streak Days',
+                              value: '${progress?.currentStreakDays ?? 0}',
+                              icon: Icons.local_fire_department_rounded,
+                              primary: primary,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _StatCard(
-                          label: 'Accuracy',
-                          value: '86%',
-                          icon: Icons.track_changes_rounded,
-                          primary: primary,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _StatCard(
-                          label: 'Streak Days',
-                          value: '12',
-                          icon: Icons.local_fire_department_rounded,
-                          primary: primary,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 12),
+                  const SizedBox(height: 12),
 
-              // ── Weekly activity card ────────────────────────────────────────
-              FadeSlideIn(
-                delay: const Duration(milliseconds: 60),
-                child: _WhiteCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _SectionLabel(label: 'Weekly Activity'),
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        height: 160,
-                        child: _WeeklyLineChart(primary: primary),
+                  // ── Weekly activity card ────────────────────────────────────
+                  FadeSlideIn(
+                    delay: const Duration(milliseconds: 60),
+                    child: GlassCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const _SectionLabel(label: 'Weekly Activity'),
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            height: 160,
+                            child: _WeeklyLineChart(
+                              primary: primary,
+                              days: progress?.last7Days ?? const [],
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 24),
+                  const SizedBox(height: 24),
 
-              // ── Topic Mastery label ─────────────────────────────────────────
-              FadeSlideIn(
-                delay: const Duration(milliseconds: 100),
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text(
-                        'Topic Mastery',
-                        style: TextStyle(
-                          color: _muted,
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.4,
+                  // ── Topic Mastery label ─────────────────────────────────────
+                  FadeSlideIn(
+                    delay: const Duration(milliseconds: 100),
+                    child: const Padding(
+                      padding: EdgeInsets.only(bottom: 12),
+                      child: _SectionLabel(label: 'Topic Mastery'),
+                    ),
+                  ),
+
+                  // ── Topic mastery rows ──────────────────────────────────────
+                  ...topics.asMap().entries.map((entry) {
+                    final i = entry.key;
+                    final topic = entry.value;
+                    final subjectId =
+                        subjects.firstWhere((s) => s.topics.contains(topic)).id;
+                    final topicPct =
+                        (topicProgress(topic, byConcept) * 100).round();
+                    return FadeSlideIn(
+                      delay: Duration(milliseconds: 120 + 50 * i),
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: _TopicMasteryCard(
+                          topic: topic,
+                          primary: primary,
+                          progressPercent: topicPct,
+                          onTap: () => context.push(
+                            RouteNames.topicAnalytics,
+                            extra: {
+                              'subjectId': subjectId,
+                              'topicId': topic.id,
+                            },
+                          ),
                         ),
                       ),
-                    ],
-                  ),
-                ),
-              ),
+                    );
+                  }),
+                  const SizedBox(height: 24),
 
-              // ── Topic mastery rows ──────────────────────────────────────────
-              ...topics.asMap().entries.map((entry) {
-                final i = entry.key;
-                final topic = entry.value;
-                final subjectId =
-                    subjects.firstWhere((s) => s.topics.contains(topic)).id;
-                return FadeSlideIn(
-                  delay: Duration(milliseconds: 120 + 50 * i),
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: _TopicMasteryCard(
-                      topic: topic,
+                  // ── Achievements label ──────────────────────────────────────
+                  FadeSlideIn(
+                    delay: const Duration(milliseconds: 160),
+                    child: Padding(
+                      key: _achievementsKey,
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: const _SectionLabel(label: 'Achievements'),
+                    ),
+                  ),
+
+                  // ── Achievements grid ───────────────────────────────────────
+                  FadeSlideIn(
+                    delay: const Duration(milliseconds: 180),
+                    child: _AchievementsGrid(
                       primary: primary,
-                      onTap: () => context.push(
-                        RouteNames.topicAnalytics,
-                        extra: {
-                          'subjectId': subjectId,
-                          'topicId': topic.id,
-                        },
-                      ),
+                      achievements: progress?.achievements ?? const [],
                     ),
                   ),
-                );
-              }),
-              const SizedBox(height: 24),
-
-              // ── Achievements label ──────────────────────────────────────────
-              FadeSlideIn(
-                delay: const Duration(milliseconds: 160),
-                child: Padding(
-                  key: _achievementsKey,
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: const Text(
-                    'Achievements',
-                    style: TextStyle(
-                      color: _muted,
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.4,
-                    ),
-                  ),
-                ),
-              ),
-
-              // ── Achievements grid ───────────────────────────────────────────
-              FadeSlideIn(
-                delay: const Duration(milliseconds: 180),
-                child: _AchievementsGrid(primary: primary),
-              ),
-            ],
+                ],
+              );
+            },
           ),
         ),
       ),
@@ -274,20 +274,10 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final colors = AppTheme.colorsOf(context);
+
+    return GlassCard(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 16),
-      decoration: BoxDecoration(
-        color: _surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _border, width: 1),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x08000000),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -303,8 +293,8 @@ class _StatCard extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             value,
-            style: const TextStyle(
-              color: _ink,
+            style: TextStyle(
+              color: colors.ink,
               fontSize: 20,
               fontWeight: FontWeight.w700,
             ),
@@ -313,7 +303,7 @@ class _StatCard extends StatelessWidget {
           Text(
             label,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: _muted, fontSize: 10.5),
+            style: TextStyle(color: colors.muted, fontSize: 10.5),
           ),
         ],
       ),
@@ -326,84 +316,71 @@ class _StatCard extends StatelessWidget {
 class _TopicMasteryCard extends StatelessWidget {
   final dynamic topic;
   final Color primary;
+  final int progressPercent; // real mastery %, computed from attempt history
   final VoidCallback onTap;
 
   const _TopicMasteryCard({
     required this.topic,
     required this.primary,
+    required this.progressPercent,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final progress = (topic.progress as num).toDouble();
+    final progress = progressPercent.toDouble();
+    final colors = AppTheme.colorsOf(context);
 
-    return TapScale(
+    return GlassCard(
       onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: _surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: _border, width: 1),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x08000000),
-              blurRadius: 8,
-              offset: Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    topic.title,
-                    style: const TextStyle(
-                      color: _ink,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14.5,
-                    ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  topic.title,
+                  style: TextStyle(
+                    color: colors.ink,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14.5,
                   ),
                 ),
-                const SizedBox(width: 12),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: primary.withOpacity(0.07),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: primary.withOpacity(0.12)),
-                  ),
-                  child: Text(
-                    '${topic.progress}%',
-                    style: TextStyle(
-                      color: primary,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Icon(Icons.arrow_forward_rounded, color: _muted, size: 15),
-              ],
-            ),
-            const SizedBox(height: 12),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(99),
-              child: LinearProgressIndicator(
-                value: (progress / 100).clamp(0.0, 1.0),
-                minHeight: 5,
-                backgroundColor: _border,
-                valueColor: AlwaysStoppedAnimation<Color>(primary),
               ),
+              const SizedBox(width: 12),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                decoration: BoxDecoration(
+                  color: primary.withOpacity(0.07),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: primary.withOpacity(0.12)),
+                ),
+                child: Text(
+                  '$progressPercent%',
+                  style: TextStyle(
+                    color: primary,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(Icons.arrow_forward_rounded, color: colors.muted, size: 15),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(99),
+            child: LinearProgressIndicator(
+              value: (progress / 100).clamp(0.0, 1.0),
+              minHeight: 5,
+              backgroundColor: colors.glassBorderSoft,
+              valueColor: AlwaysStoppedAnimation<Color>(primary),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -413,26 +390,48 @@ class _TopicMasteryCard extends StatelessWidget {
 
 class _WeeklyLineChart extends StatelessWidget {
   final Color primary;
-  const _WeeklyLineChart({required this.primary});
+  final List<DayActivity> days;
+  const _WeeklyLineChart({required this.primary, required this.days});
+
+  // Single-letter weekday label derived from a "YYYY-MM-DD" date string, so
+  // the axis tracks the actual 7 days returned rather than assuming a fixed
+  // week-start. Falls back to an empty label if the date can't be parsed.
+  static const _weekdayLetters = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+  String _label(String date) {
+    final parsed = DateTime.tryParse(date);
+    if (parsed == null) return '';
+    return _weekdayLetters[parsed.weekday - 1];
+  }
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppTheme.colorsOf(context);
+
+    // Attempt counts in chronological order (oldest→newest), normalized in the
+    // painter. Empty until the first fetch resolves → flat zero line.
+    final counts = days.map((d) => d.attempts.toDouble()).toList();
+
     return CustomPaint(
-      painter: _WeeklyLinePainter(primary: primary),
+      painter: _WeeklyLinePainter(
+        primary: primary,
+        gridColor: colors.border,
+        values: counts,
+      ),
       child: Align(
         alignment: Alignment.bottomCenter,
         child: Padding(
           padding: const EdgeInsets.only(bottom: 4),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: const [
-              Text('M', style: TextStyle(color: _muted, fontSize: 11)),
-              Text('T', style: TextStyle(color: _muted, fontSize: 11)),
-              Text('W', style: TextStyle(color: _muted, fontSize: 11)),
-              Text('T', style: TextStyle(color: _muted, fontSize: 11)),
-              Text('F', style: TextStyle(color: _muted, fontSize: 11)),
-              Text('S', style: TextStyle(color: _muted, fontSize: 11)),
-              Text('S', style: TextStyle(color: _muted, fontSize: 11)),
+            children: [
+              if (days.isEmpty)
+                for (final l in _weekdayLetters)
+                  Text(l, style: TextStyle(color: colors.muted, fontSize: 11))
+              else
+                for (final d in days)
+                  Text(_label(d.date),
+                      style: TextStyle(color: colors.muted, fontSize: 11)),
             ],
           ),
         ),
@@ -443,18 +442,30 @@ class _WeeklyLineChart extends StatelessWidget {
 
 class _WeeklyLinePainter extends CustomPainter {
   final Color primary;
-  const _WeeklyLinePainter({required this.primary});
+  final Color gridColor;
+  final List<double> values;
+  const _WeeklyLinePainter({
+    required this.primary,
+    required this.gridColor,
+    required this.values,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
-    final values = [0.25, 0.45, 0.38, 0.65, 0.58, 0.8, 0.72];
+    // Normalize raw attempt counts to 0..1 against the week's peak so the line
+    // fills the chart regardless of absolute volume. No activity → flat line
+    // along the baseline.
+    final raw = values.isEmpty ? List<double>.filled(7, 0) : values;
+    final peak = raw.fold<double>(0, (m, v) => v > m ? v : m);
+    final normalized =
+        peak <= 0 ? raw.map((_) => 0.0).toList() : raw.map((v) => v / peak).toList();
     final chartHeight = size.height - 26;
     final path = Path();
     final points = <Offset>[];
 
-    for (var i = 0; i < values.length; i++) {
-      final x = i * (size.width / (values.length - 1));
-      final y = chartHeight - values[i] * (chartHeight - 10) + 5;
+    for (var i = 0; i < normalized.length; i++) {
+      final x = i * (size.width / (normalized.length - 1));
+      final y = chartHeight - normalized[i] * (chartHeight - 10) + 5;
       points.add(Offset(x, y));
       if (i == 0) {
         path.moveTo(x, y);
@@ -465,7 +476,7 @@ class _WeeklyLinePainter extends CustomPainter {
 
     // Grid lines
     final gridPaint = Paint()
-      ..color = _border
+      ..color = gridColor
       ..strokeWidth = 1;
     for (var i = 0; i < 4; i++) {
       final y = i * chartHeight / 4;
@@ -492,48 +503,39 @@ class _WeeklyLinePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _WeeklyLinePainter old) =>
-      old.primary != primary;
+      old.primary != primary ||
+      old.gridColor != gridColor ||
+      old.values != values;
 }
 
 // ── Achievements Grid ─────────────────────────────────────────────────────────
 
 class _AchievementsGrid extends StatelessWidget {
   final Color primary;
+  final List<Achievement> achievements;
 
-  static const _achievements = [
-    _AchievementData(
-        icon: Icons.emoji_events_rounded,
-        label: 'First Win',
-        desc: 'Solved your first problem',
-        earned: true),
-    _AchievementData(
-        icon: Icons.local_fire_department_rounded,
-        label: '7-Day Streak',
-        desc: 'Practiced 7 days in a row',
-        earned: true),
-    _AchievementData(
-        icon: Icons.bolt_rounded,
-        label: 'Speed Demon',
-        desc: 'Solved a problem in under 10s',
-        earned: true),
-    _AchievementData(
-        icon: Icons.star_rounded,
-        label: 'Perfect Score',
-        desc: 'Got 100% on a quiz',
-        earned: false),
-    _AchievementData(
-        icon: Icons.school_rounded,
-        label: 'Topic Master',
-        desc: 'Mastered an entire topic',
-        earned: false),
-    _AchievementData(
-        icon: Icons.psychology_rounded,
-        label: 'Big Brain',
-        desc: 'Solved 50 hard problems',
-        earned: false),
-  ];
+  const _AchievementsGrid({required this.primary, required this.achievements});
 
-  const _AchievementsGrid({required this.primary});
+  // Maps the backend achievement ids (see backend/app/api/quiz.py) to icons.
+  // Kept on the frontend so the backend response stays presentation-agnostic.
+  static IconData _iconFor(String id) {
+    switch (id) {
+      case 'first_steps':
+        return Icons.emoji_events_rounded;
+      case 'seven_day_streak':
+        return Icons.local_fire_department_rounded;
+      case 'speed_demon':
+        return Icons.bolt_rounded;
+      case 'perfect_ten':
+        return Icons.star_rounded;
+      case 'topic_master':
+        return Icons.school_rounded;
+      case 'dedicated_learner':
+        return Icons.psychology_rounded;
+      default:
+        return Icons.military_tech_rounded;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -544,8 +546,16 @@ class _AchievementsGrid extends StatelessWidget {
       crossAxisSpacing: 10,
       mainAxisSpacing: 10,
       childAspectRatio: 0.85,
-      children: _achievements
-          .map((a) => _AchievementTile(data: a, primary: primary))
+      children: achievements
+          .map((a) => _AchievementTile(
+                data: _AchievementData(
+                  icon: _iconFor(a.id),
+                  label: a.label,
+                  desc: a.description,
+                  earned: a.earned,
+                ),
+                primary: primary,
+              ))
           .toList(),
     );
   }
@@ -575,6 +585,8 @@ class _AchievementTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppTheme.colorsOf(context);
+
     return GestureDetector(
       onTap: () => showDialog(
         context: context,
@@ -582,10 +594,10 @@ class _AchievementTile extends StatelessWidget {
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Text(data.label,
-              style: const TextStyle(
-                  color: _ink, fontWeight: FontWeight.w700, fontSize: 16)),
-          content: Text(data.desc,
-              style: const TextStyle(color: _muted, fontSize: 14)),
+              style: TextStyle(
+                  color: colors.ink, fontWeight: FontWeight.w700, fontSize: 16)),
+          content:
+              Text(data.desc, style: TextStyle(color: colors.muted, fontSize: 14)),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -596,19 +608,8 @@ class _AchievementTile extends StatelessWidget {
           ],
         ),
       ),
-      child: Container(
-        decoration: BoxDecoration(
-          color: _surface,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: _border, width: 1),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x08000000),
-              blurRadius: 8,
-              offset: Offset(0, 2),
-            ),
-          ],
-        ),
+      child: GlassCard(
+        borderRadius: BorderRadius.circular(14),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -618,12 +619,12 @@ class _AchievementTile extends StatelessWidget {
               decoration: BoxDecoration(
                 color: data.earned
                     ? primary.withOpacity(0.08)
-                    : const Color(0xFFF1F5F9),
+                    : colors.glassChipFill,
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 data.icon,
-                color: data.earned ? primary : const Color(0xFFCBD5E1),
+                color: data.earned ? primary : colors.subtleMuted,
                 size: 22,
               ),
             ),
@@ -635,7 +636,7 @@ class _AchievementTile extends StatelessWidget {
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 style: TextStyle(
-                  color: data.earned ? _ink : const Color(0xFF94A3B8),
+                  color: data.earned ? colors.ink : colors.subtleMuted,
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                 ),
@@ -643,8 +644,7 @@ class _AchievementTile extends StatelessWidget {
             ),
             if (!data.earned) ...[
               const SizedBox(height: 4),
-              const Icon(Icons.lock_rounded,
-                  size: 11, color: Color(0xFFCBD5E1)),
+              Icon(Icons.lock_rounded, size: 11, color: colors.subtleMuted),
             ],
           ],
         ),
@@ -663,40 +663,12 @@ class _SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       label,
-      style: const TextStyle(
-        color: _muted,
+      style: TextStyle(
+        color: AppTheme.colorsOf(context).muted,
         fontSize: 11.5,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.4,
       ),
-    );
-  }
-}
-
-// ── White Card ────────────────────────────────────────────────────────────────
-
-class _WhiteCard extends StatelessWidget {
-  final Widget child;
-  const _WhiteCard({required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: _surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _border, width: 1),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x08000000),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: child,
     );
   }
 }

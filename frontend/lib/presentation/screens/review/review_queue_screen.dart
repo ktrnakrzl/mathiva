@@ -7,12 +7,11 @@ import 'package:mathiva/data/providers/repository_providers.dart';
 import 'package:mathiva/presentation/widgets/loading_overlay.dart';
 import 'package:mathiva/presentation/widgets/animated_background.dart';
 import 'package:mathiva/presentation/widgets/fade_slide_in.dart';
+import 'package:mathiva/presentation/widgets/glass_card.dart';
 import 'package:mathiva/presentation/widgets/section_header.dart';
 import 'package:mathiva/services/app_preferences.dart';
+import 'package:mathiva/theme/app_theme.dart';
 import '../../../widgets/mathiva_app_bar.dart';
-
-const _ink = Color(0xFF242033);
-const _muted = Color(0xFF8C879A);
 
 final reviewQueueProvider = FutureProvider<List<ReviewQuestion>>((ref) {
   return ref
@@ -27,6 +26,7 @@ class ReviewQueueScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final queue = ref.watch(reviewQueueProvider);
     final palette = AppPreferences.palette.value;
+    final colors = AppTheme.colorsOf(context);
     return Scaffold(
       backgroundColor: Colors.transparent,
       extendBodyBehindAppBar: true,
@@ -37,6 +37,7 @@ class ReviewQueueScreen extends ConsumerWidget {
         showBack: true,
       ),
       body: AnimatedBackground(
+        vivid: true,
         child: SafeArea(
           top: false,
           child: queue.when(
@@ -56,7 +57,7 @@ class ReviewQueueScreen extends ConsumerWidget {
                   padding: const EdgeInsets.only(bottom: 14),
                   child: FadeSlideIn(
                     delay: Duration(milliseconds: 60 * index),
-                    child: _SoftCard(
+                    child: GlassCard(
                       child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -78,14 +79,14 @@ class ReviewQueueScreen extends ConsumerWidget {
                             const SizedBox(height: 14),
                             MathRenderer(
                                 text: item.question_text,
-                                textStyle: const TextStyle(
-                                    color: _ink, fontWeight: FontWeight.w800),
+                                textStyle: TextStyle(
+                                    color: colors.ink, fontWeight: FontWeight.w800),
                                 mathFontSize: 16),
                             const SizedBox(height: 12),
                             ...item.choices.map((choice) => Padding(
                                 padding: const EdgeInsets.only(bottom: 6),
                                 child: Text('• $choice',
-                                    style: const TextStyle(color: _muted)))),
+                                    style: TextStyle(color: colors.muted)))),
                           ]),
                     ),
                   ),
@@ -99,23 +100,4 @@ class ReviewQueueScreen extends ConsumerWidget {
       ),
     );
   }
-}
-
-class _SoftCard extends StatelessWidget {
-  final Widget child;
-  const _SoftCard({required this.child});
-  @override
-  Widget build(BuildContext context) => Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF7F9FC).withOpacity(.92),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: const [
-            BoxShadow(
-                color: Colors.black12, blurRadius: 16, offset: Offset(0, 8))
-          ],
-        ),
-        child: child,
-      );
 }

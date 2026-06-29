@@ -1,29 +1,35 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
 import '../services/app_preferences.dart';
 import 'package:go_router/go_router.dart';
 
 import '../services/local_content_service.dart';
+import '../services/progress_service.dart';
+import '../services/progress_store.dart';
+import '../utils/progress_calc.dart';
 import '../utils/route_names.dart';
 import '../widgets/mathiva_bottom_nav.dart';
 import '../presentation/widgets/animated_background.dart';
 import '../presentation/widgets/fade_slide_in.dart';
+import '../presentation/widgets/glass_card.dart';
 import '../presentation/widgets/tap_scale.dart';
+import '../theme/app_theme.dart';
 
-const _ink = Color(0xFF111827);
-const _muted = Color(0xFF6B7280);
-const _border = Color(0xFFE5E7EB);
-const _surface = Color(0xFFFFFFFF);
-const _pageBg = Color(0xFFF8F9FB);
-
-// Shared app-chrome surface — a very light lavender tint used by the header
-// (and mirrored in MathivaBottomNav) so both pieces of app chrome read as
-// one distinct layer, sitting just above the white content surfaces below.
-const _chromeSurface = Color(0xFFF6F5FB);
-const _chromeBorder = Color(0xFFEAE8F5);
-
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    ProgressStore.refresh();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,90 +37,121 @@ class HomeScreen extends StatelessWidget {
     final firstSubject = subjects.first;
     final firstTopic = firstSubject.topics.first;
     final firstLesson = firstTopic.lessons.first;
+    final primary = AppPreferences.palette.value.primary;
+    final colors = AppTheme.colorsOf(context);
 
     return Scaffold(
       extendBody: true,
-      backgroundColor: _pageBg,
-      appBar: AppBar(
-        backgroundColor: _chromeSurface,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 1,
-        shadowColor: Colors.black.withOpacity(0.04),
-        automaticallyImplyLeading: false,
-        centerTitle: false,
-        toolbarHeight: 58,
-        titleSpacing: 20,
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Image.asset(
-              'assets/mathiva_logo.png',
-              height: 26,
-              fit: BoxFit.contain,
-            ),
-            const SizedBox(width: 8),
-            const Text(
-              'Mathivia',
-              style: TextStyle(
-                color: Color(0xFF312E81),
-                fontSize: 19,
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.2,
-                height: 1,
+      backgroundColor: colors.pageBg,
+      // Frosted-glass header — BackdropFilter blur over a translucent white
+      // tint, matching GlassCard/MathivaBottomNav, instead of the old flat
+      // lavender chrome.
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(58),
+        child: ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+            child: AppBar(
+              backgroundColor: colors.glassFillStart,
+              surfaceTintColor: Colors.transparent,
+              elevation: 0,
+              scrolledUnderElevation: 1,
+              shadowColor: primary.withOpacity(0.12),
+              automaticallyImplyLeading: false,
+              centerTitle: false,
+              toolbarHeight: 58,
+              titleSpacing: 20,
+              title: Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Image.asset(
+                    'assets/mathiva_logo.png',
+                    height: 26,
+                    fit: BoxFit.contain,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Mathivia',
+                    style: TextStyle(
+                      color: colors.titleColor,
+                      fontSize: 19,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: -0.2,
+                      height: 1,
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                IconButton(
+                  tooltip: 'Ask Math Tutor',
+                  onPressed: () => context.push(RouteNames.chat),
+                  icon: Icon(
+                    Icons.chat_bubble_outline_rounded,
+                    color: primary,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(1),
+                child: Container(
+                  height: 1,
+                  color: colors.glassBorder,
+                ),
               ),
             ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            tooltip: 'Ask Math Tutor',
-            onPressed: () => context.push(RouteNames.chat),
-            icon: Icon(
-              Icons.chat_bubble_outline_rounded,
-              color: AppPreferences.palette.value.primary,
-              size: 22,
-            ),
-          ),
-          const SizedBox(width: 8),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(
-            height: 1,
-            color: _chromeBorder,
           ),
         ),
       ),
       body: AnimatedBackground(
+        vivid: true,
         child: SafeArea(
           top: false,
           child: ListView(
             physics: const BouncingScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 112),
             children: [
-              // ① Continue Learning
+              // ① Greeting + stats strip (streak/points/mastery are all
+              // reactive on real attempt history via ProgressStore).
+              const FadeSlideIn(
+                child: _GreetingHeader(),
+              ),
+              const SizedBox(height: 20),
+
+              // ② Continue Learning — progress badge reflects real mastery of
+              // the focus topic, recomputed whenever ProgressStore updates.
               FadeSlideIn(
-                child: _ContinueLearningHero(
-                  subject: firstSubject.title,
-                  lesson: firstLesson.title,
-                  progress: firstTopic.progress,
-                  onTap: () => context.push(
-                    RouteNames.lessonDetail,
-                    extra: {
-                      'subjectId': firstSubject.id,
-                      'topicId': firstTopic.id,
-                      'lessonId': firstLesson.id,
-                    },
-                  ),
+                delay: const Duration(milliseconds: 60),
+                child: ValueListenableBuilder<UserProgress?>(
+                  valueListenable: ProgressStore.current,
+                  builder: (context, progress, _) {
+                    final byConcept = progress?.conceptStats ?? const {};
+                    final pct =
+                        (topicProgress(firstTopic, byConcept) * 100).round();
+                    return _ContinueLearningHero(
+                      subject: firstSubject.title,
+                      lesson: firstLesson.title,
+                      progress: pct,
+                      onTap: () => context.push(
+                        RouteNames.lessonDetail,
+                        extra: {
+                          'subjectId': firstSubject.id,
+                          'topicId': firstTopic.id,
+                          'lessonId': firstLesson.id,
+                        },
+                      ),
+                    );
+                  },
                 ),
               ),
               const SizedBox(height: 20),
 
-              // ② What would you like to do?
+              // ③ What would you like to do?
               FadeSlideIn(
-                delay: const Duration(milliseconds: 140),
+                delay: const Duration(milliseconds: 200),
                 child: _NextActionsZone(
                   onScanTap: () => context.push(RouteNames.imageSolver),
                   onPracticeTap: () => context.push(
@@ -145,6 +182,171 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
+// ─── Greeting Header ──────────────────────────────────────────────────────────
+
+class _GreetingHeader extends StatelessWidget {
+  const _GreetingHeader();
+
+  static String _greeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+  }
+
+  /// Compact "1.2k" style for large point totals, exact for small ones.
+  static String _formatPoints(int points) {
+    if (points >= 1000) return '${(points / 1000).toStringAsFixed(1)}k';
+    return '$points';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppTheme.colorsOf(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ValueListenableBuilder<String>(
+          valueListenable: AppPreferences.studentName,
+          builder: (context, name, _) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${_greeting()},',
+                  style: TextStyle(
+                    color: colors.muted,
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  name,
+                  style: TextStyle(
+                    color: colors.ink,
+                    fontSize: 23,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+        const SizedBox(height: 16),
+        // Streak / points / mastery all derive from real attempt history.
+        // Before the first fetch resolves (or for a brand-new user) they
+        // simply read as 0 — no fake fallback values.
+        ValueListenableBuilder<UserProgress?>(
+          valueListenable: ProgressStore.current,
+          builder: (context, progress, _) {
+            final byConcept = progress?.conceptStats ?? const {};
+            final allTopics = LocalContentService().allTopics();
+            final mastery = allTopics.isEmpty
+                ? 0
+                : (allTopics
+                            .map((t) => topicProgress(t, byConcept) * 100)
+                            .reduce((a, b) => a + b) /
+                        allTopics.length)
+                    .round();
+
+            return Row(
+              children: [
+                Expanded(
+                  child: _StatChip(
+                    icon: Icons.local_fire_department_rounded,
+                    value: '${progress?.currentStreakDays ?? 0}',
+                    label: 'day streak',
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _StatChip(
+                    icon: Icons.star_rounded,
+                    value: _formatPoints(progress?.points ?? 0),
+                    label: 'points',
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _StatChip(
+                    icon: Icons.insights_rounded,
+                    value: '$mastery%',
+                    label: 'mastery',
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+// ─── Stat Chip ────────────────────────────────────────────────────────────────
+
+class _StatChip extends StatelessWidget {
+  final IconData icon;
+  final String value;
+  final String label;
+
+  const _StatChip({
+    required this.icon,
+    required this.value,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = AppPreferences.palette.value.primary;
+    final colors = AppTheme.colorsOf(context);
+
+    return GlassCard(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      borderRadius: BorderRadius.circular(14),
+      blurSigma: 14,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: primary, size: 18),
+          const SizedBox(width: 7),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  value,
+                  style: TextStyle(
+                    color: colors.ink,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    height: 1,
+                  ),
+                ),
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: colors.muted,
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w500,
+                    height: 1.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 // ─── Next Actions Zone ────────────────────────────────────────────────────────
 
 class _NextActionsZone extends StatelessWidget {
@@ -166,22 +368,10 @@ class _NextActionsZone extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primary = AppPreferences.palette.value.primary;
+    final colors = AppTheme.colorsOf(context);
 
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: _surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _border, width: 1),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x08000000),
-            blurRadius: 10,
-            offset: Offset(0, 3),
-          ),
-        ],
-      ),
+    return GlassCard(
+      padding: EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -190,7 +380,7 @@ class _NextActionsZone extends StatelessWidget {
             child: Text(
               'What would you like to do?',
               style: TextStyle(
-                color: _muted,
+                color: colors.muted,
                 fontSize: 11.5,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 0.4,
@@ -242,14 +432,15 @@ class _NextActionsZone extends StatelessWidget {
             child: Row(
               children: [
                 Expanded(
-                  child: Divider(color: _border, height: 1, thickness: 1),
+                  child: Divider(
+                      color: colors.glassBorderSoft, height: 1, thickness: 1),
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 10),
                   child: Text(
                     'Recent',
                     style: TextStyle(
-                      color: _muted,
+                      color: colors.muted,
                       fontSize: 11,
                       fontWeight: FontWeight.w500,
                       letterSpacing: 0.3,
@@ -257,11 +448,17 @@ class _NextActionsZone extends StatelessWidget {
                   ),
                 ),
                 Expanded(
-                  child: Divider(color: _border, height: 1, thickness: 1),
+                  child: Divider(
+                      color: colors.glassBorderSoft, height: 1, thickness: 1),
                 ),
               ],
             ),
           ),
+          // NOTE: these two "Recent" rows are still illustrative placeholders.
+          // They represent *scan/solver* history, which has no persistence
+          // layer at all yet (a separate feature from quiz/practice progress,
+          // out of scope for the stats work that made streak/points/mastery
+          // above real). Left as static examples until solver history exists.
           _RecentScanRow(
             title: '2x² + 5x + 3 = 0',
             subtitle: 'Quadratic equation · solved today',
@@ -269,7 +466,8 @@ class _NextActionsZone extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 18),
-            child: Divider(color: _border, height: 1, thickness: 1),
+            child: Divider(
+                color: colors.glassBorderSoft, height: 1, thickness: 1),
           ),
           _RecentScanRow(
             title: 'f(x) = 2x + 1',
@@ -301,6 +499,7 @@ class _RecentScanRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final primary = AppPreferences.palette.value.primary;
+    final colors = AppTheme.colorsOf(context);
 
     return TapScale(
       onTap: onTap,
@@ -326,8 +525,8 @@ class _RecentScanRow extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(
-                        color: _ink,
+                      style: TextStyle(
+                        color: colors.ink,
                         fontWeight: FontWeight.w600,
                         fontSize: 13.5,
                       ),
@@ -335,56 +534,18 @@ class _RecentScanRow extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       subtitle,
-                      style: const TextStyle(color: _muted, fontSize: 12),
+                      style: TextStyle(color: colors.muted, fontSize: 12),
                     ),
                   ],
                 ),
               ),
               const SizedBox(width: 8),
-              const Icon(Icons.chevron_right_rounded, color: _muted, size: 17),
+              Icon(Icons.chevron_right_rounded, color: colors.muted, size: 17),
             ],
           ),
         ),
       ),
     );
-  }
-}
-
-// ─── White Card Base ──────────────────────────────────────────────────────────
-
-class _WhiteCard extends StatelessWidget {
-  final Widget child;
-  final VoidCallback? onTap;
-  final EdgeInsets padding;
-
-  const _WhiteCard({
-    required this.child,
-    this.onTap,
-    this.padding = const EdgeInsets.all(20),
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final card = Container(
-      width: double.infinity,
-      padding: padding,
-      decoration: BoxDecoration(
-        color: _surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _border, width: 1),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x08000000),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: child,
-    );
-
-    if (onTap == null) return card;
-    return TapScale(onTap: onTap, child: card);
   }
 }
 
@@ -406,8 +567,9 @@ class _ContinueLearningHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final primary = AppPreferences.palette.value.primary;
+    final colors = AppTheme.colorsOf(context);
 
-    return _WhiteCard(
+    return GlassCard(
       onTap: onTap,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -430,10 +592,10 @@ class _ContinueLearningHero extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       "Today's Focus",
                       style: TextStyle(
-                        color: _muted,
+                        color: colors.muted,
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                       ),
@@ -441,8 +603,8 @@ class _ContinueLearningHero extends StatelessWidget {
                     const SizedBox(height: 3),
                     Text(
                       lesson,
-                      style: const TextStyle(
-                        color: _ink,
+                      style: TextStyle(
+                        color: colors.ink,
                         fontSize: 17,
                         fontWeight: FontWeight.w700,
                       ),
@@ -450,7 +612,7 @@ class _ContinueLearningHero extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       subject,
-                      style: const TextStyle(color: _muted, fontSize: 12.5),
+                      style: TextStyle(color: colors.muted, fontSize: 12.5),
                     ),
                   ],
                 ),
@@ -484,7 +646,7 @@ class _ContinueLearningHero extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: (progress / 100).clamp(0.0, 1.0),
                     minHeight: 6,
-                    backgroundColor: _border,
+                    backgroundColor: colors.glassBorderSoft,
                     valueColor: AlwaysStoppedAnimation<Color>(primary),
                   ),
                 ),
@@ -526,6 +688,7 @@ class _PrimaryActionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final primary = AppPreferences.palette.value.primary;
+    final colors = AppTheme.colorsOf(context);
 
     return TapScale(
       onTap: onTap,
@@ -559,8 +722,8 @@ class _PrimaryActionTile extends StatelessWidget {
                 children: [
                   Text(
                     label,
-                    style: const TextStyle(
-                      color: _ink,
+                    style: TextStyle(
+                      color: colors.ink,
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
@@ -568,8 +731,8 @@ class _PrimaryActionTile extends StatelessWidget {
                   const SizedBox(height: 1),
                   Text(
                     description,
-                    style: const TextStyle(
-                      color: _muted,
+                    style: TextStyle(
+                      color: colors.muted,
                       fontSize: 12,
                       fontWeight: FontWeight.w400,
                     ),
@@ -602,15 +765,16 @@ class _ActionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final primary = AppPreferences.palette.value.primary;
+    final colors = AppTheme.colorsOf(context);
 
     return TapScale(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: _pageBg,
+          color: colors.glassChipFill,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: _border, width: 1),
+          border: Border.all(color: colors.glassBorder, width: 1),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -619,8 +783,8 @@ class _ActionTile extends StatelessWidget {
             const SizedBox(height: 7),
             Text(
               label,
-              style: const TextStyle(
-                color: _ink,
+              style: TextStyle(
+                color: colors.ink,
                 fontSize: 11.5,
                 fontWeight: FontWeight.w600,
               ),

@@ -5,13 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../utils/route_names.dart';
 import '../presentation/widgets/animated_background.dart';
 import '../presentation/widgets/fade_slide_in.dart';
-
-final _primary = Color(0xFF2563EB);
-final _secondary = Color(0xFF14B8A6);
-final _chip = Color(0xFFEFF6FF);
-
-final _ink = Color(0xFF242033);
-final _muted = Color(0xFF8C879A);
+import '../presentation/widgets/glass_card.dart';
+import '../theme/app_theme.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -66,14 +61,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget build(BuildContext context) {
     final _palette = AppPreferences.palette.value;
     final _primary = _palette.primary;
-    final _secondary = _palette.secondary;
-    final _gBackgroundStart = _palette.background.first;
-    final _chip =
-        Color.alphaBlend(_primary.withOpacity(0.05), const Color(0xFFF7F9FC));
+    final colors = AppTheme.colorsOf(context);
+    final _chip = colors.glassChipFill;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: AnimatedBackground(
+        vivid: true,
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(24, 14, 24, 28),
@@ -96,7 +90,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     child: Text(
                       'Skip',
                       style: TextStyle(
-                        color: _ink.withOpacity(0.55),
+                        color: colors.ink.withOpacity(0.55),
                         fontSize: 13.5,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 0.1,
@@ -175,6 +169,7 @@ class _SlidePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final _palette = AppPreferences.palette.value;
     final _primary = _palette.primary;
+    final colors = AppTheme.colorsOf(context);
 
     return FadeSlideIn(
       key: ValueKey(slide.title),
@@ -189,7 +184,7 @@ class _SlidePage extends StatelessWidget {
               slide.title,
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: _ink,
+                color: colors.ink,
                 fontSize: 26,
                 height: 1.22,
                 fontWeight: FontWeight.w600,
@@ -204,7 +199,7 @@ class _SlidePage extends StatelessWidget {
               slide.subtitle,
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: _muted,
+                color: colors.muted,
                 fontSize: 14.5,
                 height: 1.65,
                 fontWeight: FontWeight.w400,
@@ -247,19 +242,13 @@ class _Hero extends StatelessWidget {
             width: 1.2,
           ),
         ),
-        child: Container(
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Color.alphaBlend(primary.withOpacity(0.10), Colors.white),
-            boxShadow: [
-              BoxShadow(
-                color: primary.withOpacity(0.14),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
-              ),
-            ],
+        child: GlassCard(
+          borderRadius: BorderRadius.circular(76),
+          padding: EdgeInsets.zero,
+          blurSigma: 14,
+          child: Center(
+            child: Icon(slide.icon, color: primary, size: 52),
           ),
-          child: Icon(slide.icon, color: primary, size: 52),
         ),
       ),
     );

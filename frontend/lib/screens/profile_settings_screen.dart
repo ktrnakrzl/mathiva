@@ -1,30 +1,31 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import '../presentation/widgets/animated_background.dart';
 import 'package:go_router/go_router.dart';
 
+import '../presentation/widgets/glass_card.dart';
 import '../services/app_preferences.dart';
 import '../services/notification_service.dart';
+import '../services/progress_service.dart';
+import '../services/progress_store.dart';
+import '../theme/app_theme.dart';
 import '../utils/route_names.dart';
 import '../widgets/mathiva_bottom_nav.dart';
 
-// ─── Neutral palette ───────────────────────────────────────────────────────────
-// Same hex values as HomeScreen's _ink / _muted / _border / _surface / _pageBg,
-// so this screen's neutrals are pixel-identical to the rest of the app.
-const _kInk = Color(0xFF111827); // primary text
-const _kSub = Color(0xFF6B7280); // secondary text
-const _kMute = Color(0xFF9CA3AF); // placeholder / caption
-const _kDivider = Color(0xFFE5E7EB); // borders / separators
-const _kSurface = Color(0xFFFFFFFF); // card background
-const _kBg = Color(0xFFF8F9FB); // subtle off-white fill
-
-// Shared app-chrome surface — matches the header treatment on HomeScreen
-// (and MathivaBottomNav) so this screen's header reads as the same layer
-// of app chrome, sitting just above the white content surfaces below.
-const _chromeSurface = Color(0xFFF6F5FB);
-const _chromeBorder = Color(0xFFEAE8F5);
-
-class ProfileSettingsScreen extends StatelessWidget {
+class ProfileSettingsScreen extends StatefulWidget {
   const ProfileSettingsScreen({super.key});
+
+  @override
+  State<ProfileSettingsScreen> createState() => _ProfileSettingsScreenState();
+}
+
+class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    ProgressStore.refresh();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,51 +34,62 @@ class ProfileSettingsScreen extends StatelessWidget {
       builder: (context, palette, _) {
         final primary = palette.primary;
         final secondary = palette.secondary;
+        final colors = AppTheme.colorsOf(context);
 
         return Scaffold(
-          backgroundColor: _kBg,
+          backgroundColor: colors.pageBg,
           extendBody: true,
-          appBar: AppBar(
-            backgroundColor: _chromeSurface,
-            surfaceTintColor: Colors.transparent,
-            elevation: 0,
-            scrolledUnderElevation: 1,
-            shadowColor: Colors.black.withOpacity(0.04),
-            automaticallyImplyLeading: false,
-            centerTitle: false,
-            toolbarHeight: 58,
-            titleSpacing: 20,
-            title: const Text(
-              'Settings',
-              style: TextStyle(
-                color: Color(0xFF312E81),
-                fontSize: 19,
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.2,
-                height: 1,
-              ),
-            ),
-            actions: [
-              IconButton(
-                tooltip: 'Ask Math Tutor',
-                onPressed: () => context.push(RouteNames.chat),
-                icon: Icon(
-                  Icons.chat_bubble_outline_rounded,
-                  color: primary,
-                  size: 22,
+          // Frosted-glass header, matching the rest of the app's chrome.
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(58),
+            child: ClipRect(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                child: AppBar(
+                  backgroundColor: colors.glassFillStart,
+                  surfaceTintColor: Colors.transparent,
+                  elevation: 0,
+                  scrolledUnderElevation: 1,
+                  shadowColor: primary.withOpacity(0.12),
+                  automaticallyImplyLeading: false,
+                  centerTitle: false,
+                  toolbarHeight: 58,
+                  titleSpacing: 20,
+                  title: Text(
+                    'Settings',
+                    style: TextStyle(
+                      color: colors.titleColor,
+                      fontSize: 19,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: -0.2,
+                      height: 1,
+                    ),
+                  ),
+                  actions: [
+                    IconButton(
+                      tooltip: 'Ask Math Tutor',
+                      onPressed: () => context.push(RouteNames.chat),
+                      icon: Icon(
+                        Icons.chat_bubble_outline_rounded,
+                        color: primary,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  bottom: PreferredSize(
+                    preferredSize: const Size.fromHeight(1),
+                    child: Container(
+                      height: 1,
+                      color: colors.glassBorder,
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-            ],
-            bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(1),
-              child: Container(
-                height: 1,
-                color: _chromeBorder,
               ),
             ),
           ),
           body: AnimatedBackground(
+            vivid: true,
             child: SafeArea(
               top: true,
               child: ListView(
@@ -92,22 +104,34 @@ class ProfileSettingsScreen extends StatelessWidget {
                   const SizedBox(height: 20),
 
                   // ── Stat row ─────────────────────────────────────────────
-                  Row(
-                    children: [
-                      Expanded(
-                          child: _Stat(
-                              value: '128', label: 'Solved', primary: primary)),
-                      const SizedBox(width: 10),
-                      Expanded(
-                          child: _Stat(
-                              value: '86%',
-                              label: 'Accuracy',
-                              primary: primary)),
-                      const SizedBox(width: 10),
-                      Expanded(
-                          child: _Stat(
-                              value: '12', label: 'Streak', primary: primary)),
-                    ],
+                  // Same three aggregates as the Progress tab, sourced from
+                  // real attempt history. Zeros until the first fetch resolves.
+                  ValueListenableBuilder<UserProgress?>(
+                    valueListenable: ProgressStore.current,
+                    builder: (context, progress, _) {
+                      return Row(
+                        children: [
+                          Expanded(
+                              child: _Stat(
+                                  value: '${progress?.totalAttempts ?? 0}',
+                                  label: 'Solved',
+                                  primary: primary)),
+                          const SizedBox(width: 10),
+                          Expanded(
+                              child: _Stat(
+                                  value:
+                                      '${(progress?.overallAccuracy ?? 0).round()}%',
+                                  label: 'Accuracy',
+                                  primary: primary)),
+                          const SizedBox(width: 10),
+                          Expanded(
+                              child: _Stat(
+                                  value: '${progress?.currentStreakDays ?? 0}',
+                                  label: 'Streak',
+                                  primary: primary)),
+                        ],
+                      );
+                    },
                   ),
 
                   const SizedBox(height: 28),
@@ -116,6 +140,17 @@ class ProfileSettingsScreen extends StatelessWidget {
                   const _SectionTitle('Preferences'),
                   const SizedBox(height: 10),
 
+                  ValueListenableBuilder<bool>(
+                    valueListenable: AppPreferences.darkMode,
+                    builder: (context, enabled, _) => _SwitchTile(
+                      icon: Icons.dark_mode_outlined,
+                      title: 'Dark Mode',
+                      subtitle: 'Switch the whole app to a dark theme',
+                      value: enabled,
+                      onChanged: (v) => AppPreferences.darkMode.value = v,
+                      primary: primary,
+                    ),
+                  ),
                   ValueListenableBuilder<bool>(
                     valueListenable: AppPreferences.notificationsEnabled,
                     builder: (context, enabled, _) => _SwitchTile(
@@ -240,6 +275,8 @@ class ProfileSettingsScreen extends StatelessWidget {
 
   // ─── About sheet ──────────────────────────────────────────────────────────────
   static void _showAbout(BuildContext context, Color primary, Color secondary) {
+    final colors = AppTheme.colorsOf(context);
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -251,9 +288,9 @@ class ProfileSettingsScreen extends StatelessWidget {
         expand: false,
         builder: (_, scroll) => Container(
           padding: const EdgeInsets.fromLTRB(22, 18, 22, 32),
-          decoration: const BoxDecoration(
-            color: _kSurface,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          decoration: BoxDecoration(
+            color: colors.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
           ),
           child: ListView(
             controller: scroll,
@@ -265,12 +302,12 @@ class ProfileSettingsScreen extends StatelessWidget {
                   height: 4,
                   margin: const EdgeInsets.only(bottom: 4),
                   decoration: BoxDecoration(
-                      color: _kDivider,
+                      color: colors.border,
                       borderRadius: BorderRadius.circular(99)),
                 ),
                 const Spacer(),
                 IconButton(
-                    icon: const Icon(Icons.close_rounded, color: _kSub),
+                    icon: Icon(Icons.close_rounded, color: colors.muted),
                     onPressed: () => sheetCtx.pop()),
               ]),
               // App icon — tinted primary fill, matches HomeScreen icon-tile motif
@@ -293,16 +330,16 @@ class ProfileSettingsScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 14),
-              const Center(
+              Center(
                   child: Text('Mathivia',
                       style: TextStyle(
-                          color: _kInk,
+                          color: colors.ink,
                           fontSize: 26,
                           fontWeight: FontWeight.w700))),
               const SizedBox(height: 4),
-              const Center(
+              Center(
                   child: Text('Version 1.0.0',
-                      style: TextStyle(color: _kMute, fontSize: 13))),
+                      style: TextStyle(color: colors.subtleMuted, fontSize: 13))),
               const SizedBox(height: 24),
               _AboutSection(
                 title: 'What is Mathivia?',
@@ -347,21 +384,21 @@ class ProfileSettingsScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: _kBg,
+                  color: colors.pageBg,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: _kDivider),
+                  border: Border.all(color: colors.border),
                 ),
-                child: const Column(
+                child: Column(
                   children: [
                     Text('Made with ❤️ for math students',
                         style: TextStyle(
-                            color: _kInk,
+                            color: colors.ink,
                             fontWeight: FontWeight.w600,
                             fontSize: 14),
                         textAlign: TextAlign.center),
-                    SizedBox(height: 6),
+                    const SizedBox(height: 6),
                     Text('© 2026 Mathivia. All rights reserved.',
-                        style: TextStyle(color: _kMute, fontSize: 12),
+                        style: TextStyle(color: colors.subtleMuted, fontSize: 12),
                         textAlign: TextAlign.center),
                   ],
                 ),
@@ -389,12 +426,14 @@ class _AboutSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppTheme.colorsOf(context);
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: _kSurface,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _kDivider),
+        border: Border.all(color: colors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -413,14 +452,16 @@ class _AboutSection extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               Text(title,
-                  style: const TextStyle(
-                      color: _kInk, fontWeight: FontWeight.w700, fontSize: 14)),
+                  style: TextStyle(
+                      color: colors.ink,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14)),
             ],
           ),
           const SizedBox(height: 10),
           Text(body,
-              style:
-                  const TextStyle(color: _kSub, fontSize: 13.5, height: 1.55)),
+              style: TextStyle(
+                  color: colors.muted, fontSize: 13.5, height: 1.55)),
         ],
       ),
     );
@@ -435,6 +476,8 @@ class _LearningAccountCard extends StatelessWidget {
   void _showEditName(BuildContext context) {
     final controller =
         TextEditingController(text: AppPreferences.studentName.value);
+    final colors = AppTheme.colorsOf(context);
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -444,9 +487,9 @@ class _LearningAccountCard extends StatelessWidget {
             EdgeInsets.only(bottom: MediaQuery.of(sheetCtx).viewInsets.bottom),
         child: Container(
           padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
-          decoration: const BoxDecoration(
-            color: _kSurface,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+          decoration: BoxDecoration(
+            color: colors.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -458,37 +501,37 @@ class _LearningAccountCard extends StatelessWidget {
                   height: 4,
                   margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
-                      color: _kDivider,
+                      color: colors.border,
                       borderRadius: BorderRadius.circular(99)),
                 ),
               ),
               Row(children: [
-                const Expanded(
+                Expanded(
                     child: Text('Edit Name',
                         style: TextStyle(
-                            color: _kInk,
+                            color: colors.ink,
                             fontSize: 22,
                             fontWeight: FontWeight.w700))),
                 IconButton(
-                    icon: const Icon(Icons.close_rounded, color: _kSub),
+                    icon: Icon(Icons.close_rounded, color: colors.muted),
                     onPressed: () => sheetCtx.pop()),
               ]),
               const SizedBox(height: 14),
               TextField(
                 controller: controller,
                 autofocus: true,
-                style:
-                    const TextStyle(color: _kInk, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                    color: colors.ink, fontWeight: FontWeight.w600),
                 decoration: InputDecoration(
                   hintText: 'Your name',
                   filled: true,
-                  fillColor: _kBg,
+                  fillColor: colors.pageBg,
                   border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: _kDivider)),
+                      borderSide: BorderSide(color: colors.border)),
                   enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: _kDivider)),
+                      borderSide: BorderSide(color: colors.border)),
                   focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
                       borderSide: BorderSide(color: primary, width: 1.5)),
@@ -529,6 +572,8 @@ class _LearningAccountCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppTheme.colorsOf(context);
+
     return ValueListenableBuilder<String>(
       valueListenable: AppPreferences.studentName,
       builder: (ctx, name, _) {
@@ -560,13 +605,13 @@ class _LearningAccountCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(name.isNotEmpty ? name : 'Learner',
-                        style: const TextStyle(
-                            color: _kInk,
+                        style: TextStyle(
+                            color: colors.ink,
                             fontSize: 18,
                             fontWeight: FontWeight.w700)),
                     const SizedBox(height: 3),
-                    const Text('Senior High School Learner',
-                        style: TextStyle(color: _kSub, fontSize: 13)),
+                    Text('Senior High School Learner',
+                        style: TextStyle(color: colors.muted, fontSize: 13)),
                   ],
                 ),
               ),
@@ -599,8 +644,8 @@ class _SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.only(left: 2),
         child: Text(title,
-            style: const TextStyle(
-                color: _kInk,
+            style: TextStyle(
+                color: AppTheme.colorsOf(context).ink,
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.4)),
@@ -627,7 +672,9 @@ class _Stat extends StatelessWidget {
           const SizedBox(height: 4),
           Text(label,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: _kMute, fontSize: 11.5)),
+              style: TextStyle(
+                  color: AppTheme.colorsOf(context).subtleMuted,
+                  fontSize: 11.5)),
         ],
       ),
     );
@@ -653,19 +700,22 @@ class _SwitchTile extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) => _Tile(
-        icon: icon,
-        title: title,
-        subtitle: subtitle,
-        primary: primary,
-        trailing: Switch(
-          value: value,
-          onChanged: onChanged,
-          activeColor: primary,
-          inactiveThumbColor: _kMute,
-          inactiveTrackColor: _kDivider,
-        ),
-      );
+  Widget build(BuildContext context) {
+    final colors = AppTheme.colorsOf(context);
+    return _Tile(
+      icon: icon,
+      title: title,
+      subtitle: subtitle,
+      primary: primary,
+      trailing: Switch(
+        value: value,
+        onChanged: onChanged,
+        activeColor: primary,
+        inactiveThumbColor: colors.subtleMuted,
+        inactiveTrackColor: colors.border,
+      ),
+    );
+  }
 }
 
 // ─── List tile ────────────────────────────────────────────────────────────────
@@ -688,6 +738,8 @@ class _Tile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppTheme.colorsOf(context);
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: _Card(
@@ -712,20 +764,22 @@ class _Tile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(title,
-                      style: const TextStyle(
-                          color: _kInk,
+                      style: TextStyle(
+                          color: colors.ink,
                           fontWeight: FontWeight.w600,
                           fontSize: 14)),
                   const SizedBox(height: 2),
                   Text(subtitle,
-                      style: const TextStyle(color: _kMute, fontSize: 12)),
+                      style:
+                          TextStyle(color: colors.subtleMuted, fontSize: 12)),
                 ],
               ),
             ),
             if (trailing != null)
               trailing!
             else if (onTap != null)
-              const Icon(Icons.chevron_right_rounded, color: _kMute, size: 20),
+              Icon(Icons.chevron_right_rounded,
+                  color: colors.subtleMuted, size: 20),
           ],
         ),
       ),
@@ -740,21 +794,23 @@ class _LogOutButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppTheme.colorsOf(context);
+
     return SizedBox(
       width: double.infinity,
       height: 52,
       child: OutlinedButton(
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
-          backgroundColor: _kSurface,
-          foregroundColor: _kSub,
-          side: const BorderSide(color: _kDivider),
+          backgroundColor: colors.surface,
+          foregroundColor: colors.muted,
+          side: BorderSide(color: colors.border),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           elevation: 0,
         ),
-        child: const Text('Log Out',
-            style: TextStyle(fontWeight: FontWeight.w600, color: _kSub)),
+        child: Text('Log Out',
+            style: TextStyle(fontWeight: FontWeight.w600, color: colors.muted)),
       ),
     );
   }
@@ -773,28 +829,11 @@ class _Card extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final card = Container(
-      width: double.infinity,
+    return GlassCard(
       padding: padding,
-      decoration: BoxDecoration(
-        color: _kSurface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _kDivider),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x08000000),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
+      borderRadius: BorderRadius.circular(16),
+      onTap: onTap,
       child: child,
-    );
-    if (onTap == null) return card;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-          borderRadius: BorderRadius.circular(16), onTap: onTap, child: card),
     );
   }
 }

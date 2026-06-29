@@ -1,36 +1,47 @@
 import 'package:flutter/material.dart';
 import '../presentation/widgets/animated_background.dart';
+import '../presentation/widgets/glass_card.dart';
 import '../services/app_preferences.dart';
 import 'package:go_router/go_router.dart';
 
-import '../utils/route_names.dart';
+import '../services/progress_service.dart';
+import '../services/progress_store.dart';
+import '../theme/app_theme.dart';
+import '../utils/duration_format.dart';
 
-final _primary = Color(0xFF2563EB);
-final _secondary = Color(0xFF14B8A6);
-final _chip = Color(0xFFEFF6FF);
-
-final _ink = Color(0xFF242033);
-final _muted = Color(0xFF8C879A);
-
-class ConceptProgressScreen extends StatelessWidget {
+class ConceptProgressScreen extends StatefulWidget {
   final String subjectId;
   final String topicId;
   final String lessonId;
-  const ConceptProgressScreen(
-      {super.key,
-      required this.subjectId,
-      required this.topicId,
-      required this.lessonId});
+  final String? conceptId;
+  const ConceptProgressScreen({
+    super.key,
+    required this.subjectId,
+    required this.topicId,
+    required this.lessonId,
+    this.conceptId,
+  });
+
+  @override
+  State<ConceptProgressScreen> createState() => _ConceptProgressScreenState();
+}
+
+class _ConceptProgressScreenState extends State<ConceptProgressScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Pull fresh stats; the just-submitted attempt may already have landed.
+    ProgressStore.refresh();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final _palette = AppPreferences.palette.value;
-    final _primary = _palette.primary;
-    final _chip =
-        Color.alphaBlend(_primary.withOpacity(0.05), const Color(0xFFF7F9FC));
+    final primary = AppPreferences.palette.value.primary;
+    final colors = AppTheme.colorsOf(context);
 
     return Scaffold(
       body: AnimatedBackground(
+        vivid: true,
         child: SafeArea(
           child: Column(
             children: [
@@ -40,7 +51,7 @@ class ConceptProgressScreen extends StatelessWidget {
                   children: [
                     IconButton(
                       icon: Icon(Icons.arrow_back_ios_new_rounded,
-                          color: _primary),
+                          color: primary),
                       onPressed: () => context.canPop()
                           ? context.pop()
                           : context.go('/lesson-detail'),
@@ -49,53 +60,92 @@ class ConceptProgressScreen extends StatelessWidget {
                 ),
               ),
               Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
-                  physics: const BouncingScrollPhysics(),
-                  children: [
-                    _SoftCard(
-                      child: Column(
-                        children: [
-                          Icon(Icons.rocket_launch_rounded,
-                              color: _primary, size: 72),
-                          SizedBox(height: 16),
-                          Text('Concept Progress',
-                              style: TextStyle(
-                                  color: _ink,
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.w700)),
-                          SizedBox(height: 8),
-                          Text('28% Completed',
-                              style: TextStyle(color: _muted)),
-                          SizedBox(height: 18),
-                          _ProgressBar(value: .28),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    Row(
-                      children: const [
-                        Expanded(
-                            child: _Metric(
+                child: ValueListenableBuilder<UserProgress?>(
+                  valueListenable: ProgressStore.current,
+                  builder: (context, progress, _) {
+                    // Concept-level stat for the concept we navigated from.
+                    // Null conceptId (older nav paths) or no attempts yet ->
+                    // genuine zero-state.
+                    final conceptId = widget.conceptId;
+                    final stat = (progress != null && conceptId != null)
+                        ? progress.conceptStats[conceptId]
+                        : null;
+                    final bestTime = (progress != null && conceptId != null)
+                        ? _bestTimeFor(progress, conceptId)
+                        : null;
+
+                    final accuracy = stat?.accuracy ?? 0;
+                    final hasData = stat != null && stat.attempts > 0;
+
+                    return ListView(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+                      physics: const BouncingScrollPhysics(),
+                      children: [
+                        GlassCard(
+                          child: Column(
+                            children: [
+                              Icon(Icons.rocket_launch_rounded,
+                                  color: primary, size: 72),
+                              const SizedBox(height: 16),
+                              Text('Concept Progress',
+                                  style: TextStyle(
+                                      color: colors.ink,
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.w700)),
+                              const SizedBox(height: 8),
+                              Text(
+                                hasData
+                                    ? '${accuracy.round()}% Accuracy'
+                                    : 'No data yet',
+                                style: TextStyle(color: colors.muted),
+                              ),
+                              const SizedBox(height: 18),
+                              _ProgressBar(value: accuracy / 100),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _Metric(
                                 label: 'Best Time',
-                                value: '1m 58s',
-                                icon: Icons.timer_rounded)),
-                        SizedBox(width: 12),
-                        Expanded(
-                            child: _Metric(
+                                value: bestTime != null
+                                    ? formatElapsed(bestTime)
+                                    : '—',
+                                icon: Icons.timer_rounded,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _Metric(
                                 label: 'Accuracy',
-                                value: '100%',
-                                icon: Icons.check_circle_rounded)),
+                                value: hasData ? '${accuracy.round()}%' : '—',
+                                icon: Icons.check_circle_rounded,
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (hasData) ...[
+                          const SizedBox(height: 12),
+                          Text(
+                            '${stat.correct} of ${stat.attempts} attempt'
+                            '${stat.attempts == 1 ? '' : 's'} correct',
+                            textAlign: TextAlign.center,
+                            style:
+                                TextStyle(color: colors.muted, fontSize: 12.5),
+                          ),
+                        ],
+                        const SizedBox(height: 24),
+                        _GradientButton(
+                          label: 'Back to Concepts',
+                          onPressed: () => context.canPop()
+                              ? context.pop()
+                              : context.go('/lesson-detail'),
+                        ),
                       ],
-                    ),
-                    const SizedBox(height: 24),
-                    _GradientButton(
-                      label: 'Back to Concepts',
-                      onPressed: () => context.canPop()
-                          ? context.pop()
-                          : context.go('/lesson-detail'),
-                    ),
-                  ],
+                    );
+                  },
                 ),
               ),
             ],
@@ -103,6 +153,13 @@ class ConceptProgressScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  int? _bestTimeFor(UserProgress progress, String conceptId) {
+    for (final b in progress.bestTimeByConcept) {
+      if (b.conceptId == conceptId) return b.bestElapsedSeconds;
+    }
+    return null;
   }
 }
 
@@ -113,18 +170,23 @@ class _Metric extends StatelessWidget {
   const _Metric({required this.label, required this.value, required this.icon});
 
   @override
-  Widget build(BuildContext context) => _SoftCard(
-        child: Column(
-          children: [
-            Icon(icon, color: _primary),
-            const SizedBox(height: 10),
-            Text(value,
-                style: TextStyle(
-                    color: _ink, fontSize: 22, fontWeight: FontWeight.w700)),
-            Text(label, style: TextStyle(color: _muted, fontSize: 12)),
-          ],
-        ),
-      );
+  Widget build(BuildContext context) {
+    final primary = AppPreferences.palette.value.primary;
+    final colors = AppTheme.colorsOf(context);
+
+    return GlassCard(
+      child: Column(
+        children: [
+          Icon(icon, color: primary),
+          const SizedBox(height: 10),
+          Text(value,
+              style: TextStyle(
+                  color: colors.ink, fontSize: 22, fontWeight: FontWeight.w700)),
+          Text(label, style: TextStyle(color: colors.muted, fontSize: 12)),
+        ],
+      ),
+    );
+  }
 }
 
 class _ProgressBar extends StatelessWidget {
@@ -132,14 +194,19 @@ class _ProgressBar extends StatelessWidget {
   const _ProgressBar({required this.value});
 
   @override
-  Widget build(BuildContext context) => ClipRRect(
-        child: LinearProgressIndicator(
-          value: value,
-          minHeight: 12,
-          backgroundColor: _chip,
-          valueColor: AlwaysStoppedAnimation<Color>(_primary),
-        ),
-      );
+  Widget build(BuildContext context) {
+    final primary = AppPreferences.palette.value.primary;
+    final colors = AppTheme.colorsOf(context);
+
+    return ClipRRect(
+      child: LinearProgressIndicator(
+        value: value,
+        minHeight: 12,
+        backgroundColor: colors.glassBorderSoft,
+        valueColor: AlwaysStoppedAnimation<Color>(primary),
+      ),
+    );
+  }
 }
 
 class _GradientButton extends StatelessWidget {
@@ -148,43 +215,22 @@ class _GradientButton extends StatelessWidget {
   const _GradientButton({required this.label, required this.onPressed});
 
   @override
-  Widget build(BuildContext context) => SizedBox(
-        height: 54,
-        child: OutlinedButton(
-          onPressed: onPressed,
-          style: OutlinedButton.styleFrom(
-            backgroundColor: Colors.transparent,
-            foregroundColor: _primary,
-            side: BorderSide(color: _primary, width: 1),
-            shadowColor: Colors.transparent,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          ),
-          child:
-              Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
+  Widget build(BuildContext context) {
+    final primary = AppPreferences.palette.value.primary;
+
+    return SizedBox(
+      height: 54,
+      child: OutlinedButton(
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          foregroundColor: primary,
+          side: BorderSide(color: primary, width: 1),
+          shadowColor: Colors.transparent,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         ),
-      );
+        child: Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
+      ),
+    );
+  }
 }
-
-class _SoftCard extends StatelessWidget {
-  final Widget child;
-  const _SoftCard({required this.child});
-
-  @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF7F9FC),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 8,
-                offset: Offset(0, 8))
-          ],
-        ),
-        child: child,
-      );
-}
-
-// REDESIGNED SCREEN MARKER

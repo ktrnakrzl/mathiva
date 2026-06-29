@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/app_preferences.dart';
+import 'semantic_colors.dart';
 
 class AppColors {
   static const purple = Color(0xFF7A3CFF);
@@ -22,17 +23,37 @@ class AppTheme {
   static List<Color> backgroundOf(BuildContext context) =>
       paletteOf(context).background;
 
-  static ThemeData light([MathiviaPalette? palette]) {
+  /// The reactive light/dark neutral palette — read this instead of
+  /// declaring local `_ink`/`_muted`/`_pageBg` consts in a screen.
+  static SemanticColors colorsOf(BuildContext context) =>
+      Theme.of(context).extension<SemanticColors>()!;
+
+  static ThemeData light([MathiviaPalette? palette]) =>
+      _build(palette, Brightness.light, SemanticColors.light);
+
+  static ThemeData dark([MathiviaPalette? palette]) =>
+      _build(palette, Brightness.dark, SemanticColors.dark);
+
+  static ThemeData _build(
+    MathiviaPalette? palette,
+    Brightness brightness,
+    SemanticColors colors,
+  ) {
     final active = palette ?? AppPreferences.palette.value;
+    final isDark = brightness == Brightness.dark;
+
     return ThemeData(
       useMaterial3: true,
+      brightness: brightness,
       fontFamily: 'Poppins',
-      scaffoldBackgroundColor: Colors.white,
+      scaffoldBackgroundColor: colors.pageBg,
       colorScheme: ColorScheme.fromSeed(
         seedColor: active.primary,
         primary: active.primary,
         secondary: active.secondary,
+        brightness: brightness,
       ),
+      extensions: [colors],
       switchTheme: SwitchThemeData(
         thumbColor: MaterialStateProperty.resolveWith((states) =>
             states.contains(MaterialState.selected) ? active.primary : null),
@@ -45,21 +66,22 @@ class AppTheme {
         fillColor: MaterialStateProperty.resolveWith((states) =>
             states.contains(MaterialState.selected) ? active.primary : null),
       ),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: Colors.white,
+      appBarTheme: AppBarTheme(
+        backgroundColor: colors.surface,
         elevation: 0,
         centerTitle: true,
-        foregroundColor: AppColors.ink,
+        foregroundColor: colors.ink,
       ),
       cardTheme: CardThemeData(
-        color: const Color(0xFFF7F9FC),
+        color: isDark ? colors.surface : const Color(0xFFF7F9FC),
         elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: const Color(0xFFF7F9FC).withOpacity(.84),
-        hintStyle: const TextStyle(color: AppColors.muted),
+        fillColor: (isDark ? colors.surface : const Color(0xFFF7F9FC))
+            .withOpacity(.84),
+        hintStyle: TextStyle(color: colors.muted),
         border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(18),
             borderSide: BorderSide.none),
@@ -78,8 +100,8 @@ class AppTheme {
       ),
       timePickerTheme: TimePickerThemeData(
         dialHandColor: active.primary,
-        hourMinuteTextColor: AppColors.ink,
-        dayPeriodTextColor: AppColors.ink,
+        hourMinuteTextColor: colors.ink,
+        dayPeriodTextColor: colors.ink,
       ),
     );
   }

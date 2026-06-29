@@ -2,15 +2,14 @@ import 'package:flutter/material.dart';
 import '../services/app_preferences.dart';
 import 'package:go_router/go_router.dart';
 
+import '../repositories/api/api_auth_repository.dart';
+import '../repositories/auth_repository.dart';
+import '../services/auth_storage.dart';
 import '../utils/route_names.dart';
 import '../presentation/widgets/animated_background.dart';
 import '../presentation/widgets/fade_slide_in.dart';
-
-const _ink = Color(0xFF111827);
-const _muted = Color(0xFF6B7280);
-const _border = Color(0xFFE5E7EB);
-const _surface = Color(0xFFFFFFFF);
-const _pageBg = Color(0xFFF8F9FB);
+import '../presentation/widgets/glass_card.dart';
+import '../theme/app_theme.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -22,6 +21,9 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final AuthRepository _authRepository = ApiAuthRepository();
+
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -30,13 +32,49 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  Future<void> _handleLogin() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    if (email.isEmpty || password.isEmpty) {
+      _showError('Please enter your email and password.');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      final token = await _authRepository.login(email: email, password: password);
+      await AuthStorage.saveToken(token);
+      if (!mounted) return;
+      context.go(RouteNames.home);
+    } catch (e) {
+      if (!mounted) return;
+      _showError(e is AuthException ? e.message : 'Could not log in. Please try again.');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _showError(String message) {
+    final colors = AppTheme.colorsOf(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: TextStyle(color: colors.pageBg)),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: colors.ink,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final primary = AppPreferences.palette.value.primary;
+    final colors = AppTheme.colorsOf(context);
 
     return Scaffold(
-      backgroundColor: _pageBg,
+      backgroundColor: colors.pageBg,
       body: AnimatedBackground(
+        vivid: true,
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
@@ -55,10 +93,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 18),
                   FadeSlideIn(
                     delay: const Duration(milliseconds: 80),
-                    child: const Text(
+                    child: Text(
                       'Mathivia',
                       style: TextStyle(
-                        color: Color(0xFF312E81),
+                        color: colors.titleColor,
                         fontSize: 19,
                         fontWeight: FontWeight.w600,
                         letterSpacing: -0.2,
@@ -72,7 +110,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       'Log in and keep growing your math skills.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: _muted,
+                        color: colors.muted,
                         fontSize: 13.5,
                         fontWeight: FontWeight.w500,
                       ),
@@ -83,21 +121,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   // ── Auth card ──
                   FadeSlideIn(
                     delay: const Duration(milliseconds: 170),
-                    child: Container(
-                      width: double.infinity,
+                    child: GlassCard(
                       padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
-                      decoration: BoxDecoration(
-                        color: _surface,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: _border, width: 1),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x08000000),
-                            blurRadius: 10,
-                            offset: Offset(0, 3),
-                          ),
-                        ],
-                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -117,7 +142,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           const SizedBox(height: 18),
                           _PrimaryButton(
                             label: 'Log In',
-                            onPressed: () => context.go(RouteNames.home),
+                            isLoading: _isLoading,
+                            onPressed: _isLoading ? null : _handleLogin,
                           ),
                           const SizedBox(height: 20),
                           const _DividerOr(),
@@ -139,7 +165,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         Text(
                           'New to Mathivia? ',
                           style: TextStyle(
-                            color: _muted,
+                            color: colors.muted,
                             fontSize: 13.5,
                             fontWeight: FontWeight.w500,
                           ),
@@ -193,33 +219,36 @@ class _AuthField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final primary = AppPreferences.palette.value.primary;
+    final colors = AppTheme.colorsOf(context);
 
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
       obscureText: obscureText,
-      style: const TextStyle(
-        color: _ink,
+      style: TextStyle(
+        color: colors.ink,
         fontSize: 14.5,
         fontWeight: FontWeight.w500,
       ),
       decoration: InputDecoration(
         hintText: hintText,
-        hintStyle: const TextStyle(
-          color: _muted,
+        hintStyle: TextStyle(
+          color: colors.muted,
           fontSize: 14.5,
           fontWeight: FontWeight.w400,
         ),
-        prefixIcon: Icon(icon, color: _muted, size: 19),
+        prefixIcon: Icon(icon, color: colors.muted, size: 19),
+        // Translucent, not solid -- so the field reads as part of the glass
+        // card rather than a disconnected opaque box sitting on top of it.
         filled: true,
-        fillColor: _pageBg,
+        fillColor: colors.glassChipFill,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(13),
-          borderSide: BorderSide(color: _border, width: 1),
+          borderSide: BorderSide(color: colors.glassBorder, width: 1),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(13),
-          borderSide: BorderSide(color: _border, width: 1),
+          borderSide: BorderSide(color: colors.glassBorder, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(13),
@@ -236,9 +265,14 @@ class _AuthField extends StatelessWidget {
 
 class _PrimaryButton extends StatelessWidget {
   final String label;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
+  final bool isLoading;
 
-  const _PrimaryButton({required this.label, required this.onPressed});
+  const _PrimaryButton({
+    required this.label,
+    required this.onPressed,
+    this.isLoading = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -259,10 +293,17 @@ class _PrimaryButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(13),
           ),
         ),
-        child: Text(
-          label,
-          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5),
-        ),
+        child: isLoading
+            ? SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2, color: primary),
+              )
+            : Text(
+                label,
+                style:
+                    const TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5),
+              ),
       ),
     );
   }
@@ -277,15 +318,17 @@ class _GoogleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppTheme.colorsOf(context);
+
     return SizedBox(
       width: double.infinity,
       height: 50,
       child: OutlinedButton.icon(
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
-          backgroundColor: _surface,
-          foregroundColor: _ink,
-          side: const BorderSide(color: _border, width: 1),
+          backgroundColor: colors.surface,
+          foregroundColor: colors.ink,
+          side: BorderSide(color: colors.border, width: 1),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(13),
           ),
@@ -313,21 +356,27 @@ class _DividerOr extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppTheme.colorsOf(context);
+
     return Row(
       children: [
-        const Expanded(child: Divider(color: _border, height: 1, thickness: 1)),
+        Expanded(
+            child: Divider(
+                color: colors.glassBorderSoft, height: 1, thickness: 1)),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Text(
             'or',
             style: TextStyle(
-              color: _muted,
+              color: colors.muted,
               fontSize: 12,
               fontWeight: FontWeight.w500,
             ),
           ),
         ),
-        const Expanded(child: Divider(color: _border, height: 1, thickness: 1)),
+        Expanded(
+            child: Divider(
+                color: colors.glassBorderSoft, height: 1, thickness: 1)),
       ],
     );
   }

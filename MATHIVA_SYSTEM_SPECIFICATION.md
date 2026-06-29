@@ -1,10 +1,35 @@
 # MATHIVA: System Specification Document
 
+> ⚠️ **This document specifies the target system**, including requirements not yet fully met. See [Implementation Status](#implementation-status-as-of-2026-06-25) immediately below for what's actually running today vs. what's still planned.
+
 ## Executive Summary
 
 MATHIVA is a RAG-based mathematics tutoring application designed for STEM strand students (Grades 11–12) at Upper Bicutan National High School (UBNHS). The system provides personalized mathematics instruction through a combination of Retrieval-Augmented Generation (RAG) with fine-tuned transformer models, delivering answers, step-by-step solutions, and adaptive quizzes with performance analytics.
 
 **Full Title:** MATHIVA: A RAG-Based Mathematics Tutoring Application for STEM Strand Students of Upper Bicutan National High School
+
+---
+
+## Implementation Status (as of 2026-06-25)
+
+This document specifies the **full target system** (Sections 1–12 below). This section is the source of truth for what's actually implemented vs. still planned — see [MATHIVA_SYSTEM_BLUEPRINT.md](./MATHIVA_SYSTEM_BLUEPRINT.md#implementation-status-as-of-2026-06-25) for the matching architecture-level breakdown.
+
+**§5 Database Schema** — only the `users` table (§5.1 `users`) exists today. `sessions`, `quiz_attempts`, `quiz_responses`, `knowledge_base_metadata`, and `faiss_indices` (pgvector) are all specified but not yet created. Currently running on local SQLite, not the specified Supabase Postgres.
+
+**§6 API Specification** — implemented vs. specified:
+
+| Endpoint | Status |
+|---|---|
+| `POST /auth/register`, `POST /auth/login` | ✅ Live (bcrypt + JWT, 24h expiry) |
+| `POST /ask` (as `/api/ask`) | ✅ Live — SBERT → FAISS → **Ollama "phi"** (not the specified T5 fine-tuned model; no Phi-3/Claude fallback chain) |
+| `POST /solve` | ✅ Live (SymPy) |
+| `POST /quiz` | 🟡 Partial — generates questions from `genmath_qa_pairs.json`, but no scoring |
+| `POST /quiz/submit` | ❌ Not implemented |
+| `GET /user/profile`, `GET /user/progress` | ❌ Not implemented |
+
+**§3 Architecture / §9 Deployment** — running locally (FastAPI dev server), not deployed to AWS EC2 + Supabase as specified. No Nginx, systemd, or CI/CD pipeline yet.
+
+**Runway:** thesis deadline is ~mid-August 2026 (6 weeks out as of this writing) — the gaps above are this stretch's actual work, not just documentation debt. Update this section as each lands.
 
 ---
 
@@ -778,6 +803,7 @@ Supabase PostgreSQL
 | Version | Date | Author | Changes |
 |---|---|---|---|
 | 1.0 | June 2026 | Kat | Initial system specification for thesis submission |
+| 1.1 | 2026-06-25 | Kat | Added Implementation Status section distinguishing built vs. planned components |
 
 ---
 

@@ -1,10 +1,15 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-import requests
 import sys
 import os
 import json
 import random
+
+# Load backend/.env FIRST -- DATABASE_URL and JWT_SECRET are read from
+# os.environ at import time by app.database.db / app.services.auth_service,
+# so this must run before any app.* module is imported below.
+from dotenv import load_dotenv
+load_dotenv(os.path.join(os.path.dirname(__file__), "../.env"))
 
 # Create app FIRST
 app = FastAPI(title="Mathiva API")
@@ -26,12 +31,36 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../ml"))
 from app.api.solve import router as solve_router
 app.include_router(solve_router)
 
-# Safely import retrieval FIFTH
-try:
-    from retrieval.test_retrieval import load_index_and_chunks
-except Exception as e:
-    print(f"Warning: Could not import retrieval: {e}")
-    load_index_and_chunks = None
+from app.api.ocr import router as ocr_router
+app.include_router(ocr_router)
+
+from app.api.ask import router as ask_router
+app.include_router(ask_router)
+
+from app.api.auth import router as auth_router
+app.include_router(auth_router)
+
+from app.api.quiz import router as quiz_router
+app.include_router(quiz_router)
+
+from app.database.db import Base, engine
+# app.api.auth/app.api.quiz (imported above) already import
+# app.database.models, which registers User/QuizAttempt on Base -- so
+# create_all below picks both up.
+Base.metadata.create_all(bind=engine)
+
+
+@app.on_event("startup")
+def warm_up_ollama():
+    # Pay Ollama's model-load-into-VRAM cost once at server startup instead
+    # of on a real user's first /api/ask request — without this, the first
+    # request after any 5+ minute gap (Ollama's default keep_alive) can take
+    # minutes instead of seconds.
+    from app.services.ai_service import generate_answer
+    try:
+        generate_answer("Say OK.")
+    except Exception as e:
+        print(f"Warning: Ollama warm-up failed (is Ollama running?): {e}")
 
 
 @app.get("/health")
@@ -39,50 +68,13 @@ def health():
     return {"status": "ok"}
 
 
-@app.post("/ask")
-def ask(question: str):
-    try:
-        if load_index_and_chunks is None:
-            raise HTTPException(status_code=500, detail="Retrieval module not loaded")
-        
-        index, chunks = load_index_and_chunks()
-        from sentence_transformers import SentenceTransformer
-        model = SentenceTransformer("all-MiniLM-L6-v2")
-        query_embedding = model.encode(question).astype("float32").reshape(1, -1)
-        distances, indices = index.search(query_embedding, k=5)
-        
-        context = "\n\n".join([chunks[idx]["content"] for idx in indices[0]])
-        
-        prompt = f"""You are a helpful math tutor. Answer the student's question clearly.
-
-Relevant course material:
-{context}
-
-Student Question: {question}
-
-If the question is covered in the course material above, use that. Otherwise, use your general knowledge to help.
-
-Answer:"""
-        
-        response = requests.post("http://localhost:11434/api/generate", json={
-            "model": "phi",
-            "prompt": prompt,
-            "stream": False
-        })
-        
-        return {
-            "question": question,
-            "answer": response.json()["response"]
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
 @app.post("/quiz")
 def quiz(subject: str = "General Mathematics", difficulty: str = "Easy", count: int = 5):
-    """Generate quiz questions from Q&A pairs"""
+    """Generate quiz questions from Q&A pairs. Unrelated to the
+    /api/quiz/submit and /api/user/progress routes (app.api.quiz) -- this
+    is the older Q&A-sampling endpoint, different path prefix, no overlap."""
     try:
-        qa_path = os.path.join(os.path.dirname(__file__), "../../ml/retrieval/genmath_chunks.json")
+        qa_path = os.path.join(os.path.dirname(__file__), "../../ml/retrieval/genmath_qa_pairs.json")
         with open(qa_path, 'r') as f:
             all_qa = json.load(f)
         

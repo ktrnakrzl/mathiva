@@ -1,6 +1,17 @@
 fastapi
 uvicorn[standard]
+python-multipart
 python-dotenv
 psycopg2-binary
 pgvector
 sqlalchemy
+requests
+sympy
+antlr4-python3-runtime==4.11
+sentence-transformers
+faiss-cpu
+pix2tex
+Pillow
+bcrypt
+PyJWT
+email-validator

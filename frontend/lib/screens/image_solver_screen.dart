@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:math' as math;
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -7,22 +8,13 @@ import 'package:image_picker/image_picker.dart';
 
 import '../presentation/widgets/animated_background.dart';
 import '../presentation/widgets/fade_slide_in.dart';
+import '../presentation/widgets/glass_card.dart';
 import '../presentation/widgets/tap_scale.dart';
 import '../services/app_preferences.dart';
+import '../services/solver_service.dart';
+import '../theme/app_theme.dart';
 import '../utils/route_names.dart';
 import '../widgets/mathiva_bottom_nav.dart';
-
-// ── Design tokens (mirrors HomeScreen exactly) ────────────────────────────────
-const _ink = Color(0xFF111827);
-const _muted = Color(0xFF6B7280);
-const _border = Color(0xFFE5E7EB);
-const _surface = Color(0xFFFFFFFF);
-const _pageBg = Color(0xFFF8F9FB);
-
-// Shared app-chrome surface — matches the HomeScreen header tint so this
-// screen's AppBar reads as the same chrome layer, not a separate white bar.
-const _chromeSurface = Color(0xFFF6F5FB);
-const _chromeBorder = Color(0xFFEAE8F5);
 
 /// The three steps of the scan → solve workflow. Kept private to this file
 /// since navigation/routing elsewhere is untouched — only what happens
@@ -47,6 +39,9 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
   // successfully picks one — the scan stage is shown until then.
   File? _pickedImage;
 
+  // True while the picked image is being uploaded and solved.
+  bool _isSolving = false;
+
   @override
   void initState() {
     super.initState();
@@ -54,6 +49,15 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     )..repeat(reverse: true);
+
+    // Open the camera immediately on entering this screen, rather than
+    // waiting for the user to tap "Open Camera" — per manual test feedback,
+    // the scan-first flow should put the camera up front. Scheduled for
+    // after the first frame so `context`/`mounted` are safe to use inside
+    // `_pickImage`.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _onOpenCamera();
+    });
   }
 
   @override
@@ -100,11 +104,12 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
   }
 
   void _showPickError(String message) {
+    final colors = AppTheme.colorsOf(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: Text(message, style: TextStyle(color: colors.pageBg)),
         behavior: SnackBarBehavior.floating,
-        backgroundColor: _ink,
+        backgroundColor: colors.ink,
       ),
     );
   }
@@ -124,66 +129,44 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
     setState(() => _step = _SolverStep.preview);
   }
 
-  void _onContinueToSolve() {
-    context.push(RouteNames.solution);
+  Future<void> _onContinueToSolve() async {
+    final image = _pickedImage;
+    if (image == null || _isSolving) return;
+
+    setState(() => _isSolving = true);
+    try {
+      final problem = await SolverService.solveImage(image);
+      if (!mounted) return;
+      context.push(RouteNames.solution, extra: problem);
+    } catch (e) {
+      if (!mounted) return;
+      _showPickError('Could not solve this problem. Please try again.');
+    } finally {
+      if (mounted) setState(() => _isSolving = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final primary = AppPreferences.palette.value.primary;
+    final colors = AppTheme.colorsOf(context);
 
     return Scaffold(
       extendBody: _step == _SolverStep.scan,
-      backgroundColor: _step == _SolverStep.crop ? Colors.black : _pageBg,
-      appBar: AppBar(
-        backgroundColor:
-            _step == _SolverStep.crop ? Colors.black : _chromeSurface,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        shadowColor: Colors.transparent,
-        centerTitle: false,
-        toolbarHeight: 58,
-        titleSpacing: 4,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_rounded,
-            color: _step == _SolverStep.crop ? Colors.white : _ink,
-            size: 22,
-          ),
-          onPressed: () => _onBack(),
-        ),
-        title: Text(
-          _titleFor(_step),
-          style: TextStyle(
-            color: _step == _SolverStep.crop
-                ? Colors.white
-                : const Color(0xFF312E81),
-            fontSize: 19,
-            fontWeight: FontWeight.w600,
-            letterSpacing: -0.2,
-            height: 1,
-          ),
-        ),
-        actions: _step == _SolverStep.scan
-            ? [
-                IconButton(
-                  tooltip: 'Ask Math Tutor',
-                  onPressed: () => context.push(RouteNames.chat),
-                  icon: Icon(
-                    Icons.chat_bubble_outline_rounded,
-                    color: primary,
-                    size: 22,
-                  ),
+      backgroundColor:
+          _step == _SolverStep.crop ? Colors.black : colors.pageBg,
+      // The crop step stays a flat solid-black bar (it's a full-screen photo
+      // editor, no animated background behind it to blur). Scan/preview get
+      // the same frosted-glass chrome as the rest of the app.
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(58),
+        child: _step == _SolverStep.crop
+            ? _buildAppBar(primary, glass: false)
+            : ClipRect(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                  child: _buildAppBar(primary, glass: true),
                 ),
-                const SizedBox(width: 8),
-              ]
-            : null,
-        bottom: _step == _SolverStep.crop
-            ? null
-            : PreferredSize(
-                preferredSize: const Size.fromHeight(1),
-                child: Container(height: 1, color: _chromeBorder),
               ),
       ),
       body: AnimatedSwitcher(
@@ -194,6 +177,59 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
       ),
       bottomNavigationBar: _step == _SolverStep.scan
           ? const MathivaBottomNav(selected: MathivaTab.scan)
+          : null,
+    );
+  }
+
+  AppBar _buildAppBar(Color primary, {required bool glass}) {
+    final colors = AppTheme.colorsOf(context);
+
+    return AppBar(
+      backgroundColor: glass ? colors.glassFillStart : Colors.black,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      shadowColor: Colors.transparent,
+      centerTitle: false,
+      toolbarHeight: 58,
+      titleSpacing: 4,
+      leading: IconButton(
+        icon: Icon(
+          Icons.arrow_back_rounded,
+          color: glass ? colors.ink : Colors.white,
+          size: 22,
+        ),
+        onPressed: () => _onBack(),
+      ),
+      title: Text(
+        _titleFor(_step),
+        style: TextStyle(
+          color: glass ? colors.titleColor : Colors.white,
+          fontSize: 19,
+          fontWeight: FontWeight.w600,
+          letterSpacing: -0.2,
+          height: 1,
+        ),
+      ),
+      actions: _step == _SolverStep.scan
+          ? [
+              IconButton(
+                tooltip: 'Ask Math Tutor',
+                onPressed: () => context.push(RouteNames.chat),
+                icon: Icon(
+                  Icons.chat_bubble_outline_rounded,
+                  color: primary,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 8),
+            ]
+          : null,
+      bottom: glass
+          ? PreferredSize(
+              preferredSize: const Size.fromHeight(1),
+              child: Container(height: 1, color: colors.glassBorder),
+            )
           : null,
     );
   }
@@ -239,6 +275,7 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
           key: const ValueKey('preview'),
           primary: primary,
           image: _pickedImage,
+          isSolving: _isSolving,
           onRetake: _onRetake,
           onEditCrop: _onEditCrop,
           onContinue: _onContinueToSolve,
@@ -274,6 +311,7 @@ class _ScanStage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnimatedBackground(
+      vivid: true,
       child: SafeArea(
         top: false,
         child: LayoutBuilder(
@@ -283,59 +321,68 @@ class _ScanStage extends StatelessWidget {
               child: Column(
                 children: [
                   // ── Scanner viewport (hero) ─────────────────────────────
+                  // Real frosted glass (BackdropFilter) rather than a flat
+                  // primary tint, so the vivid background blobs refract
+                  // through the viewport the same way GlassCard does
+                  // elsewhere — keeps the scan-first hero feeling alive
+                  // rather than static.
                   Expanded(
                     child: FadeSlideIn(
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(20),
-                        child: Container(
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: primary.withOpacity(0.05),
-                            border: Border.all(
-                              color: primary.withOpacity(0.14),
-                              width: 1,
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                          child: Container(
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              color: primary.withOpacity(0.12),
+                              border: Border.all(
+                                color: AppTheme.colorsOf(context).glassBorder,
+                                width: 1,
+                              ),
                             ),
-                          ),
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              Icon(
-                                Icons.document_scanner_rounded,
-                                color: primary.withOpacity(0.16),
-                                size: 72,
-                              ),
-                              AnimatedBuilder(
-                                animation: controller,
-                                builder: (context, child) {
-                                  final h = constraints.maxHeight - 232;
-                                  final travel = h > 60 ? h - 48 : 60.0;
-                                  return Positioned(
-                                    top: 24 + controller.value * travel,
-                                    left: 24,
-                                    right: 24,
-                                    child: Container(
-                                      height: 2,
-                                      decoration: BoxDecoration(
-                                        color: primary.withOpacity(0.6),
-                                        borderRadius: BorderRadius.circular(99),
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                Icon(
+                                  Icons.document_scanner_rounded,
+                                  color: primary.withOpacity(0.16),
+                                  size: 72,
+                                ),
+                                AnimatedBuilder(
+                                  animation: controller,
+                                  builder: (context, child) {
+                                    final h = constraints.maxHeight - 232;
+                                    final travel = h > 60 ? h - 48 : 60.0;
+                                    return Positioned(
+                                      top: 24 + controller.value * travel,
+                                      left: 24,
+                                      right: 24,
+                                      child: Container(
+                                        height: 2,
+                                        decoration: BoxDecoration(
+                                          color: primary.withOpacity(0.6),
+                                          borderRadius:
+                                              BorderRadius.circular(99),
+                                        ),
                                       ),
+                                    );
+                                  },
+                                ),
+                                ..._cornerGuides(primary),
+                                Positioned(
+                                  bottom: 18,
+                                  child: Text(
+                                    'Align the problem within the frame',
+                                    style: TextStyle(
+                                      color: primary.withOpacity(0.55),
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w600,
                                     ),
-                                  );
-                                },
-                              ),
-                              ..._cornerGuides(primary),
-                              Positioned(
-                                bottom: 18,
-                                child: Text(
-                                  'Align the problem within the frame',
-                                  style: TextStyle(
-                                    color: primary.withOpacity(0.55),
-                                    fontSize: 12.5,
-                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -440,6 +487,7 @@ class _ScanStage extends StatelessWidget {
 class _PreviewStage extends StatelessWidget {
   final Color primary;
   final File? image;
+  final bool isSolving;
   final VoidCallback onRetake;
   final VoidCallback onEditCrop;
   final VoidCallback onContinue;
@@ -448,6 +496,7 @@ class _PreviewStage extends StatelessWidget {
     super.key,
     required this.primary,
     required this.image,
+    required this.isSolving,
     required this.onRetake,
     required this.onEditCrop,
     required this.onContinue,
@@ -455,33 +504,23 @@ class _PreviewStage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: _pageBg,
+    return AnimatedBackground(
+      vivid: true,
       child: SafeArea(
         top: false,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
           child: Column(
             children: [
+              // GlassCard rather than a flat white frame — the photo itself
+              // (BoxFit.contain) renders crisp on top since it's opaque, but
+              // any letterboxed space around it shows the blurred vivid
+              // background through, instead of dead white space.
               Expanded(
                 child: FadeSlideIn(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: _surface,
-                        border: Border.all(color: _border, width: 1),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x08000000),
-                            blurRadius: 10,
-                            offset: Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      child: _PickedImageView(image: image),
-                    ),
+                  child: GlassCard(
+                    padding: EdgeInsets.zero,
+                    child: _PickedImageView(image: image),
                   ),
                 ),
               ),
@@ -524,17 +563,18 @@ class _PreviewStage extends StatelessWidget {
                         icon: Icons.refresh_rounded,
                         primary: primary,
                         filled: false,
-                        onPressed: onRetake,
+                        onPressed: isSolving ? null : onRetake,
                       ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: _ScanActionButton(
-                        label: 'Continue',
+                        label: isSolving ? 'Solving…' : 'Continue',
                         icon: Icons.arrow_forward_rounded,
                         primary: primary,
                         filled: true,
-                        onPressed: onContinue,
+                        isLoading: isSolving,
+                        onPressed: isSolving ? null : onContinue,
                       ),
                     ),
                   ],
@@ -850,13 +890,15 @@ class _PickedImageView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppTheme.colorsOf(context);
+
     if (image == null) {
       return Container(
-        color: const Color(0xFFFDFDFD),
-        child: const Center(
+        color: colors.surface,
+        child: Center(
           child: Text(
             'No image yet',
-            style: TextStyle(color: _muted, fontSize: 14),
+            style: TextStyle(color: colors.muted, fontSize: 14),
           ),
         ),
       );
@@ -869,14 +911,14 @@ class _PickedImageView extends StatelessWidget {
       height: double.infinity,
       errorBuilder: (context, error, stackTrace) {
         return Container(
-          color: const Color(0xFFFDFDFD),
-          child: const Center(
+          color: colors.surface,
+          child: Center(
             child: Padding(
-              padding: EdgeInsets.all(24),
+              padding: const EdgeInsets.all(24),
               child: Text(
                 'Could not load this image.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: _muted, fontSize: 14),
+                style: TextStyle(color: colors.muted, fontSize: 14),
               ),
             ),
           ),
@@ -901,7 +943,8 @@ class _ScanActionButton extends StatelessWidget {
   final Color primary;
   final bool filled;
   final bool dark;
-  final VoidCallback onPressed;
+  final bool isLoading;
+  final VoidCallback? onPressed;
 
   const _ScanActionButton({
     required this.label,
@@ -910,15 +953,19 @@ class _ScanActionButton extends StatelessWidget {
     required this.filled,
     required this.onPressed,
     this.dark = false,
+    this.isLoading = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppTheme.colorsOf(context);
+
     // Primary actions get the accent color outline/text; secondary actions
     // get a neutral outline/text. `dark` (used on the black crop screen)
     // swaps the neutral tone for a white-on-black equivalent.
-    final accentColor = filled ? primary : (dark ? Colors.white : _ink);
-    final outlineColor = filled ? primary : (dark ? Colors.white24 : _border);
+    final accentColor = filled ? primary : (dark ? Colors.white : colors.ink);
+    final outlineColor =
+        filled ? primary : (dark ? Colors.white24 : colors.border);
 
     return TapScale(
       onTap: onPressed,
@@ -932,7 +979,17 @@ class _ScanActionButton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 18, color: accentColor),
+            if (isLoading)
+              SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: accentColor,
+                ),
+              )
+            else
+              Icon(icon, size: 18, color: accentColor),
             const SizedBox(width: 8),
             Text(
               label,

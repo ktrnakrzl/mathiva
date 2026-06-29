@@ -5,11 +5,11 @@ import 'package:mathiva/presentation/notifiers/quiz_notifier.dart';
 import 'package:mathiva/presentation/widgets/loading_overlay.dart';
 import 'package:mathiva/presentation/widgets/animated_background.dart';
 import 'package:mathiva/presentation/widgets/fade_slide_in.dart';
+import 'package:mathiva/presentation/widgets/glass_card.dart';
 import 'package:mathiva/presentation/widgets/section_header.dart';
 import 'package:mathiva/services/app_preferences.dart';
+import 'package:mathiva/theme/app_theme.dart';
 import '../../../widgets/mathiva_app_bar.dart';
-
-const _ink = Color(0xFF242033);
 
 class QuizScreen extends ConsumerStatefulWidget {
   const QuizScreen({super.key});
@@ -31,6 +31,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
   Widget build(BuildContext context) {
     final quizState = ref.watch(quizNotifierProvider);
     final palette = AppPreferences.palette.value;
+    final colors = AppTheme.colorsOf(context);
     return Scaffold(
       backgroundColor: Colors.transparent,
       extendBodyBehindAppBar: true,
@@ -41,6 +42,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
         showBack: true,
       ),
       body: AnimatedBackground(
+        vivid: true,
         child: SafeArea(
           top: false,
           child: quizState.when(
@@ -64,7 +66,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
                     padding: const EdgeInsets.only(bottom: 16),
                     child: FadeSlideIn(
                       delay: Duration(milliseconds: 60 * index),
-                      child: _SoftCard(
+                      child: GlassCard(
                         child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -72,8 +74,8 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
                               const SizedBox(height: 14),
                               MathRenderer(
                                   text: question.question_text,
-                                  textStyle: const TextStyle(
-                                      color: _ink,
+                                  textStyle: TextStyle(
+                                      color: colors.ink,
                                       fontSize: 18,
                                       fontWeight: FontWeight.w800),
                                   mathFontSize: 18),
@@ -143,39 +145,23 @@ class _ChoiceButton extends StatelessWidget {
   final VoidCallback onPressed;
   const _ChoiceButton({required this.label, required this.onPressed});
   @override
-  Widget build(BuildContext context) => SizedBox(
-        width: double.infinity,
-        child: OutlinedButton(
-          onPressed: onPressed,
-          style: OutlinedButton.styleFrom(
-              backgroundColor: const Color(0xFFF7F9FC),
-              foregroundColor: _ink,
-              side: const BorderSide(color: Color(0xFFEDE9FF)),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14)),
-              padding: const EdgeInsets.all(16),
-              alignment: Alignment.centerLeft),
-          child:
-              Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
-        ),
-      );
-}
-
-class _SoftCard extends StatelessWidget {
-  final Widget child;
-  const _SoftCard({required this.child});
-  @override
-  Widget build(BuildContext context) => Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF7F9FC).withOpacity(.92),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: const [
-            BoxShadow(
-                color: Colors.black12, blurRadius: 16, offset: Offset(0, 8))
-          ],
-        ),
-        child: child,
-      );
+  Widget build(BuildContext context) {
+    final colors = AppTheme.colorsOf(context);
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton(
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+            backgroundColor: colors.surface,
+            foregroundColor: colors.ink,
+            side: BorderSide(color: colors.border),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14)),
+            padding: const EdgeInsets.all(16),
+            alignment: Alignment.centerLeft),
+        child:
+            Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
+      ),
+    );
+  }
 }

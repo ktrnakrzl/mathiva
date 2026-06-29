@@ -1,26 +1,26 @@
 import 'package:flutter/material.dart';
+import '../core/utils/math_renderer.dart';
 import '../presentation/widgets/animated_background.dart';
+import '../presentation/widgets/glass_card.dart';
 import '../services/app_preferences.dart';
 import 'package:go_router/go_router.dart';
 
 import '../data/local_mathiva_data.dart';
+import '../models/mathiva_models.dart';
+import '../theme/app_theme.dart';
 import '../utils/route_names.dart';
 import '../widgets/mathiva_app_bar.dart';
 
-// Shared tokens — identical values to HomeScreen's palette, so this screen
-// reads as the same surface system rather than its own design.
-const _ink = Color(0xFF111827);
-const _muted = Color(0xFF6B7280);
-const _border = Color(0xFFE5E7EB);
-const _surface = Color(0xFFFFFFFF);
-
 class SolutionScreen extends StatelessWidget {
-  const SolutionScreen({super.key});
+  final PracticeProblem? problem;
+
+  const SolutionScreen({super.key, this.problem});
 
   @override
   Widget build(BuildContext context) {
     final primary = AppPreferences.palette.value.primary;
-    final problem = LocalMathivaData.quadraticProblem;
+    final colors = AppTheme.colorsOf(context);
+    final problem = this.problem ?? LocalMathivaData.quadraticProblem;
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -41,6 +41,7 @@ class SolutionScreen extends StatelessWidget {
         ],
       ),
       body: AnimatedBackground(
+        vivid: true,
         child: SafeArea(
           child: ListView(
             physics: const BouncingScrollPhysics(),
@@ -49,19 +50,19 @@ class SolutionScreen extends StatelessWidget {
               Text(
                 'Detected Equation',
                 style: TextStyle(
-                  color: _muted,
+                  color: colors.muted,
                   fontSize: 11.5,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.4,
                 ),
               ),
               const SizedBox(height: 10),
-              _SoftCard(
+              GlassCard(
                 child: Center(
-                  child: Text(
-                    problem.question.replaceAll('Solve for x: ', ''),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
+                  child: MathRenderer(
+                    text: problem.question.replaceAll('Solve for x: ', ''),
+                    mathFontSize: 28,
+                    textStyle: TextStyle(
                       color: primary,
                       fontSize: 28,
                       fontWeight: FontWeight.w700,
@@ -74,7 +75,7 @@ class SolutionScreen extends StatelessWidget {
               Text(
                 'Step-by-Step',
                 style: TextStyle(
-                  color: _ink,
+                  color: colors.ink,
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
                   letterSpacing: -0.2,
@@ -88,7 +89,7 @@ class SolutionScreen extends StatelessWidget {
                     ),
                   ),
               const SizedBox(height: 10),
-              _SoftCard(
+              GlassCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -111,7 +112,7 @@ class SolutionScreen extends StatelessWidget {
                         Text(
                           'Final Answer',
                           style: TextStyle(
-                            color: _muted,
+                            color: colors.muted,
                             fontSize: 11.5,
                             fontWeight: FontWeight.w600,
                             letterSpacing: 0.4,
@@ -120,9 +121,10 @@ class SolutionScreen extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 14),
-                    Text(
-                      problem.answer,
-                      style: TextStyle(
+                    MathRenderer(
+                      text: problem.answer,
+                      mathFontSize: 26,
+                      textStyle: TextStyle(
                         color: primary,
                         fontSize: 26,
                         fontWeight: FontWeight.w700,
@@ -153,10 +155,11 @@ class _StepCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final primary = AppPreferences.palette.value.primary;
+    final colors = AppTheme.colorsOf(context);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
-      child: _SoftCard(
+      child: GlassCard(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -182,15 +185,15 @@ class _StepCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    text,
-                    style: const TextStyle(color: _ink, height: 1.5),
+                  MathRenderer(
+                    text: text,
+                    textStyle: TextStyle(color: colors.ink, height: 1.5),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'Why: this step moves closer to the answer while keeping the equation balanced.',
-                    style:
-                        TextStyle(color: _muted, fontSize: 12.5, height: 1.35),
+                    style: TextStyle(
+                        color: colors.muted, fontSize: 12.5, height: 1.35),
                   ),
                 ],
               ),
@@ -198,33 +201,6 @@ class _StepCard extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _SoftCard extends StatelessWidget {
-  final Widget child;
-
-  const _SoftCard({required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: _surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _border, width: 1),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x08000000),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: child,
     );
   }
 }

@@ -63,3 +63,9 @@ ml/embeddings/
 *.so
 *.dylib
 *.dll
+
+# Python bytecode (any package)
+**/__pycache__/
+
+# Claude Code local state (memory, plans, settings)
+.claude/

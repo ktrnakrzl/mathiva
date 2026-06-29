@@ -6,13 +6,11 @@ import 'package:mathiva/data/providers/repository_providers.dart';
 import 'package:mathiva/presentation/widgets/loading_overlay.dart';
 import 'package:mathiva/presentation/widgets/animated_background.dart';
 import 'package:mathiva/presentation/widgets/fade_slide_in.dart';
+import 'package:mathiva/presentation/widgets/glass_card.dart';
 import 'package:mathiva/presentation/widgets/section_header.dart';
 import 'package:mathiva/services/app_preferences.dart';
+import 'package:mathiva/theme/app_theme.dart';
 import '../../../widgets/mathiva_app_bar.dart';
-
-const _ink = Color(0xFF242033);
-const _muted = Color(0xFF8C879A);
-const _chip = Color(0xFFEDE9FF);
 
 final masteryProvider = FutureProvider<List<TopicMastery>>((ref) {
   return ref.read(progressRepositoryProvider).getMastery(AppStrings.studentId);
@@ -25,6 +23,7 @@ class MasteryHeatmapScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final mastery = ref.watch(masteryProvider);
     final palette = AppPreferences.palette.value;
+    final colors = AppTheme.colorsOf(context);
     return Scaffold(
       backgroundColor: Colors.transparent,
       extendBodyBehindAppBar: true,
@@ -35,6 +34,7 @@ class MasteryHeatmapScreen extends ConsumerWidget {
         showBack: true,
       ),
       body: AnimatedBackground(
+        vivid: true,
         child: SafeArea(
           top: false,
           child: mastery.when(
@@ -64,14 +64,15 @@ class MasteryHeatmapScreen extends ConsumerWidget {
                         final item = items[index];
                         return FadeSlideIn(
                           delay: Duration(milliseconds: 60 * index),
-                          child: _SoftCard(
+                          child: GlassCard(
+                              padding: const EdgeInsets.all(18),
                               child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                 Text(item.topic_name,
                                     textAlign: TextAlign.center,
-                                    style: const TextStyle(
-                                        color: _ink,
+                                    style: TextStyle(
+                                        color: colors.ink,
                                         fontWeight: FontWeight.w900)),
                                 const SizedBox(height: 10),
                                 ShaderMask(
@@ -93,8 +94,8 @@ class MasteryHeatmapScreen extends ConsumerWidget {
                                 const SizedBox(height: 8),
                                 Text('Last: ${item.last_practiced}',
                                     textAlign: TextAlign.center,
-                                    style: const TextStyle(
-                                        color: _muted, fontSize: 11)),
+                                    style: TextStyle(
+                                        color: colors.muted, fontSize: 11)),
                               ])),
                         );
                       },
@@ -118,36 +119,20 @@ class _ProgressBar extends StatelessWidget {
   final Color color;
   const _ProgressBar({required this.value, required this.color});
   @override
-  Widget build(BuildContext context) => ClipRRect(
-        borderRadius: BorderRadius.circular(99),
-        child: TweenAnimationBuilder<double>(
-          tween: Tween(begin: 0, end: value.clamp(0.0, 1.0).toDouble()),
-          duration: const Duration(milliseconds: 900),
-          curve: Curves.easeOutCubic,
-          builder: (context, v, _) => LinearProgressIndicator(
-              value: v,
-              minHeight: 9,
-              backgroundColor: _chip,
-              valueColor: AlwaysStoppedAnimation<Color>(color)),
-        ),
-      );
-}
-
-class _SoftCard extends StatelessWidget {
-  final Widget child;
-  const _SoftCard({required this.child});
-  @override
-  Widget build(BuildContext context) => Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF7F9FC).withOpacity(.92),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: const [
-            BoxShadow(
-                color: Colors.black12, blurRadius: 16, offset: Offset(0, 8))
-          ],
-        ),
-        child: child,
-      );
+  Widget build(BuildContext context) {
+    final colors = AppTheme.colorsOf(context);
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(99),
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0, end: value.clamp(0.0, 1.0).toDouble()),
+        duration: const Duration(milliseconds: 900),
+        curve: Curves.easeOutCubic,
+        builder: (context, v, _) => LinearProgressIndicator(
+            value: v,
+            minHeight: 9,
+            backgroundColor: colors.glassBorderSoft,
+            valueColor: AlwaysStoppedAnimation<Color>(color)),
+      ),
+    );
+  }
 }

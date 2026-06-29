@@ -1,19 +1,15 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../presentation/notifiers/tutor_notifier.dart';
+import '../core/utils/math_renderer.dart';
 import '../presentation/widgets/animated_background.dart';
 import '../services/app_preferences.dart';
-
-// ── Design tokens (mirrors HomeScreen exactly) ────────────────────────────────
-const _ink = Color(0xFF111827);
-const _muted = Color(0xFF6B7280);
-const _border = Color(0xFFE5E7EB);
-const _surface = Color(0xFFFFFFFF);
-const _pageBg = Color(0xFFF8F9FB);
+import '../services/chat_service.dart';
+import '../theme/app_theme.dart';
 
 class ChatMessage {
   final String text;
@@ -85,20 +81,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
 
     String answer;
     try {
-      final notifier = ref.read(tutorNotifierProvider.notifier);
-      await notifier.askQuestion(question, 'gen_math', 'gen_math_functions');
-      final response = ref.read(tutorNotifierProvider).valueOrNull;
-      answer = response == null
-          ? await _mockReply(question)
-          : [
-              response.answer,
-              if (response.steps.isNotEmpty) '',
-              ...response.steps.asMap().entries.map(
-                    (entry) => '${entry.key + 1}. ${entry.value}',
-                  ),
-            ].join('\n');
+      // Calls the real backend (/api/ask, RAG + Phi-3) via the repository
+      // pattern's swappable facade — see lib/repositories/tutor_repository.dart.
+      answer = await ChatService.ask(question);
     } catch (_) {
-      answer = await _mockReply(question);
+      // Surface a real failure instead of silently faking a plausible-looking
+      // answer — a previous version of this screen did that and it read as
+      // the tutor "hallucinating" when the request had actually failed.
+      answer = 'Sorry, I couldn\'t reach the tutor right now. Please check '
+          'your connection and try again.';
     }
 
     if (!mounted) return;
@@ -111,11 +102,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       ));
     });
     _scrollToBottom();
-  }
-
-  Future<String> _mockReply(String question) async {
-    await Future.delayed(const Duration(milliseconds: 1500));
-    return 'Let\'s work through "$question" step by step.\n\n1. Identify what is being asked so we know the target answer.\n2. Write the known values or equation to avoid guessing.\n3. Choose the rule or formula that matches the problem.\n4. Simplify carefully and check the result.\n\nWhy this works: each step connects the given information to the final answer, so you can see not only what the answer is, but why it is correct. Share the full equation and I can solve it with detailed steps.';
   }
 
   void _scrollToBottom() {
@@ -137,54 +123,66 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   @override
   Widget build(BuildContext context) {
     final primary = AppPreferences.palette.value.primary;
+    final colors = AppTheme.colorsOf(context);
 
     return Scaffold(
-      backgroundColor: _pageBg,
-      appBar: AppBar(
-        backgroundColor: _surface,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        shadowColor: Colors.transparent,
-        centerTitle: false,
-        toolbarHeight: 58,
-        titleSpacing: 4,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: _ink, size: 22),
-          onPressed: () =>
-              context.canPop() ? context.pop() : context.go('/home'),
-        ),
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 30,
-              height: 30,
-              decoration: BoxDecoration(
-                color: primary.withOpacity(0.08),
-                shape: BoxShape.circle,
+      backgroundColor: colors.pageBg,
+      // Frosted-glass header, matching the chrome treatment used elsewhere.
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(58),
+        child: ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+            child: AppBar(
+              backgroundColor: colors.glassFillStart,
+              surfaceTintColor: Colors.transparent,
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              shadowColor: Colors.transparent,
+              centerTitle: false,
+              toolbarHeight: 58,
+              titleSpacing: 4,
+              leading: IconButton(
+                icon: Icon(Icons.arrow_back_rounded, color: colors.ink, size: 22),
+                onPressed: () =>
+                    context.canPop() ? context.pop() : context.go('/home'),
               ),
-              child: Icon(Icons.smart_toy_rounded, color: primary, size: 16),
-            ),
-            const SizedBox(width: 10),
-            const Text(
-              'Math Tutor',
-              style: TextStyle(
-                color: Color(0xFF312E81),
-                fontSize: 19,
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.2,
-                height: 1,
+              title: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      color: primary.withOpacity(0.08),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.smart_toy_rounded,
+                        color: primary, size: 16),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Math Tutor',
+                    style: TextStyle(
+                      color: colors.titleColor,
+                      fontSize: 19,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: -0.2,
+                      height: 1,
+                    ),
+                  ),
+                ],
+              ),
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(1),
+                child: Container(height: 1, color: colors.glassBorder),
               ),
             ),
-          ],
-        ),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: const Color(0xFFF1F0F8)),
+          ),
         ),
       ),
       body: AnimatedBackground(
+        vivid: true,
         child: SafeArea(
           child: Column(
             children: [
@@ -230,6 +228,7 @@ class _ChatBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isUser = message.isUser;
+    final colors = AppTheme.colorsOf(context);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
@@ -253,14 +252,15 @@ class _ChatBubble extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
                 decoration: BoxDecoration(
-                  color: isUser ? primary : _surface,
+                  color: isUser ? primary : colors.surface,
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(isUser ? 18 : 4),
                     topRight: const Radius.circular(18),
                     bottomLeft: const Radius.circular(18),
                     bottomRight: Radius.circular(isUser ? 4 : 18),
                   ),
-                  border: isUser ? null : Border.all(color: _border, width: 1),
+                  border:
+                      isUser ? null : Border.all(color: colors.border, width: 1),
                   boxShadow: [
                     BoxShadow(
                       color: isUser
@@ -271,10 +271,11 @@ class _ChatBubble extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: Text(
-                  message.text,
-                  style: TextStyle(
-                    color: isUser ? Colors.white : _ink,
+                child: MathRenderer(
+                  text: message.text,
+                  mathFontSize: 14,
+                  textStyle: TextStyle(
+                    color: isUser ? Colors.white : colors.ink,
                     height: 1.5,
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
@@ -284,7 +285,7 @@ class _ChatBubble extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 _formatTime(message.timestamp),
-                style: const TextStyle(color: _muted, fontSize: 11),
+                style: TextStyle(color: colors.muted, fontSize: 11),
               ),
             ],
           ),
@@ -304,6 +305,8 @@ class _TypingBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppTheme.colorsOf(context);
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Row(
@@ -314,14 +317,14 @@ class _TypingBubble extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
-              color: _surface,
+              color: colors.surface,
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(4),
                 topRight: Radius.circular(18),
                 bottomLeft: Radius.circular(18),
                 bottomRight: Radius.circular(18),
               ),
-              border: Border.all(color: _border, width: 1),
+              border: Border.all(color: colors.border, width: 1),
               boxShadow: const [
                 BoxShadow(
                   color: Color(0x08000000),
@@ -400,6 +403,7 @@ class _InputBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppTheme.colorsOf(context);
     const suggestions = [
       'Solve quadratic?',
       'Explain derivatives',
@@ -409,9 +413,9 @@ class _InputBar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
       decoration: BoxDecoration(
-        color: _surface,
-        border: const Border(
-          top: BorderSide(color: _border, width: 1),
+        color: colors.surface,
+        border: Border(
+          top: BorderSide(color: colors.border, width: 1),
         ),
       ),
       child: Column(
@@ -455,19 +459,19 @@ class _InputBar extends StatelessWidget {
                   enabled: enabled,
                   textInputAction: TextInputAction.send,
                   onSubmitted: (_) => onSend(),
-                  style: const TextStyle(color: _ink, fontSize: 14),
+                  style: TextStyle(color: colors.ink, fontSize: 14),
                   decoration: InputDecoration(
                     hintText: 'Ask a math question…',
-                    hintStyle: const TextStyle(color: _muted, fontSize: 14),
+                    hintStyle: TextStyle(color: colors.muted, fontSize: 14),
                     filled: true,
-                    fillColor: _pageBg,
+                    fillColor: colors.pageBg,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: _border, width: 1),
+                      borderSide: BorderSide(color: colors.border, width: 1),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: _border, width: 1),
+                      borderSide: BorderSide(color: colors.border, width: 1),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -487,9 +491,9 @@ class _InputBar extends StatelessWidget {
                   style: OutlinedButton.styleFrom(
                     backgroundColor: Colors.transparent,
                     foregroundColor: primary,
-                    disabledForegroundColor: _border,
+                    disabledForegroundColor: colors.border,
                     side: BorderSide(
-                        color: enabled ? primary : _border, width: 1),
+                        color: enabled ? primary : colors.border, width: 1),
                     elevation: 0,
                     shadowColor: Colors.transparent,
                     padding: EdgeInsets.zero,

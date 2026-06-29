@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'models/mathiva_models.dart';
 import 'presentation/screens/progress/mastery_heatmap_screen.dart';
 import 'presentation/screens/progress/rewards_screen.dart';
 import 'presentation/screens/quiz/quiz_screen.dart';
@@ -28,6 +30,7 @@ import 'screens/subject_progress_screen.dart';
 import 'screens/topic_analytics_screen.dart';
 import 'services/app_preferences.dart';
 import 'theme/app_theme.dart';
+import 'theme/semantic_colors.dart';
 import 'utils/route_names.dart';
 
 class MathivaApp extends StatelessWidget {
@@ -62,7 +65,8 @@ class MathivaApp extends StatelessWidget {
       GoRoute(path: RouteNames.chat, builder: (_, __) => const ChatScreen()),
       GoRoute(
           path: RouteNames.solution,
-          builder: (_, __) => const SolutionScreen()),
+          builder: (_, state) =>
+              SolutionScreen(problem: state.extra as PracticeProblem?)),
       GoRoute(path: '/quiz', builder: (_, __) => const QuizScreen()),
       GoRoute(path: '/review', builder: (_, __) => const ReviewQueueScreen()),
       GoRoute(
@@ -125,6 +129,8 @@ class MathivaApp extends StatelessWidget {
             selectedAnswer: args['selectedAnswer'] as String?,
             elapsedSeconds: args['elapsedSeconds'] as int?,
             isCorrect: args['isCorrect'] as bool?,
+            correctAnswer: args['correctAnswer'] as String?,
+            steps: (args['steps'] as List?)?.cast<String>(),
           );
         },
       ),
@@ -136,6 +142,7 @@ class MathivaApp extends StatelessWidget {
             subjectId: args['subjectId'] as String,
             topicId: args['topicId'] as String,
             lessonId: args['lessonId'] as String,
+            conceptId: args['conceptId'] as String?,
           );
         },
       ),
@@ -168,14 +175,35 @@ class MathivaApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ProviderScope(
-      child: ValueListenableBuilder(
+      child: ValueListenableBuilder<MathiviaPalette>(
         valueListenable: AppPreferences.palette,
         builder: (context, palette, _) {
-          return MaterialApp.router(
-            debugShowCheckedModeBanner: false,
-            title: 'Mathiva',
-            theme: AppTheme.light(palette),
-            routerConfig: _router,
+          return ValueListenableBuilder<bool>(
+            valueListenable: AppPreferences.darkMode,
+            builder: (context, isDark, _) {
+              // Status bar / nav bar icon color is OS-level chrome, not part
+              // of Flutter's ThemeData -- it has to be re-applied by hand
+              // whenever dark mode toggles, or the icons stay whatever
+              // brightness they were set to at launch (dark icons on a now-
+              // dark background, which is invisible).
+              final colors =
+                  isDark ? SemanticColors.dark : SemanticColors.light;
+              SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+                statusBarColor: Colors.transparent,
+                systemNavigationBarColor: colors.pageBg,
+                statusBarIconBrightness:
+                    isDark ? Brightness.light : Brightness.dark,
+                systemNavigationBarIconBrightness:
+                    isDark ? Brightness.light : Brightness.dark,
+              ));
+
+              return MaterialApp.router(
+                debugShowCheckedModeBanner: false,
+                title: 'Mathiva',
+                theme: isDark ? AppTheme.dark(palette) : AppTheme.light(palette),
+                routerConfig: _router,
+              );
+            },
           );
         },
       ),

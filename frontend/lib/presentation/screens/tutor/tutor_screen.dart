@@ -8,12 +8,11 @@ import 'package:mathiva/presentation/widgets/loading_overlay.dart';
 import 'package:mathiva/presentation/widgets/step_revealer.dart';
 import 'package:mathiva/presentation/widgets/animated_background.dart';
 import 'package:mathiva/presentation/widgets/fade_slide_in.dart';
+import 'package:mathiva/presentation/widgets/glass_card.dart';
 import 'package:mathiva/presentation/widgets/section_header.dart';
 import 'package:mathiva/services/app_preferences.dart';
+import 'package:mathiva/theme/app_theme.dart';
 import '../../../widgets/mathiva_app_bar.dart';
-
-const _ink = Color(0xFF242033);
-const _muted = Color(0xFF8C879A);
 
 class TutorScreen extends ConsumerStatefulWidget {
   const TutorScreen({super.key});
@@ -36,6 +35,7 @@ class _TutorScreenState extends ConsumerState<TutorScreen> {
   Widget build(BuildContext context) {
     final tutorState = ref.watch(tutorNotifierProvider);
     final palette = AppPreferences.palette.value;
+    final colors = AppTheme.colorsOf(context);
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: MathivaAppBar(
@@ -46,6 +46,7 @@ class _TutorScreenState extends ConsumerState<TutorScreen> {
         onBack: () => context.canPop() ? context.pop() : context.go('/home'),
       ),
       body: AnimatedBackground(
+        vivid: true,
         child: SafeArea(
           top: false,
           child: ListView(
@@ -57,7 +58,7 @@ class _TutorScreenState extends ConsumerState<TutorScreen> {
                   subtitle: 'Your AI math companion',
                 ),
                 FadeSlideIn(
-                  child: _SoftCard(
+                  child: GlassCard(
                     child: Column(children: [
                       TextField(
                         controller: _questionController,
@@ -91,13 +92,13 @@ class _TutorScreenState extends ConsumerState<TutorScreen> {
                   data: (response) => response == null
                       ? FadeSlideIn(
                           delay: const Duration(milliseconds: 80),
-                          child: _SoftCard(
+                          child: GlassCard(
                               child: Text(AppStrings.askPrompt,
-                                  style: const TextStyle(color: _muted))),
+                                  style: TextStyle(color: colors.muted))),
                         )
                       : FadeSlideIn(
                           delay: const Duration(milliseconds: 80),
-                          child: _SoftCard(
+                          child: GlassCard(
                             child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -119,16 +120,16 @@ class _TutorScreenState extends ConsumerState<TutorScreen> {
                                   const SizedBox(height: 12),
                                   MathRenderer(
                                       text: response.answer,
-                                      textStyle: const TextStyle(
-                                          color: _ink, height: 1.4),
+                                      textStyle: TextStyle(
+                                          color: colors.ink, height: 1.4),
                                       mathFontSize: 16),
                                   const SizedBox(height: 12),
                                   StepRevealer(steps: response.steps),
                                   const SizedBox(height: 12),
                                   Text(
                                       'Source: ${response.source_chunks.join(', ')}',
-                                      style: const TextStyle(
-                                          color: _muted, fontSize: 12)),
+                                      style: TextStyle(
+                                          color: colors.muted, fontSize: 12)),
                                 ]),
                           ),
                         ),
@@ -165,23 +166,4 @@ class _GradientButton extends StatelessWidget {
       ),
     );
   }
-}
-
-class _SoftCard extends StatelessWidget {
-  final Widget child;
-  const _SoftCard({required this.child});
-  @override
-  Widget build(BuildContext context) => Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF7F9FC).withOpacity(.92),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: const [
-            BoxShadow(
-                color: Colors.black12, blurRadius: 16, offset: Offset(0, 8))
-          ],
-        ),
-        child: child,
-      );
 }

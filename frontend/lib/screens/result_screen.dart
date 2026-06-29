@@ -1,18 +1,14 @@
 import 'package:flutter/material.dart';
 import '../presentation/widgets/animated_background.dart';
+import '../presentation/widgets/glass_card.dart';
 import '../services/app_preferences.dart';
 import 'package:go_router/go_router.dart';
 
 import '../services/local_content_service.dart';
+import '../theme/app_theme.dart';
+import '../utils/duration_format.dart';
 import '../utils/route_names.dart';
 import '../widgets/mathiva_app_bar.dart';
-
-// Shared tokens — identical values to HomeScreen's palette, so this screen
-// reads as the same surface system rather than its own design.
-const _ink = Color(0xFF111827);
-const _muted = Color(0xFF6B7280);
-const _border = Color(0xFFE5E7EB);
-const _surface = Color(0xFFFFFFFF);
 
 class ResultScreen extends StatelessWidget {
   final String subjectId;
@@ -23,6 +19,11 @@ class ResultScreen extends StatelessWidget {
   final String? selectedAnswer;
   final int? elapsedSeconds;
   final bool? isCorrect;
+  // The correct answer and worked steps as graded by the server
+  // (POST /api/quiz/answer). Optional so the screen still renders if reached
+  // without them; falls back to the local content's static problem.
+  final String? correctAnswer;
+  final List<String>? steps;
 
   const ResultScreen({
     super.key,
@@ -34,17 +35,24 @@ class ResultScreen extends StatelessWidget {
     this.selectedAnswer,
     this.elapsedSeconds,
     this.isCorrect,
+    this.correctAnswer,
+    this.steps,
   });
 
   @override
   Widget build(BuildContext context) {
     final primary = AppPreferences.palette.value.primary;
     final secondary = AppPreferences.palette.value.secondary;
+    final colors = AppTheme.colorsOf(context);
 
-    final concept = LocalContentService()
-        .getConcept(subjectId, topicId, lessonId, conceptId);
-    final problem = concept.problem;
-    final correct = isCorrect ?? selectedAnswer == problem.answer;
+    // Prefer the server-graded answer/steps; fall back to the local static
+    // problem only if this screen was reached without them.
+    final problem = LocalContentService()
+        .getConcept(subjectId, topicId, lessonId, conceptId)
+        .problem;
+    final answer = correctAnswer ?? problem.answer;
+    final resolvedSteps = steps ?? problem.steps;
+    final correct = isCorrect ?? selectedAnswer == answer;
     final resultColor = correct ? primary : secondary;
 
     return PopScope(
@@ -79,13 +87,14 @@ class ResultScreen extends StatelessWidget {
           ],
         ),
         body: AnimatedBackground(
+          vivid: true,
           child: SafeArea(
             top: false,
             child: ListView(
               padding: const EdgeInsets.fromLTRB(20, 86, 20, 28),
               physics: const BouncingScrollPhysics(),
               children: [
-                _SoftCard(
+                GlassCard(
                   child: Column(
                     children: [
                       Container(
@@ -105,21 +114,21 @@ class ResultScreen extends StatelessWidget {
                       const SizedBox(height: 18),
                       Text(
                         correct ? 'Great job!' : 'Keep practicing!',
-                        style: const TextStyle(
-                            color: _ink,
+                        style: TextStyle(
+                            color: colors.ink,
                             fontSize: 24,
                             fontWeight: FontWeight.w700),
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        'Completed in ${_formatElapsed(elapsedSeconds ?? 0)} • $difficulty',
-                        style: const TextStyle(color: _muted, fontSize: 13),
+                        'Completed in ${formatElapsed(elapsedSeconds ?? 0)} • $difficulty',
+                        style: TextStyle(color: colors.muted, fontSize: 13),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 16),
-                _SoftCard(
+                GlassCard(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -136,10 +145,10 @@ class ResultScreen extends StatelessWidget {
                                 color: primary, size: 20),
                           ),
                           const SizedBox(width: 12),
-                          const Text(
+                          Text(
                             'Correct Answer',
                             style: TextStyle(
-                              color: _muted,
+                              color: colors.muted,
                               fontSize: 11.5,
                               fontWeight: FontWeight.w600,
                               letterSpacing: 0.4,
@@ -149,7 +158,7 @@ class ResultScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 14),
                       Text(
-                        problem.answer,
+                        answer,
                         style: TextStyle(
                             color: primary,
                             fontSize: 24,
@@ -158,30 +167,30 @@ class ResultScreen extends StatelessWidget {
                       if (selectedAnswer != null) ...[
                         const SizedBox(height: 12),
                         Text('Your answer: $selectedAnswer',
-                            style: const TextStyle(color: _ink)),
+                            style: TextStyle(color: colors.ink)),
                       ],
                       const SizedBox(height: 12),
                       Text(
                         correct
                             ? 'Why: your choice matches the result from the simplified steps below.'
                             : 'Why: compare your answer with the steps below to see where the result changes.',
-                        style: const TextStyle(color: _muted, height: 1.4),
+                        style: TextStyle(color: colors.muted, height: 1.4),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 26),
-                const Text(
+                Text(
                   'Step-by-Step Explanation',
                   style: TextStyle(
-                    color: _ink,
+                    color: colors.ink,
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                     letterSpacing: -0.2,
                   ),
                 ),
                 const SizedBox(height: 14),
-                ...problem.steps.asMap().entries.map(
+                ...resolvedSteps.asMap().entries.map(
                       (entry) => _StepCard(
                         number: entry.key + 1,
                         text: entry.value,
@@ -195,7 +204,8 @@ class ResultScreen extends StatelessWidget {
                     extra: {
                       'subjectId': subjectId,
                       'topicId': topicId,
-                      'lessonId': lessonId
+                      'lessonId': lessonId,
+                      'conceptId': conceptId,
                     },
                   ),
                 ),
@@ -236,9 +246,11 @@ class _StepCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final primary = AppPreferences.palette.value.primary;
 
+    final colors = AppTheme.colorsOf(context);
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: _SoftCard(
+      child: GlassCard(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -261,12 +273,12 @@ class _StepCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(text, style: const TextStyle(color: _ink, height: 1.5)),
+                  Text(text, style: TextStyle(color: colors.ink, height: 1.5)),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'This step keeps the equation equivalent, so the final answer stays valid.',
-                    style:
-                        TextStyle(color: _muted, fontSize: 12.5, height: 1.35),
+                    style: TextStyle(
+                        color: colors.muted, fontSize: 12.5, height: 1.35),
                   ),
                 ],
               ),
@@ -317,6 +329,7 @@ class _OutlineButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final primary = AppPreferences.palette.value.primary;
+    final colors = AppTheme.colorsOf(context);
 
     return SizedBox(
       width: double.infinity,
@@ -326,7 +339,7 @@ class _OutlineButton extends StatelessWidget {
         style: OutlinedButton.styleFrom(
           backgroundColor: Colors.transparent,
           foregroundColor: primary,
-          side: const BorderSide(color: _border),
+          side: BorderSide(color: colors.border),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         ),
@@ -334,38 +347,4 @@ class _OutlineButton extends StatelessWidget {
       ),
     );
   }
-}
-
-class _SoftCard extends StatelessWidget {
-  final Widget child;
-
-  const _SoftCard({required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: _surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _border, width: 1),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x08000000),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: child,
-    );
-  }
-}
-
-String _formatElapsed(int seconds) {
-  if (seconds < 60) return '${seconds}s';
-  final minutes = seconds ~/ 60;
-  final remainder = seconds % 60;
-  return '${minutes}m ${remainder}s';
 }

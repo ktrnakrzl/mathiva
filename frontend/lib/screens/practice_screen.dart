@@ -1,21 +1,18 @@
 import 'dart:async';
 import '../presentation/widgets/animated_background.dart';
+import '../presentation/widgets/glass_card.dart';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/app_preferences.dart';
 import 'package:go_router/go_router.dart';
 
-import '../services/local_content_service.dart';
+import '../services/progress_service.dart';
+import '../services/progress_store.dart';
+import '../theme/app_theme.dart';
 import '../utils/route_names.dart';
 import '../widgets/mathiva_app_bar.dart';
-
-final _primary = Color(0xFF2563EB);
-final _secondary = Color(0xFF14B8A6);
-final _chip = Color(0xFFEFF6FF);
-
-final _ink = Color(0xFF242033);
-final _muted = Color(0xFF8C879A);
 
 class PracticeScreen extends StatefulWidget {
   final String subjectId;
@@ -38,17 +35,24 @@ class PracticeScreen extends StatefulWidget {
 }
 
 class _PracticeScreenState extends State<PracticeScreen> {
+  // The server-generated question for this concept. Null until it loads.
+  GeneratedQuestion? _question;
+  bool _loadingQuestion = true;
+  String? _loadError;
+  // True when the load failed with 401 -- the session expired, so the fix is
+  // to log in again (not "try again" with the same dead token).
+  bool _sessionExpired = false;
+
   String? _selected;
+  bool _submitting = false;
+
   Timer? _timer;
   int _elapsedSeconds = 0;
 
   @override
   void initState() {
     super.initState();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!mounted) return;
-      setState(() => _elapsedSeconds++);
-    });
+    _loadQuestion();
   }
 
   @override
@@ -57,20 +61,100 @@ class _PracticeScreenState extends State<PracticeScreen> {
     super.dispose();
   }
 
-  void _submit(String correctAnswer) {
-    final selected = _selected;
-    if (selected == null) return;
-    _timer?.cancel();
+  /// Fetches a fresh question from the server. The timer only starts once the
+  /// question is on screen, so loading time isn't counted against the student.
+  Future<void> _loadQuestion() async {
+    setState(() {
+      _loadingQuestion = true;
+      _loadError = null;
+      _sessionExpired = false;
+      _selected = null;
+    });
+    try {
+      final question = await ProgressService.fetchNextQuestion(
+        subjectId: widget.subjectId,
+        topicId: widget.topicId,
+        lessonId: widget.lessonId,
+        conceptId: widget.conceptId,
+        difficulty: widget.difficulty,
+      );
+      if (!mounted) return;
+      setState(() {
+        _question = question;
+        _loadingQuestion = false;
+        _elapsedSeconds = 0;
+      });
+      _timer?.cancel();
+      _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (!mounted) return;
+        setState(() => _elapsedSeconds++);
+      });
+    } catch (e) {
+      if (!mounted) return;
+      final status = e is DioException ? e.response?.statusCode : null;
+      // 422 means there's no question template for this concept yet -- a
+      // content gap, not a transient failure, so say so plainly.
+      // 401 means the login session expired (the JWT only lasts 24h) -- the
+      // fix is to sign in again, not to retry with the same dead token.
+      final sessionExpired = status == 401;
+      setState(() {
+        _loadingQuestion = false;
+        _sessionExpired = sessionExpired;
+        if (sessionExpired) {
+          _loadError = 'Your session expired. Please log in again.';
+        } else if (status == 422) {
+          _loadError = "Practice questions for this lesson aren't ready yet.";
+        } else {
+          _loadError =
+              "Couldn't load a question. Check your connection and try again.";
+        }
+      });
+    }
+  }
 
-    final correct = selected == correctAnswer;
+  Future<void> _submit() async {
+    final selected = _selected;
+    final question = _question;
+    if (selected == null || question == null || _submitting) return;
+
+    _timer?.cancel();
+    setState(() => _submitting = true);
+
+    final AnswerResult result;
+    try {
+      result = await ProgressService.submitAnswer(
+        questionId: question.questionId,
+        selectedAnswer: selected,
+        elapsedSeconds: _elapsedSeconds,
+      );
+    } catch (_) {
+      if (!mounted) return;
+      // Submit failed -- let the student try again rather than losing their
+      // answer. Resume the timer so elapsed time stays honest.
+      setState(() => _submitting = false);
+      _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (!mounted) return;
+        setState(() => _elapsedSeconds++);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Couldn't submit your answer. Try again.")),
+      );
+      return;
+    }
+
     if (AppPreferences.hapticFeedback.value) {
-      if (correct) {
+      if (result.isCorrect) {
         HapticFeedback.lightImpact();
       } else {
         HapticFeedback.heavyImpact();
       }
     }
 
+    // The attempt is already recorded server-side by /api/quiz/answer; refresh
+    // the local stats cache so the progress screens reflect it next time.
+    unawaited(ProgressStore.refresh());
+
+    if (!mounted) return;
     context.push(
       RouteNames.result,
       extra: {
@@ -81,55 +165,37 @@ class _PracticeScreenState extends State<PracticeScreen> {
         'difficulty': widget.difficulty,
         'selectedAnswer': selected,
         'elapsedSeconds': _elapsedSeconds,
-        'isCorrect': correct,
+        'isCorrect': result.isCorrect,
+        'correctAnswer': result.correctAnswer,
+        'steps': result.steps,
       },
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final _palette = AppPreferences.palette.value;
-    final _primary = _palette.primary;
-    final _secondary = _palette.secondary;
-    final _gBackgroundStart = _palette.background.first;
-    final _chip =
-        Color.alphaBlend(_primary.withOpacity(0.05), const Color(0xFFF7F9FC));
-
-    final concept = LocalContentService().getConcept(
-      widget.subjectId,
-      widget.topicId,
-      widget.lessonId,
-      widget.conceptId,
-    );
-    final problem = concept.problem;
-    final choices = problem.choices.isEmpty
-        ? [
-            problem.answer,
-            'x = 1 and x = 3/2',
-            'x = -2 and x = 3',
-            'No solution'
-          ]
-        : problem.choices;
+    final primary = AppPreferences.palette.value.primary;
 
     // The screen uses `extendBodyBehindAppBar: true` + `SafeArea(top:
     // false)` so the scrolling background shows through behind the
-    // translucent-feeling app bar. That means the ListView itself has to
-    // account for *all* of the space the app bar visually occupies —
-    // status bar height + the app bar's own height (including its
-    // bottom hairline) — before the real content starts.
-    //
-    // MathivaAppBar is taller when it has a subtitle (74 vs 58) plus a
-    // 1px bottom border, and this screen always passes a subtitle. A
-    // hardcoded `86` doesn't track that, and on devices with a taller
-    // status bar it ends up too small, letting the app bar visually
-    // overlap/clip the first chunk of scrollable content (which is what
-    // was happening — the list *was* scrolling, it just started from
-    // underneath the header).
-    const appBarHeight =
-        74.0; // MathivaAppBar.preferredSize when subtitle != null
+    // translucent-feeling app bar. The body content has to account for all
+    // of the space the app bar visually occupies (status bar + app bar
+    // height + its 1px bottom border) before the real content starts.
+    // MathivaAppBar is 74 tall when it has a subtitle, which this screen
+    // always passes.
+    const appBarHeight = 74.0;
     const appBarBottomBorder = 1.0;
     final statusBarHeight = MediaQuery.of(context).padding.top;
     final topPadding = statusBarHeight + appBarHeight + appBarBottomBorder + 12;
+
+    final Widget body;
+    if (_loadingQuestion) {
+      body = _buildLoading(topPadding);
+    } else if (_loadError != null) {
+      body = _buildError(topPadding);
+    } else {
+      body = _buildQuestion(topPadding);
+    }
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -143,68 +209,134 @@ class _PracticeScreenState extends State<PracticeScreen> {
             tooltip: 'Ask Math Tutor',
             onPressed: () => context.push(RouteNames.chat),
             icon: const Icon(Icons.chat_bubble_outline_rounded),
-            color: _primary,
+            color: primary,
           ),
           const SizedBox(width: 4),
         ],
       ),
       body: AnimatedBackground(
-        child: SafeArea(
-          top: false,
-          child: ListView(
-            padding: EdgeInsets.fromLTRB(16, topPadding, 16, 28),
-            physics: const BouncingScrollPhysics(),
+        vivid: true,
+        child: SafeArea(top: false, child: body),
+      ),
+    );
+  }
+
+  Widget _buildLoading(double topPadding) {
+    final colors = AppTheme.colorsOf(context);
+    final primary = AppPreferences.palette.value.primary;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, topPadding, 16, 28),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(color: primary),
+            const SizedBox(height: 18),
+            Text(
+              'Generating your question…',
+              style:
+                  TextStyle(color: colors.muted, fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildError(double topPadding) {
+    final colors = AppTheme.colorsOf(context);
+    return Padding(
+      padding: EdgeInsets.fromLTRB(24, topPadding, 24, 28),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              _sessionExpired
+                  ? Icons.lock_clock_rounded
+                  : Icons.cloud_off_rounded,
+              size: 48,
+              color: colors.muted,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _loadError!,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: colors.ink, fontSize: 16, height: 1.4),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: 200,
+              child: _sessionExpired
+                  ? _GradientButton(
+                      label: 'Log In Again',
+                      onPressed: () => context.go(RouteNames.login),
+                    )
+                  : _GradientButton(
+                      label: 'Try Again', onPressed: _loadQuestion),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuestion(double topPadding) {
+    final colors = AppTheme.colorsOf(context);
+    final question = _question!;
+
+    return ListView(
+      padding: EdgeInsets.fromLTRB(16, topPadding, 16, 28),
+      physics: const BouncingScrollPhysics(),
+      children: [
+        GlassCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _SoftCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const _Pill(label: 'Question 1 of 1'),
-                        const Spacer(),
-                        _TimerBadge(seconds: _elapsedSeconds),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      problem.question,
-                      style: TextStyle(
-                        color: _ink,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w700,
-                        height: 1.35,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Choose an answer. The next screen will show the solution and why it works.',
-                      style: TextStyle(color: _muted, height: 1.4),
-                    ),
-                  ],
+              Row(
+                children: [
+                  const _Pill(label: 'Question 1 of 1'),
+                  const Spacer(),
+                  _TimerBadge(seconds: _elapsedSeconds),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                question.question,
+                style: TextStyle(
+                  color: colors.ink,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  height: 1.35,
                 ),
               ),
-              const SizedBox(height: 20),
-              ...choices.map(
-                (choice) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _ChoiceTile(
-                    label: choice,
-                    selected: _selected == choice,
-                    onTap: () => setState(() => _selected = choice),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              _GradientButton(
-                label: 'Submit Answer',
-                onPressed:
-                    _selected == null ? null : () => _submit(problem.answer),
+              const SizedBox(height: 12),
+              Text(
+                'Choose an answer. The next screen will show the solution and why it works.',
+                style: TextStyle(color: colors.muted, height: 1.4),
               ),
             ],
           ),
         ),
-      ),
+        const SizedBox(height: 20),
+        ...question.choices.map(
+          (choice) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _ChoiceTile(
+              label: choice,
+              selected: _selected == choice,
+              onTap: _submitting
+                  ? () {}
+                  : () => setState(() => _selected = choice),
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        _GradientButton(
+          label: _submitting ? 'Checking…' : 'Submit Answer',
+          onPressed: (_selected == null || _submitting) ? null : _submit,
+        ),
+      ],
     );
   }
 }
@@ -222,12 +354,8 @@ class _ChoiceTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _palette = AppPreferences.palette.value;
-    final _primary = _palette.primary;
-    final _secondary = _palette.secondary;
-    final _gBackgroundStart = _palette.background.first;
-    final _chip =
-        Color.alphaBlend(_primary.withOpacity(0.05), const Color(0xFFF7F9FC));
+    final primary = AppPreferences.palette.value.primary;
+    final colors = AppTheme.colorsOf(context);
 
     return Material(
       color: Colors.transparent,
@@ -238,13 +366,13 @@ class _ChoiceTile extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: const Color(0xFFF7F9FC),
+            color: colors.surface,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-                color: selected ? _primary : const Color(0xFFF1ECFF)),
+                color: selected ? primary : colors.border),
             boxShadow: [
               BoxShadow(
-                color: _primary.withOpacity(selected ? .12 : .06),
+                color: primary.withOpacity(selected ? .12 : .06),
                 blurRadius: 8,
                 offset: const Offset(0, 8),
               ),
@@ -257,11 +385,11 @@ class _ChoiceTile extends StatelessWidget {
                 height: 24,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: selected ? _primary : _chip,
+                  color: selected ? primary : colors.glassChipFill,
                 ),
                 child: selected
                     ? const Icon(Icons.check_rounded,
-                        color: const Color(0xFFF7F9FC), size: 16)
+                        color: Colors.white, size: 16)
                     : null,
               ),
               const SizedBox(width: 12),
@@ -269,7 +397,7 @@ class _ChoiceTile extends StatelessWidget {
                 child: Text(
                   label,
                   style: TextStyle(
-                    color: selected ? _primary : _ink,
+                    color: selected ? primary : colors.ink,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -289,28 +417,24 @@ class _TimerBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _palette = AppPreferences.palette.value;
-    final _primary = _palette.primary;
-    final _secondary = _palette.secondary;
-    final _gBackgroundStart = _palette.background.first;
-    final _chip =
-        Color.alphaBlend(_primary.withOpacity(0.05), const Color(0xFFF7F9FC));
+    final primary = AppPreferences.palette.value.primary;
+    final colors = AppTheme.colorsOf(context);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F9FC),
+        color: colors.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _chip),
+        border: Border.all(color: colors.border),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.timer_outlined, size: 16, color: _primary),
+          Icon(Icons.timer_outlined, size: 16, color: primary),
           const SizedBox(width: 5),
           Text(
             _formatTimer(seconds),
-            style: TextStyle(color: _primary, fontWeight: FontWeight.w700),
+            style: TextStyle(color: primary, fontWeight: FontWeight.w700),
           ),
         ],
       ),
@@ -325,19 +449,15 @@ class _Pill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _palette = AppPreferences.palette.value;
-    final _primary = _palette.primary;
-    final _secondary = _palette.secondary;
-    final _gBackgroundStart = _palette.background.first;
-    final _chip =
-        Color.alphaBlend(_primary.withOpacity(0.05), const Color(0xFFF7F9FC));
+    final primary = AppPreferences.palette.value.primary;
+    final colors = AppTheme.colorsOf(context);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-      decoration:
-          BoxDecoration(color: _chip, borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(
+          color: colors.glassChipFill, borderRadius: BorderRadius.circular(20)),
       child: Text(label,
-          style: TextStyle(color: _primary, fontWeight: FontWeight.w600)),
+          style: TextStyle(color: primary, fontWeight: FontWeight.w600)),
     );
   }
 }
@@ -354,15 +474,11 @@ class _GradientButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _palette = AppPreferences.palette.value;
-    final _primary = _palette.primary;
-    final _secondary = _palette.secondary;
-    final _gBackgroundStart = _palette.background.first;
-    final _chip =
-        Color.alphaBlend(_primary.withOpacity(0.05), const Color(0xFFF7F9FC));
+    final primary = AppPreferences.palette.value.primary;
+    final colors = AppTheme.colorsOf(context);
 
     final isDisabled = onPressed == null;
-    final accentColor = isDisabled ? const Color(0xFFB4B2A9) : _primary;
+    final accentColor = isDisabled ? colors.subtleMuted : primary;
 
     return SizedBox(
       width: double.infinity,
@@ -381,38 +497,6 @@ class _GradientButton extends StatelessWidget {
         ),
         child: Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
       ),
-    );
-  }
-}
-
-class _SoftCard extends StatelessWidget {
-  final Widget child;
-
-  const _SoftCard({required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    final _palette = AppPreferences.palette.value;
-    final _primary = _palette.primary;
-    final _chip =
-        Color.alphaBlend(_primary.withOpacity(0.05), const Color(0xFFF7F9FC));
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF7F9FC),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFF1ECFF)),
-        boxShadow: [
-          BoxShadow(
-            color: _primary.withOpacity(0.04),
-            blurRadius: 9,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: child,
     );
   }
 }

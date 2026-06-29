@@ -1,7 +1,10 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../services/app_preferences.dart';
+import '../theme/app_theme.dart';
 import '../utils/route_names.dart';
 
 enum MathivaTab {
@@ -11,18 +14,6 @@ enum MathivaTab {
   progress,
   settings,
 }
-
-// Shared tokens — mirrors the palette established on HomeScreen so the nav
-// reads as part of the same surface system rather than a separate component.
-const _muted = Color(0xFF6B7280);
-const _border = Color(0xFFE5E7EB);
-const _surface = Color(0xFFFFFFFF);
-
-// Shared app-chrome surface — same very light lavender tint used by the
-// HomeScreen header, so header and bottom nav read as one "chrome" layer
-// distinct from the white content surfaces between them.
-const _chromeSurface = Color(0xFFF6F5FB);
-const _chromeBorder = Color(0xFFEAE8F5);
 
 class MathivaBottomNav extends StatelessWidget {
   final MathivaTab selected;
@@ -50,63 +41,79 @@ class MathivaBottomNav extends StatelessWidget {
       valueListenable: AppPreferences.palette,
       builder: (context, palette, _) {
         final primary = palette.primary;
+        final colors = AppTheme.colorsOf(context);
 
         return SafeArea(
           minimum: const EdgeInsets.fromLTRB(14, 0, 14, 12),
-          child: Container(
-            height: 68,
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            decoration: BoxDecoration(
-              color: _chromeSurface,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: _chromeBorder, width: 1),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x08000000),
-                  blurRadius: 12,
-                  offset: Offset(0, 3),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: BackdropFilter(
+              // Real frosted glass — same BackdropFilter + translucent white
+              // gradient as GlassCard, so the nav reads as part of the same
+              // surface system as the app bar and content cards rather than
+              // a separate opaque bar.
+              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+              child: Container(
+                height: 68,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [colors.glassFillStart, colors.glassFillEnd],
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: colors.glassBorder, width: 1),
+                  boxShadow: [
+                    BoxShadow(
+                      color: primary.withOpacity(0.16),
+                      blurRadius: 24,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _NavItem(
-                  icon: Icons.home_rounded,
-                  label: 'Home',
-                  selected: selected == MathivaTab.home,
-                  primary: primary,
-                  onTap: () => _go(context, MathivaTab.home),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _NavItem(
+                      icon: Icons.home_rounded,
+                      label: 'Home',
+                      selected: selected == MathivaTab.home,
+                      primary: primary,
+                      onTap: () => _go(context, MathivaTab.home),
+                    ),
+                    _NavItem(
+                      icon: Icons.menu_book_rounded,
+                      label: 'Lessons',
+                      selected: selected == MathivaTab.lessons,
+                      primary: primary,
+                      onTap: () => _go(context, MathivaTab.lessons),
+                    ),
+                    _NavItem(
+                      icon: Icons.document_scanner_rounded,
+                      label: 'Scan',
+                      selected: selected == MathivaTab.scan,
+                      primary: primary,
+                      onTap: () => _go(context, MathivaTab.scan),
+                    ),
+                    _NavItem(
+                      icon: Icons.bar_chart_rounded,
+                      label: 'Progress',
+                      selected: selected == MathivaTab.progress,
+                      primary: primary,
+                      onTap: () => _go(context, MathivaTab.progress),
+                    ),
+                    _NavItem(
+                      icon: Icons.settings_rounded,
+                      label: 'Settings',
+                      selected: selected == MathivaTab.settings,
+                      primary: primary,
+                      onTap: () => _go(context, MathivaTab.settings),
+                    ),
+                  ],
                 ),
-                _NavItem(
-                  icon: Icons.menu_book_rounded,
-                  label: 'Lessons',
-                  selected: selected == MathivaTab.lessons,
-                  primary: primary,
-                  onTap: () => _go(context, MathivaTab.lessons),
-                ),
-                _NavItem(
-                  icon: Icons.document_scanner_rounded,
-                  label: 'Scan',
-                  selected: selected == MathivaTab.scan,
-                  primary: primary,
-                  onTap: () => _go(context, MathivaTab.scan),
-                ),
-                _NavItem(
-                  icon: Icons.bar_chart_rounded,
-                  label: 'Progress',
-                  selected: selected == MathivaTab.progress,
-                  primary: primary,
-                  onTap: () => _go(context, MathivaTab.progress),
-                ),
-                _NavItem(
-                  icon: Icons.settings_rounded,
-                  label: 'Settings',
-                  selected: selected == MathivaTab.settings,
-                  primary: primary,
-                  onTap: () => _go(context, MathivaTab.settings),
-                ),
-              ],
+              ),
             ),
           ),
         );
@@ -140,7 +147,7 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? primary : _muted;
+    final color = selected ? primary : AppTheme.colorsOf(context).muted;
 
     return InkWell(
       borderRadius: BorderRadius.circular(14),

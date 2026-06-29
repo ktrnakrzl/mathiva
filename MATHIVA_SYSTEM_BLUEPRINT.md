@@ -1,8 +1,53 @@
 # MATHIVA: System Blueprint & Architecture Documentation
 
+> ⚠️ **This document describes the target architecture**, including components not yet built. See [Implementation Status](#implementation-status-as-of-2026-06-25) immediately below for what's actually running today vs. what's still planned.
+
 ## Executive Summary
 
 This document provides detailed architectural blueprints, component interaction diagrams, deployment topology, and technical design rationale for MATHIVA. It complements the System Specification with visual representations and implementation-level detail.
+
+---
+
+## Implementation Status (as of 2026-06-25)
+
+Everything in Sections 1–11 below describes the **full target design**. The table below is the source of truth for what's actually built right now vs. what's still planned — refer back to this section whenever a diagram or table elsewhere in this document implies something that isn't live yet.
+
+### ✅ Built and working
+
+| Component | Reality |
+|---|---|
+| FastAPI backend (`backend/app/main.py`) | Running, CORS configured, routers registered |
+| `POST /api/ask` (RAG) | Real pipeline: SBERT (`all-MiniLM-L6-v2`) → FAISS top-k search → prompt assembly → generation |
+| Text generation | **Ollama "phi" only** — single hardcoded model call, no fine-tuning, no fallback |
+| `POST /solve` | SymPy-based solver, live |
+| OCR endpoint (`api/ocr.py`) | Live (image → text for the solver flow) |
+| Auth (`POST /auth/register`, `POST /auth/login`) | Real: bcrypt password hashing, JWT (HS256, 24h expiry). `get_current_user` dependency exists but **no other route requires login yet** |
+| Database | SQLAlchemy ORM, but only the **`users`** table exists. Defaults to local SQLite (`DATABASE_URL` env var swaps to Postgres — not yet pointed at Supabase) |
+| `POST /quiz` | Generation-only — randomly samples from `genmath_qa_pairs.json` (373 Q&A pairs). No grading. |
+| Frontend (Flutter) | Two screen trees: the active `lib/screens/*` (current, theme-aware) and a legacy `lib/presentation/screens/**` tree (still live-routed at `/quiz`, `/review`, `/mastery`, `/rewards`, `/tutor`) |
+| Frontend Repository Pattern | Real, but only on the frontend (`lib/repositories/` — abstract + API/mock implementations) |
+| Frontend state management | Riverpod is only used in the **legacy** screen tree (7 files); the active app flow uses plain `StatefulWidget` + `ValueNotifier` |
+
+### 📋 Planned, not yet built
+
+| Component | Status |
+|---|---|
+| T5 fine-tuned model | Not started — confirmed as upcoming work (data prep + fine-tuning + eval) |
+| Phi-3 Mini fallback | Not implemented |
+| Claude API fallback | Not implemented |
+| Fallback / Circuit Breaker pattern (§11.1.4) | Not implemented — there's only the one Ollama call, nothing to fall back from |
+| Adapter Pattern across models (§11.1.6) | Not implemented — no unified model interface exists yet |
+| `POST /quiz/submit`, scoring, points/rewards persistence | Not implemented |
+| DB tables: `sessions`, `quiz_attempts`, `quiz_responses`, `knowledge_base_metadata`, `faiss_indices` | Not implemented (only `users` exists) |
+| Supabase Postgres + pgvector | Not connected — running on local SQLite |
+| `GET /user/profile`, `GET /user/progress` | Not implemented |
+| AWS EC2 deployment, Nginx, systemd, CI/CD (§4) | Not set up — runs locally only |
+| Backend Repository Pattern (§11.1.3) | Not implemented — `api/auth.py` talks directly to a SQLAlchemy `Session` |
+| MVC/Riverpod pattern (§11.1.2) | Only true for the legacy screen tree, not the active app |
+| Monitoring/CloudWatch, rate limiting, `sessions` table (§7, §8) | Not implemented |
+| Appendix A file structure | Describes the **target** repo layout, not the current one — actual backend lives at `backend/app/` with a flatter structure than shown |
+
+**Runway:** thesis deadline is ~mid-August 2026 (6 weeks out as of this writing), so the planned items above are realistic to build before defense, not just aspirational — this section should be revisited and updated as each one lands.
 
 ---
 
@@ -1090,6 +1135,7 @@ Log Retention:
 | Version | Date | Author | Changes |
 |---|---|---|---|
 | 1.0 | June 2026 | Kat | Initial system blueprint for thesis submission |
+| 1.1 | 2026-06-25 | Kat | Added Implementation Status section distinguishing built vs. planned components |
 
 ---
 

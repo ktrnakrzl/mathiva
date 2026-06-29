@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../services/app_preferences.dart';
+import '../../theme/app_theme.dart';
 
 /// A large, animated section title with an accent bar that grows in
 /// and a gradient-tinted heading. Used to replace plain section labels
@@ -42,6 +43,8 @@ class _SectionHeaderState extends State<SectionHeader>
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppTheme.colorsOf(context);
+
     return ValueListenableBuilder<MathiviaPalette>(
       valueListenable: AppPreferences.palette,
       builder: (context, palette, _) {
@@ -105,7 +108,7 @@ class _SectionHeaderState extends State<SectionHeader>
                         child: Text(
                           widget.subtitle!,
                           style: TextStyle(
-                            color: const Color(0xFF8C879A),
+                            color: colors.muted,
                             fontWeight: FontWeight.w600,
                             fontSize: 13,
                           ),

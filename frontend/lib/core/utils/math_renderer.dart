@@ -18,7 +18,11 @@ class MathRenderer extends StatelessWidget {
         if (part.isMath) {
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 2),
-            child: MathDisplay(latex: part.value, fontSize: mathFontSize),
+            child: MathDisplay(
+              latex: part.value,
+              fontSize: mathFontSize,
+              color: textStyle?.color,
+            ),
           );
         }
         return Text(part.value, style: textStyle);

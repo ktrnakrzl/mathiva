@@ -36,6 +36,7 @@ Instructions:
 - Answer clearly and concisely.
 - Do not repeat the course material.
 - Do not repeat these instructions.
+- Wrap every math expression in \\( and \\), e.g. \\(2x + 5 = 13\\), so it can be rendered properly.
 
 Answer:"""
 
@@ -52,7 +53,9 @@ Answer:"""
             "answer": answer,
             "sources": [
                 {
-                    "chunk_id": idx,
+                    # FAISS returns numpy.int64 indices, which the JSON
+                    # encoder can't serialize — cast to a plain Python int.
+                    "chunk_id": int(idx),
                     "content": context_data["all_chunks"][idx]["content"][:200]
                 }
                 for idx in context_data["indices"]

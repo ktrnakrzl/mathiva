@@ -16,6 +16,7 @@ The symbolic solver found these solutions:
 
 Explain how to solve this problem step-by-step in simple language.
 Show the mathematical process and conclude with the final answer.
+Wrap every math expression in \\( and \\), e.g. \\(2x + 5 = 13\\), so it can be rendered properly.
 """
 
     explanation = generate_answer(prompt)
