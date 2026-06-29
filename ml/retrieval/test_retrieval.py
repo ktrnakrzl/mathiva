@@ -32,8 +32,9 @@ if __name__ == "__main__":
     # Student query
     query = "how do I solve rational equations?"
 
-    # Convert query into embedding
-    query_embedding = model.encode([query])
+    # Convert query into a unit-length embedding so the inner-product index
+    # (built from normalized vectors) returns cosine similarity.
+    query_embedding = model.encode([query], normalize_embeddings=True)
 
     # Convert to float32
     query_embedding = np.array(query_embedding).astype("float32")
