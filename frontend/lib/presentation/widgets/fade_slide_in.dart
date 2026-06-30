@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
-/// Wraps [child] with a gentle fade + upward slide entrance animation.
-/// Use [delay] to stagger multiple items (e.g. index * 60ms).
-class FadeSlideIn extends StatefulWidget {
+/// Previously wrapped [child] with a fade + upward slide entrance animation.
+/// The entrance animation was removed on request — content now appears
+/// immediately with no fade-in. Kept as a pass-through (same constructor) so
+/// the many call sites don't need to change.
+class FadeSlideIn extends StatelessWidget {
   final Widget child;
   final Duration delay;
   final Duration duration;
@@ -17,44 +19,5 @@ class FadeSlideIn extends StatefulWidget {
   });
 
   @override
-  State<FadeSlideIn> createState() => _FadeSlideInState();
-}
-
-class _FadeSlideInState extends State<FadeSlideIn>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  late final Animation<double> _fade;
-  late final Animation<Offset> _slide;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(vsync: this, duration: widget.duration);
-    _fade = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
-    _slide = Tween<Offset>(
-      begin: Offset(0, widget.offsetY / 100),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
-
-    Future.delayed(widget.delay, () {
-      if (mounted) _controller.forward();
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: _fade,
-      child: SlideTransition(
-        position: _slide,
-        child: widget.child,
-      ),
-    );
-  }
+  Widget build(BuildContext context) => child;
 }

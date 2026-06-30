@@ -50,13 +50,13 @@ class _HomeScreenState extends State<HomeScreen> {
         preferredSize: const Size.fromHeight(58),
         child: ClipRect(
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
             child: AppBar(
               backgroundColor: colors.glassFillStart,
               surfaceTintColor: Colors.transparent,
               elevation: 0,
               scrolledUnderElevation: 1,
-              shadowColor: primary.withOpacity(0.12),
+              shadowColor: Colors.black.withOpacity(0.08),
               automaticallyImplyLeading: false,
               centerTitle: false,
               toolbarHeight: 58,

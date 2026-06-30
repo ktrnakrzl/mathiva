@@ -46,17 +46,17 @@ class SemanticColors extends ThemeExtension<SemanticColors> {
 
   static const light = SemanticColors(
     ink: Color(0xFF111827),
-    muted: Color(0xFF6B7280),
-    subtleMuted: Color(0xFF9CA3AF),
+    muted: Color(0xFF4B5563), // darker grey — readable over light glass/color bg
+    subtleMuted: Color(0xFF6B7280), // was 9CA3AF (too faint to read on light mode)
     border: Color(0xFFE5E7EB),
     surface: Colors.white,
     pageBg: Color(0xFFF8F9FB),
     chromeSurface: Color(0xFFF6F5FB),
     chromeBorder: Color(0xFFEAE8F5),
     titleColor: Color(0xFF312E81),
-    glassFillStart: Color(0x1AFFFFFF), // white @ 0.10
-    glassFillEnd: Color(0x0AFFFFFF), // white @ 0.04
-    glassBorder: Color(0x8CFFFFFF), // white @ 0.55
+    glassFillStart: Color(0x0FFFFFFF), // white @ 0.06 — lighter, airier glass
+    glassFillEnd: Color(0x03FFFFFF), // white @ 0.012 — nearly clear at the bottom
+    glassBorder: Color(0xA6FFFFFF), // white @ 0.65 — crisp specular rim (Apple)
     glassBorderSoft: Color(0x66FFFFFF), // white @ 0.4
     glassChipFill: Color(0x59FFFFFF), // white @ 0.35
   );
@@ -67,13 +67,13 @@ class SemanticColors extends ThemeExtension<SemanticColors> {
     subtleMuted: Color(0xFF6B7280),
     border: Color(0xFF31354A),
     surface: Color(0xFF1B1E2C),
-    pageBg: Color(0xFF11131C),
+    pageBg: Color(0xFF09090C), // near-black base (was navy 0xFF11131C)
     chromeSurface: Color(0xFF1E2030),
     chromeBorder: Color(0xFF2A2D40),
     titleColor: Color(0xFFC7C5FF),
-    glassFillStart: Color(0x0AFFFFFF), // white @ 0.04
-    glassFillEnd: Color(0x03FFFFFF), // white @ 0.01
-    glassBorder: Color(0x26FFFFFF), // white @ 0.15
+    glassFillStart: Color(0x0DFFFFFF), // white @ 0.05 — lighter, airier glass
+    glassFillEnd: Color(0x03FFFFFF), // white @ 0.012 — nearly clear at the bottom
+    glassBorder: Color(0x52FFFFFF), // white @ 0.32 — specular rim (Apple, dark)
     glassBorderSoft: Color(0x1FFFFFFF), // white @ 0.12
     glassChipFill: Color(0x1AFFFFFF), // white @ 0.10
   );

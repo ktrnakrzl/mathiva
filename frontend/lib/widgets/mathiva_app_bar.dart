@@ -42,16 +42,15 @@ class MathivaAppBar extends StatelessWidget implements PreferredSizeWidget {
 
     return ClipRect(
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
         child: AppBar(
           backgroundColor: colors.glassFillStart,
           surfaceTintColor: Colors.transparent,
           elevation: 0,
-          // A soft primary-tinted shadow rather than a flat black one — keeps
-          // the separation-on-scroll behavior while fitting the glass
-          // surfaces used elsewhere (GlassCard uses the same treatment).
+          // Soft neutral shadow on scroll — matches GlassCard's liquid-glass
+          // treatment (a colored glow would read as a tint, not glass).
           scrolledUnderElevation: 1,
-          shadowColor: primary.withOpacity(0.12),
+          shadowColor: Colors.black.withOpacity(0.08),
           automaticallyImplyLeading: automaticallyImplyLeading,
           toolbarHeight: subtitle != null ? 74 : 58,
           leadingWidth: showBack ? 52 : 0,

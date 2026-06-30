@@ -38,13 +38,13 @@ class LessonDetailScreen extends StatelessWidget {
         preferredSize: const Size.fromHeight(58),
         child: ClipRect(
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
             child: AppBar(
               backgroundColor: colors.glassFillStart,
               surfaceTintColor: Colors.transparent,
               elevation: 0,
-              scrolledUnderElevation: 0,
-              shadowColor: Colors.transparent,
+              scrolledUnderElevation: 1,
+              shadowColor: Colors.black.withOpacity(0.08),
               centerTitle: false,
               toolbarHeight: 58,
               titleSpacing: 4,

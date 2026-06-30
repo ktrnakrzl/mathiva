@@ -48,11 +48,11 @@ class MathivaBottomNav extends StatelessWidget {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(20),
             child: BackdropFilter(
-              // Real frosted glass — same BackdropFilter + translucent white
-              // gradient as GlassCard, so the nav reads as part of the same
-              // surface system as the app bar and content cards rather than
-              // a separate opaque bar.
-              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+              // Soft "liquid glass" — same BackdropFilter + frosted gradient
+              // as GlassCard, so the nav reads as part of the same surface
+              // system as the app bar and content cards rather than a
+              // separate opaque bar.
+              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
               child: Container(
                 height: 68,
                 padding:
@@ -67,9 +67,9 @@ class MathivaBottomNav extends StatelessWidget {
                   border: Border.all(color: colors.glassBorder, width: 1),
                   boxShadow: [
                     BoxShadow(
-                      color: primary.withOpacity(0.16),
-                      blurRadius: 24,
-                      offset: const Offset(0, 8),
+                      color: Colors.black.withOpacity(0.10),
+                      blurRadius: 30,
+                      offset: const Offset(0, 12),
                     ),
                   ],
                 ),

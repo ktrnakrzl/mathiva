@@ -31,6 +31,17 @@
 
   <title>mathivia</title>
   <link rel="manifest" href="manifest.json">
+  <style>
+    /* Match the app's light-mode page background so the pre-first-frame
+       load shows the right color instead of flashing stark white then the
+       themed UI ("old then new color"). The app always boots in light mode
+       (AppPreferences defaults), so this near-white base is correct. */
+    html, body {
+      margin: 0;
+      padding: 0;
+      background-color: #F8F9FB;
+    }
+  </style>
 </head>
 <body>
   <!--
