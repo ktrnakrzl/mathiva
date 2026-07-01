@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import '../presentation/widgets/animated_background.dart';
 import 'package:go_router/go_router.dart';
@@ -12,6 +10,7 @@ import '../services/progress_store.dart';
 import '../theme/app_theme.dart';
 import '../utils/route_names.dart';
 import '../widgets/mathiva_bottom_nav.dart';
+import '../widgets/mathiva_top_bar.dart';
 
 class ProfileSettingsScreen extends StatefulWidget {
   const ProfileSettingsScreen({super.key});
@@ -39,64 +38,29 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
         return Scaffold(
           backgroundColor: colors.pageBg,
           extendBody: true,
-          // Frosted-glass header, matching the rest of the app's chrome.
-          appBar: PreferredSize(
-            preferredSize: const Size.fromHeight(58),
-            child: ClipRect(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-                child: AppBar(
-                  backgroundColor: colors.glassFillStart,
-                  surfaceTintColor: Colors.transparent,
-                  elevation: 0,
-                  scrolledUnderElevation: 1,
-                  shadowColor: primary.withOpacity(0.12),
-                  automaticallyImplyLeading: false,
-                  centerTitle: false,
-                  toolbarHeight: 58,
-                  titleSpacing: 20,
-                  title: Text(
-                    'Settings',
-                    style: TextStyle(
-                      color: colors.titleColor,
-                      fontSize: 19,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: -0.2,
-                      height: 1,
-                    ),
-                  ),
-                  actions: [
-                    IconButton(
-                      tooltip: 'Ask Math Tutor',
-                      onPressed: () => context.push(RouteNames.chat),
-                      icon: Icon(
-                        Icons.chat_bubble_outline_rounded,
-                        color: primary,
-                        size: 22,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                  ],
-                  bottom: PreferredSize(
-                    preferredSize: const Size.fromHeight(1),
-                    child: Container(
-                      height: 1,
-                      color: colors.glassBorder,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
+          appBar: const MathivaTopBar(),
           body: AnimatedBackground(
             vivid: true,
             child: SafeArea(
-              top: true,
+              top: false,
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 112),
+                padding: const EdgeInsets.fromLTRB(18, 22, 18, 112),
                 physics: const BouncingScrollPhysics(),
                 children: [
-                  const SizedBox(height: 8),
+                  // Page title (lives in the body, not the top bar).
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 18),
+                    child: Text(
+                      'Settings',
+                      style: TextStyle(
+                        color: colors.ink,
+                        fontSize: 26,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.5,
+                        height: 1.1,
+                      ),
+                    ),
+                  ),
 
                   // ── Avatar card ──────────────────────────────────────────
                   _LearningAccountCard(primary: primary),
@@ -140,17 +104,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                   const _SectionTitle('Preferences'),
                   const SizedBox(height: 10),
 
-                  ValueListenableBuilder<bool>(
-                    valueListenable: AppPreferences.darkMode,
-                    builder: (context, enabled, _) => _SwitchTile(
-                      icon: Icons.dark_mode_outlined,
-                      title: 'Dark Mode',
-                      subtitle: 'Switch the whole app to a dark theme',
-                      value: enabled,
-                      onChanged: (v) => AppPreferences.darkMode.value = v,
-                      primary: primary,
-                    ),
-                  ),
+                  // Dark Mode lives in the top-bar toggle now, not here.
                   ValueListenableBuilder<bool>(
                     valueListenable: AppPreferences.notificationsEnabled,
                     builder: (context, enabled, _) => _SwitchTile(

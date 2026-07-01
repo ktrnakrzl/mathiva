@@ -15,6 +15,7 @@ import '../services/solver_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/route_names.dart';
 import '../widgets/mathiva_bottom_nav.dart';
+import '../widgets/mathiva_top_bar.dart';
 
 /// The three steps of the scan → solve workflow. Kept private to this file
 /// since navigation/routing elsewhere is untouched — only what happens
@@ -151,24 +152,28 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
     final primary = AppPreferences.palette.value.primary;
     final colors = AppTheme.colorsOf(context);
 
+    // Scan is a main tab → the shared brand top bar. Preview/crop are in-flow
+    // detail steps that need a back affordance, so they keep the dedicated bar
+    // (crop stays solid black; preview matches app chrome).
+    final PreferredSizeWidget appBar = _step == _SolverStep.scan
+        ? const MathivaTopBar() as PreferredSizeWidget
+        : PreferredSize(
+            preferredSize: const Size.fromHeight(58),
+            child: _step == _SolverStep.crop
+                ? _buildAppBar(primary, glass: false)
+                : ClipRect(
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                      child: _buildAppBar(primary, glass: true),
+                    ),
+                  ),
+          );
+
     return Scaffold(
       extendBody: _step == _SolverStep.scan,
       backgroundColor:
           _step == _SolverStep.crop ? Colors.black : colors.pageBg,
-      // The crop step stays a flat solid-black bar (it's a full-screen photo
-      // editor, no animated background behind it to blur). Scan/preview get
-      // the same frosted-glass chrome as the rest of the app.
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(58),
-        child: _step == _SolverStep.crop
-            ? _buildAppBar(primary, glass: false)
-            : ClipRect(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-                  child: _buildAppBar(primary, glass: true),
-                ),
-              ),
-      ),
+      appBar: appBar,
       body: AnimatedSwitcher(
         duration: const Duration(milliseconds: 220),
         switchInCurve: Curves.easeOut,
@@ -310,51 +315,61 @@ class _ScanStage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppTheme.colorsOf(context);
     return AnimatedBackground(
-      vivid: true,
       child: SafeArea(
         top: false,
         child: LayoutBuilder(
           builder: (context, constraints) {
             return Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+              padding: const EdgeInsets.fromLTRB(18, 22, 18, 0),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ── Scanner viewport (hero) ─────────────────────────────
-                  // Real frosted glass (BackdropFilter) rather than a flat
-                  // primary tint, so the vivid background blobs refract
-                  // through the viewport the same way GlassCard does
-                  // elsewhere — keeps the scan-first hero feeling alive
-                  // rather than static.
+                  // Page title + subtitle (in-body, per the shell pattern).
+                  Text(
+                    'Scan a Problem',
+                    style: TextStyle(
+                      color: colors.ink,
+                      fontSize: 26,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.5,
+                      height: 1.1,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Point your camera at a math problem to solve it',
+                    style: TextStyle(
+                      color: colors.muted,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+
+                  // ── Scanner viewport (solid dark camera frame) ──────────
+                  // A solid near-black viewport (like a live camera feed
+                  // placeholder) with accent corner brackets and a sweeping
+                  // scan line. Tapping it (re-)opens the camera.
                   Expanded(
                     child: FadeSlideIn(
-                      // The viewport doubles as the "open camera" affordance:
-                      // the camera auto-opens on entry, and tapping the frame
-                      // re-opens it if the user backed out -- so there's no
-                      // separate "Open Camera" button to be redundant with the
-                      // automatic open.
                       child: GestureDetector(
                         behavior: HitTestBehavior.opaque,
                         onTap: onOpenCamera,
                         child: ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                          borderRadius: BorderRadius.circular(20),
                           child: Container(
                             width: double.infinity,
-                            decoration: BoxDecoration(
-                              color: primary.withOpacity(0.12),
-                              border: Border.all(
-                                color: AppTheme.colorsOf(context).glassBorder,
-                                width: 1,
-                              ),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF0B0B0F),
                             ),
                             child: Stack(
                               alignment: Alignment.center,
                               children: [
                                 Icon(
                                   Icons.document_scanner_rounded,
-                                  color: primary.withOpacity(0.16),
+                                  color: Colors.white.withOpacity(0.10),
                                   size: 72,
                                 ),
                                 AnimatedBuilder(
@@ -369,9 +384,15 @@ class _ScanStage extends StatelessWidget {
                                       child: Container(
                                         height: 2,
                                         decoration: BoxDecoration(
-                                          color: primary.withOpacity(0.6),
+                                          color: primary.withOpacity(0.85),
                                           borderRadius:
                                               BorderRadius.circular(99),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: primary.withOpacity(0.5),
+                                              blurRadius: 8,
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     );
@@ -383,7 +404,7 @@ class _ScanStage extends StatelessWidget {
                                   child: Text(
                                     'Tap to open the camera',
                                     style: TextStyle(
-                                      color: primary.withOpacity(0.55),
+                                      color: Colors.white.withOpacity(0.7),
                                       fontSize: 12.5,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -394,7 +415,6 @@ class _ScanStage extends StatelessWidget {
                           ),
                         ),
                       ),
-                        ),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -428,7 +448,7 @@ class _ScanStage extends StatelessWidget {
   List<Widget> _cornerGuides(Color primary) {
     const size = 22.0;
     const thickness = 2.5;
-    final color = primary.withOpacity(0.5);
+    final color = primary.withOpacity(0.9);
     final paint = BoxDecoration(color: color);
 
     Widget corner({required bool top, required bool left}) {

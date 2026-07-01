@@ -14,6 +14,7 @@ import 'screens/concept_progress_screen.dart';
 import 'screens/concept_reading_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/image_solver_screen.dart';
+import 'screens/learn_screen.dart';
 import 'screens/lesson_detail_screen.dart';
 import 'screens/lesson_list_screen.dart';
 import 'screens/login_screen.dart';
@@ -52,6 +53,8 @@ class MathivaApp extends StatelessWidget {
       GoRoute(
           path: RouteNames.subjects,
           builder: (_, __) => const MathSubjectsScreen()),
+      GoRoute(
+          path: RouteNames.learn, builder: (_, __) => const LearnScreen()),
       GoRoute(
           path: RouteNames.imageSolver,
           builder: (_, __) => const ImageSolverScreen()),

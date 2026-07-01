@@ -1,15 +1,15 @@
 import 'dart:async';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../core/utils/math_renderer.dart';
 import '../presentation/widgets/animated_background.dart';
 import '../services/app_preferences.dart';
 import '../services/chat_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/mathiva_bottom_nav.dart';
+import '../widgets/mathiva_top_bar.dart';
 
 class ChatMessage {
   final String text;
@@ -127,65 +127,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
 
     return Scaffold(
       backgroundColor: colors.pageBg,
-      // Frosted-glass header, matching the chrome treatment used elsewhere.
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(58),
-        child: ClipRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-            child: AppBar(
-              backgroundColor: colors.glassFillStart,
-              surfaceTintColor: Colors.transparent,
-              elevation: 0,
-              scrolledUnderElevation: 0,
-              shadowColor: Colors.transparent,
-              centerTitle: false,
-              toolbarHeight: 58,
-              titleSpacing: 4,
-              leading: IconButton(
-                icon: Icon(Icons.arrow_back_rounded, color: colors.ink, size: 22),
-                onPressed: () =>
-                    context.canPop() ? context.pop() : context.go('/home'),
-              ),
-              title: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 30,
-                    height: 30,
-                    decoration: BoxDecoration(
-                      color: primary.withOpacity(0.08),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(Icons.smart_toy_rounded,
-                        color: primary, size: 16),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    'Math Tutor',
-                    style: TextStyle(
-                      color: colors.titleColor,
-                      fontSize: 19,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: -0.2,
-                      height: 1,
-                    ),
-                  ),
-                ],
-              ),
-              bottom: PreferredSize(
-                preferredSize: const Size.fromHeight(1),
-                child: Container(height: 1, color: colors.glassBorder),
-              ),
-            ),
-          ),
-        ),
-      ),
+      appBar: const MathivaTopBar(),
+      bottomNavigationBar: const MathivaBottomNav(selected: MathivaTab.tutor),
       body: AnimatedBackground(
-        vivid: true,
         child: SafeArea(
+          top: false,
           child: Column(
             children: [
+              _ChatHeader(primary: primary),
               Expanded(
                 child: ListView.builder(
                   controller: _scrollController,
@@ -212,6 +161,79 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ── In-body header (tutor identity + status) ────────────────────────────────
+
+class _ChatHeader extends StatelessWidget {
+  final Color primary;
+  const _ChatHeader({required this.primary});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppTheme.colorsOf(context);
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
+      decoration: BoxDecoration(
+        color: colors.pageBg,
+        border: Border(bottom: BorderSide(color: colors.border, width: 1)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: colors.ring,
+              borderRadius: BorderRadius.circular(11),
+            ),
+            child: Icon(Icons.smart_toy_rounded, color: primary, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Math Tutor',
+                style: TextStyle(
+                  color: colors.ink,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.3,
+                  height: 1.1,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Container(
+                    width: 7,
+                    height: 7,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF22C55E),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Online · Ready to help',
+                    style: TextStyle(
+                      color: colors.subtleMuted,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      height: 1,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

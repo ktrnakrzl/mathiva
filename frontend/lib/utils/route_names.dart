@@ -5,6 +5,7 @@ class RouteNames {
   static const home = '/home';
   static const search = '/search';
   static const subjects = '/subjects';
+  static const learn = '/learn';
   static const lessons = '/lessons';
   static const lessonDetail = '/lesson-detail';
   static const concept = '/concept';

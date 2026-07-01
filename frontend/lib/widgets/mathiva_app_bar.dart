@@ -1,16 +1,12 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
-import '../services/app_preferences.dart';
 import '../theme/app_theme.dart';
 
-/// SHARED APP BAR
-/// A frosted-glass header: real backdrop blur (via [BackdropFilter]) over a
-/// translucent white tint, so the animated background blobs behind it stay
-/// visible through the bar instead of being hidden by a flat surface. This
-/// matches the glass treatment used by GlassCard, so app chrome and content
-/// surfaces read as one consistent visual language. Title/subtitle text
-/// stays on the same indigo/muted tokens used everywhere else.
+/// SHARED APP BAR (detail screens)
+/// A flat shadcn/ui header: a solid canvas background with a single hairline
+/// bottom border — no glass/blur. A small accent-tinted icon chip sits beside
+/// the title; the optional back button uses the muted text color. Used by
+/// non-tab screens (lesson detail, concept, practice, result, etc.); the main
+/// tabs use [MathivaTopBar] instead.
 class MathivaAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final String? subtitle;
@@ -36,91 +32,73 @@ class MathivaAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    final palette = AppPreferences.palette.value;
-    final primary = palette.primary;
     final colors = AppTheme.colorsOf(context);
 
-    return ClipRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: AppBar(
-          backgroundColor: colors.glassFillStart,
-          surfaceTintColor: Colors.transparent,
-          elevation: 0,
-          // Soft neutral shadow on scroll — matches GlassCard's liquid-glass
-          // treatment (a colored glow would read as a tint, not glass).
-          scrolledUnderElevation: 1,
-          shadowColor: Colors.black.withOpacity(0.08),
-          automaticallyImplyLeading: automaticallyImplyLeading,
-          toolbarHeight: subtitle != null ? 74 : 58,
-          leadingWidth: showBack ? 52 : 0,
-          leading: showBack
-              ? IconButton(
-                  icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
-                  color: primary,
-                  onPressed: onBack ?? () => Navigator.of(context).maybePop(),
-                )
-              : null,
-          titleSpacing: 0,
-          centerTitle: true,
-          title: Center(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Icon badge — same soft primary-tinted chip used throughout
-                // the app (HomeScreen action tiles, recent scans, stat cards)
-                // rather than a standalone gradient treatment.
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: primary.withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(icon, color: primary, size: 17),
+    return AppBar(
+      backgroundColor: colors.pageBg,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      automaticallyImplyLeading: automaticallyImplyLeading,
+      toolbarHeight: subtitle != null ? 74 : 58,
+      leadingWidth: showBack ? 52 : 0,
+      leading: showBack
+          ? IconButton(
+              icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+              color: colors.muted,
+              onPressed: onBack ?? () => Navigator.of(context).maybePop(),
+            )
+          : null,
+      titleSpacing: showBack ? 0 : 18,
+      centerTitle: false,
+      title: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: colors.ring,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: colors.accent, size: 18),
+          ),
+          const SizedBox(width: 10),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  color: colors.ink,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.3,
+                  height: 1,
                 ),
-                const SizedBox(width: 10),
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        color: colors.titleColor,
-                        fontSize: 19,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: -0.2,
-                        height: 1,
-                      ),
-                    ),
-                    if (subtitle != null) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        subtitle!,
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          color: colors.muted,
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: 0.1,
-                          height: 1,
-                        ),
-                      ),
-                    ],
-                  ],
+              ),
+              if (subtitle != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  subtitle!,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    color: colors.muted,
+                    fontWeight: FontWeight.w500,
+                    height: 1,
+                  ),
                 ),
               ],
-            ),
+            ],
           ),
-          actions: actions,
-          bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(1),
-            child: Container(
-              height: 1,
-              color: colors.glassBorder,
-            ),
-          ),
-        ),
+        ],
+      ),
+      actions: actions,
+      bottom: PreferredSize(
+        preferredSize: const Size.fromHeight(1),
+        child: Container(height: 1, color: colors.border),
       ),
     );
   }

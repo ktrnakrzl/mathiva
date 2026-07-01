@@ -1,27 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../services/app_preferences.dart';
 import 'semantic_colors.dart';
 
 class AppColors {
-  static const purple = Color(0xFF7A3CFF);
-  static const violet = Color(0xFF7A3CFF);
-  static const pink = Color(0xFFFF63C3);
-  static const orange = Color(0xFFFF922B);
-  static const sky = Color(0xFFEFFFF6);
-  static const blush = Color(0xFFF0FFF4);
-  static const ink = Color(0xFF252238);
-  static const muted = Color(0xFF7C7890);
+  static const purple = Color(0xFF7C3AED);
+  static const violet = Color(0xFF7C3AED);
+  static const pink = Color(0xFF7C3AED);
+  static const orange = Color(0xFF7C3AED);
+  static const sky = Color(0xFFFFFFFF);
+  static const blush = Color(0xFFFFFFFF);
+  static const ink = Color(0xFF09090B);
+  static const muted = Color(0xFF52525B);
 }
 
 class AppTheme {
   static MathiviaPalette paletteOf(BuildContext context) =>
       AppPreferences.palette.value;
-  static Color primaryOf(BuildContext context) => paletteOf(context).primary;
+
+  /// The single accent color (cyan) — read from [SemanticColors] so the whole
+  /// app re-accents from one place. Screens that call `AppTheme.primaryOf`
+  /// now get the shadcn accent, not the old palette hue.
+  static Color primaryOf(BuildContext context) => colorsOf(context).accent;
   static Color secondaryOf(BuildContext context) =>
-      paletteOf(context).secondary;
+      colorsOf(context).accentHover;
   static List<Color> backgroundOf(BuildContext context) =>
-      paletteOf(context).background;
+      [colorsOf(context).pageBg, colorsOf(context).pageBg];
 
   /// The reactive light/dark neutral palette — read this instead of
   /// declaring local `_ink`/`_muted`/`_pageBg` consts in a screen.
@@ -29,77 +34,89 @@ class AppTheme {
       Theme.of(context).extension<SemanticColors>()!;
 
   static ThemeData light([MathiviaPalette? palette]) =>
-      _build(palette, Brightness.light, SemanticColors.light);
+      _build(Brightness.light, SemanticColors.light);
 
   static ThemeData dark([MathiviaPalette? palette]) =>
-      _build(palette, Brightness.dark, SemanticColors.dark);
+      _build(Brightness.dark, SemanticColors.dark);
 
-  static ThemeData _build(
-    MathiviaPalette? palette,
-    Brightness brightness,
-    SemanticColors colors,
-  ) {
-    final active = palette ?? AppPreferences.palette.value;
-    final isDark = brightness == Brightness.dark;
+  static ThemeData _build(Brightness brightness, SemanticColors colors) {
+    final accent = colors.accent;
+    final interFamily = GoogleFonts.inter().fontFamily;
 
     return ThemeData(
       useMaterial3: true,
       brightness: brightness,
-      fontFamily: 'Poppins',
+      fontFamily: interFamily,
       scaffoldBackgroundColor: colors.pageBg,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: active.primary,
-        primary: active.primary,
-        secondary: active.secondary,
+        seedColor: accent,
+        primary: accent,
+        secondary: accent,
+        surface: colors.surface,
         brightness: brightness,
+      ).copyWith(
+        onPrimary: colors.onAccent,
+        outline: colors.border,
       ),
       extensions: [colors],
       switchTheme: SwitchThemeData(
         thumbColor: MaterialStateProperty.resolveWith((states) =>
-            states.contains(MaterialState.selected) ? active.primary : null),
+            states.contains(MaterialState.selected) ? Colors.white : null),
         trackColor: MaterialStateProperty.resolveWith((states) =>
-            states.contains(MaterialState.selected)
-                ? active.primary.withOpacity(.35)
-                : null),
+            states.contains(MaterialState.selected) ? accent : colors.track),
+        trackOutlineColor:
+            MaterialStateProperty.all(Colors.transparent),
       ),
       checkboxTheme: CheckboxThemeData(
         fillColor: MaterialStateProperty.resolveWith((states) =>
-            states.contains(MaterialState.selected) ? active.primary : null),
+            states.contains(MaterialState.selected) ? accent : null),
       ),
       appBarTheme: AppBarTheme(
-        backgroundColor: colors.surface,
+        backgroundColor: colors.pageBg,
         elevation: 0,
-        centerTitle: true,
+        scrolledUnderElevation: 0,
+        centerTitle: false,
+        surfaceTintColor: Colors.transparent,
         foregroundColor: colors.ink,
       ),
       cardTheme: CardThemeData(
-        color: isDark ? colors.surface : const Color(0xFFF7F9FC),
+        color: colors.surface,
         elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: colors.border),
+        ),
       ),
+      dividerTheme: DividerThemeData(color: colors.border, thickness: 1),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: (isDark ? colors.surface : const Color(0xFFF7F9FC))
-            .withOpacity(.84),
-        hintStyle: TextStyle(color: colors.muted),
+        fillColor: colors.surface,
+        hintStyle: TextStyle(color: colors.subtleMuted),
         border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(18),
-            borderSide: BorderSide.none),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colors.border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colors.border),
+        ),
         focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(18),
-            borderSide: BorderSide(color: active.primary, width: 1.8)),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: accent, width: 1.6),
+        ),
         contentPadding:
-            const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: active.primary,
-        contentTextStyle: const TextStyle(
-            color: const Color(0xFFF7F9FC), fontWeight: FontWeight.w600),
+        backgroundColor: accent,
+        contentTextStyle: TextStyle(
+            color: colors.onAccent, fontWeight: FontWeight.w600),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       timePickerTheme: TimePickerThemeData(
-        dialHandColor: active.primary,
+        dialHandColor: accent,
         hourMinuteTextColor: colors.ink,
         dayPeriodTextColor: colors.ink,
       ),

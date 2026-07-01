@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -10,6 +8,7 @@ import '../services/progress_store.dart';
 import '../utils/progress_calc.dart';
 import '../utils/route_names.dart';
 import '../widgets/mathiva_bottom_nav.dart';
+import '../widgets/mathiva_top_bar.dart';
 import '../presentation/widgets/animated_background.dart';
 import '../presentation/widgets/fade_slide_in.dart';
 import '../presentation/widgets/glass_card.dart';
@@ -17,7 +16,16 @@ import '../theme/app_theme.dart';
 
 class ProgressOverviewScreen extends StatefulWidget {
   final bool scrollToAchievements;
-  const ProgressOverviewScreen({super.key, this.scrollToAchievements = false});
+
+  /// When true, renders only the scrollable progress body (no Scaffold, top
+  /// bar or bottom nav) so it can be embedded as a segment inside the merged
+  /// "Learn" tab. Standalone (pushed) use keeps the full shell.
+  final bool embedded;
+  const ProgressOverviewScreen({
+    super.key,
+    this.scrollToAchievements = false,
+    this.embedded = false,
+  });
 
   @override
   State<ProgressOverviewScreen> createState() => _ProgressOverviewScreenState();
@@ -60,69 +68,36 @@ class _ProgressOverviewScreenState extends State<ProgressOverviewScreen> {
     final colors = AppTheme.colorsOf(context);
     final subjects = LocalContentService().getSubjects();
     final topics = subjects.expand((s) => s.topics).toList();
+    final embedded = widget.embedded;
 
-    return Scaffold(
-      extendBody: true,
-      backgroundColor: colors.pageBg,
-      // Frosted-glass header, matching the rest of the app's chrome.
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(58),
-        child: ClipRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-            child: AppBar(
-              backgroundColor: colors.glassFillStart,
-              surfaceTintColor: Colors.transparent,
-              elevation: 0,
-              scrolledUnderElevation: 1,
-              shadowColor: primary.withOpacity(0.12),
-              automaticallyImplyLeading: false,
-              centerTitle: false,
-              toolbarHeight: 58,
-              titleSpacing: 20,
-              title: Text(
-                'Progress',
-                style: TextStyle(
-                  color: colors.titleColor,
-                  fontSize: 19,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: -0.2,
-                  height: 1,
-                ),
-              ),
-              actions: [
-                IconButton(
-                  tooltip: 'Ask Math Tutor',
-                  onPressed: () => context.push(RouteNames.chat),
-                  icon: Icon(
-                    Icons.chat_bubble_outline_rounded,
-                    color: primary,
-                    size: 22,
-                  ),
-                ),
-                const SizedBox(width: 8),
-              ],
-              bottom: PreferredSize(
-                preferredSize: const Size.fromHeight(1),
-                child: Container(height: 1, color: colors.glassBorder),
-              ),
-            ),
-          ),
-        ),
-      ),
-      body: AnimatedBackground(
-        vivid: true,
-        child: SafeArea(
-          top: false,
-          child: ValueListenableBuilder<UserProgress?>(
-            valueListenable: ProgressStore.current,
-            builder: (context, progress, _) {
-              final byConcept = progress?.conceptStats ?? const {};
-              return ListView(
-                controller: _scrollController,
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 112),
-                children: [
+    final content = ValueListenableBuilder<UserProgress?>(
+      valueListenable: ProgressStore.current,
+      builder: (context, progress, _) {
+        final byConcept = progress?.conceptStats ?? const {};
+        return ListView(
+          controller: _scrollController,
+          physics: const BouncingScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(18, embedded ? 4 : 22, 18, 112),
+          children: [
+                  // Page title (lives in the body, not the top bar). When
+                  // embedded inside the "Learn" tab the segmented control
+                  // supplies the heading, so it's omitted here.
+                  if (!embedded)
+                    FadeSlideIn(
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 18),
+                        child: Text(
+                          'Progress',
+                          style: TextStyle(
+                            color: colors.ink,
+                            fontSize: 26,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.5,
+                            height: 1.1,
+                          ),
+                        ),
+                      ),
+                    ),
                   // ── Stat cards ─────────────────────────────────────────────
                   // Wrapped in IntrinsicHeight so all three Expanded cards share
                   // the height of whichever one is tallest. Without this, each
@@ -247,12 +222,22 @@ class _ProgressOverviewScreenState extends State<ProgressOverviewScreen> {
                   ),
                 ],
               );
-            },
-          ),
-        ),
+      },
+    );
+
+    // Embedded: caller (LearnScreen) owns the shell.
+    if (embedded) return content;
+
+    return Scaffold(
+      extendBody: true,
+      backgroundColor: colors.pageBg,
+      appBar: const MathivaTopBar(),
+      body: AnimatedBackground(
+        vivid: true,
+        child: SafeArea(top: false, child: content),
       ),
       bottomNavigationBar:
-          const MathivaBottomNav(selected: MathivaTab.progress),
+          const MathivaBottomNav(selected: MathivaTab.learn),
     );
   }
 }

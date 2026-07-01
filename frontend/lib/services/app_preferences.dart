@@ -35,10 +35,13 @@ class AppPreferences {
   static final ValueNotifier<double> textScale = ValueNotifier<double>(1.0);
 
   static const List<MathiviaPalette> palettes = [
+    // shadcn reskin: the single violet accent is the default. (The remaining
+    // palette entries below are retained for the deferred accent-picker
+    // feature but are not surfaced in the shadcn Settings screen yet.)
     MathiviaPalette(
-      name: 'Pastel Purple',
-      primary: Color(0xFF7A3CFF),
-      secondary: Color(0xFFB35CFF),
+      name: 'Violet',
+      primary: Color(0xFF7C3AED),
+      secondary: Color(0xFF6D28D9),
       background: [Colors.white, Colors.white, Colors.white],
     ),
     MathiviaPalette(
