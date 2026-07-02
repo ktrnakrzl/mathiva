@@ -197,11 +197,11 @@ class _GreetingHeader extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               name,
-              style: TextStyle(
+              style: AppTheme.serif(
+                fontSize: 28,
+                fontWeight: FontWeight.w600,
                 color: colors.ink,
-                fontSize: 26,
-                fontWeight: FontWeight.w700,
-                letterSpacing: -0.025 * 26,
+                height: 1.05,
               ),
             ),
           ],

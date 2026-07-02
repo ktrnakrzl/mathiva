@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
-import '../services/app_preferences.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../repositories/api/api_auth_repository.dart';
 import '../repositories/auth_repository.dart';
 import '../services/auth_storage.dart';
 import '../utils/route_names.dart';
-import '../presentation/widgets/animated_background.dart';
+import '../presentation/widgets/auth_widgets.dart';
 import '../presentation/widgets/fade_slide_in.dart';
-import '../presentation/widgets/glass_card.dart';
 import '../theme/app_theme.dart';
 
+/// Login — a graph-paper editorial brand band over a left-aligned form, per the
+/// auth-flow "mathematical notebook" design handoff.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -24,6 +25,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final AuthRepository _authRepository = ApiAuthRepository();
 
   bool _isLoading = false;
+  String? _error;
 
   @override
   void dispose() {
@@ -37,273 +39,166 @@ class _LoginScreenState extends State<LoginScreen> {
     final password = _passwordController.text;
 
     if (email.isEmpty || password.isEmpty) {
-      _showError('Please enter your email and password.');
+      setState(() => _error = 'Please enter your email and password.');
       return;
     }
 
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
     try {
-      final token = await _authRepository.login(email: email, password: password);
+      final token =
+          await _authRepository.login(email: email, password: password);
       await AuthStorage.saveToken(token);
       if (!mounted) return;
       context.go(RouteNames.home);
     } catch (e) {
       if (!mounted) return;
-      _showError(e is AuthException ? e.message : 'Could not log in. Please try again.');
+      setState(() => _error = e is AuthException
+          ? e.message
+          : 'Could not log in. Please try again.');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  void _showError(String message) {
-    final colors = AppTheme.colorsOf(context);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message, style: TextStyle(color: colors.pageBg)),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: colors.ink,
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final primary = AppPreferences.palette.value.primary;
     final colors = AppTheme.colorsOf(context);
 
     return Scaffold(
       backgroundColor: colors.pageBg,
-      body: AnimatedBackground(
-        vivid: true,
-        child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(24, 40, 24, 28),
-              child: Column(
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const AuthBrandBand(tagline: 'Your step-by-step math tutor.'),
+            Expanded(
+              child: ListView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(28, 30, 28, 28),
                 children: [
-                  // ── Understated brand lockup (matches HomeScreen app bar) ──
                   FadeSlideIn(
-                    child: Image.asset(
-                      'assets/mathiva_logo.png',
-                      height: 72,
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  FadeSlideIn(
-                    delay: const Duration(milliseconds: 80),
                     child: Text(
-                      'Mathivia',
-                      style: TextStyle(
-                        color: colors.titleColor,
-                        fontSize: 19,
+                      'Welcome back',
+                      style: GoogleFonts.fraunces(
+                        color: colors.ink,
+                        fontSize: 28,
                         fontWeight: FontWeight.w600,
-                        letterSpacing: -0.2,
                       ),
                     ),
                   ),
                   const SizedBox(height: 6),
                   FadeSlideIn(
-                    delay: const Duration(milliseconds: 130),
+                    delay: const Duration(milliseconds: 70),
                     child: Text(
-                      'Log in and keep growing your math skills.',
-                      textAlign: TextAlign.center,
+                      'Log in to keep growing your math skills.',
                       style: TextStyle(
                         color: colors.muted,
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w500,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 26),
 
-                  // ── Auth card ──
                   FadeSlideIn(
-                    delay: const Duration(milliseconds: 170),
-                    child: GlassCard(
-                      padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _AuthField(
-                            controller: _emailController,
-                            hintText: 'Email',
-                            icon: Icons.mail_outline_rounded,
-                            keyboardType: TextInputType.emailAddress,
-                          ),
-                          const SizedBox(height: 12),
-                          _AuthField(
-                            controller: _passwordController,
-                            hintText: 'Password',
-                            icon: Icons.lock_outline_rounded,
-                            obscureText: true,
-                          ),
-                          const SizedBox(height: 18),
-                          _PrimaryButton(
-                            label: 'Log In',
-                            isLoading: _isLoading,
-                            onPressed: _isLoading ? null : _handleLogin,
-                          ),
-                          const SizedBox(height: 20),
-                          const _DividerOr(),
-                          const SizedBox(height: 20),
-                          _GoogleButton(
-                            onPressed: () => context.go(RouteNames.home),
-                          ),
-                        ],
+                    delay: const Duration(milliseconds: 120),
+                    child: AuthField(
+                      controller: _emailController,
+                      hint: 'Email',
+                      icon: Icons.mail_outline_rounded,
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  FadeSlideIn(
+                    delay: const Duration(milliseconds: 150),
+                    child: AuthField(
+                      controller: _passwordController,
+                      hint: 'Password',
+                      icon: Icons.lock_outline_rounded,
+                      isPassword: true,
+                      textInputAction: TextInputAction.done,
+                      onFieldSubmitted: (_) => _handleLogin(),
+                    ),
+                  ),
+
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () {},
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        foregroundColor: colors.muted,
+                      ),
+                      child: const Text(
+                        'Forgot password?',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 22),
 
-                  FadeSlideIn(
-                    delay: const Duration(milliseconds: 220),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'New to Mathivia? ',
+                  if (_error != null) ...[
+                    const SizedBox(height: 4),
+                    AuthErrorBanner(message: _error!),
+                    const SizedBox(height: 16),
+                  ] else
+                    const SizedBox(height: 10),
+
+                  AuthPrimaryButton(
+                    label: 'Log In',
+                    isLoading: _isLoading,
+                    onPressed: _isLoading ? null : _handleLogin,
+                  ),
+                  const SizedBox(height: 20),
+                  const _DividerOr(),
+                  const SizedBox(height: 20),
+                  _GoogleButton(onPressed: () => context.go(RouteNames.home)),
+                  const SizedBox(height: 24),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'New to Mathiva? ',
+                        style: TextStyle(
+                          color: colors.muted,
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      TextButton(
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        onPressed: () => context.push(RouteNames.register),
+                        child: Text(
+                          'Sign up',
                           style: TextStyle(
-                            color: colors.muted,
+                            color: colors.accent,
                             fontSize: 13.5,
-                            fontWeight: FontWeight.w500,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
-                        TextButton(
-                          style: TextButton.styleFrom(
-                            padding: EdgeInsets.zero,
-                            minimumSize: Size.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                          onPressed: () => context.push(RouteNames.register),
-                          child: Text(
-                            'Sign up',
-                            style: TextStyle(
-                              color: primary,
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
-          ),
+          ],
         ),
-      ),
-    );
-  }
-}
-
-// ─── Auth Field ───────────────────────────────────────────────────────────────
-
-class _AuthField extends StatelessWidget {
-  final TextEditingController controller;
-  final String hintText;
-  final IconData icon;
-  final TextInputType? keyboardType;
-  final bool obscureText;
-
-  const _AuthField({
-    required this.controller,
-    required this.hintText,
-    required this.icon,
-    this.keyboardType,
-    this.obscureText = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final primary = AppPreferences.palette.value.primary;
-    final colors = AppTheme.colorsOf(context);
-
-    return TextField(
-      controller: controller,
-      keyboardType: keyboardType,
-      obscureText: obscureText,
-      style: TextStyle(
-        color: colors.ink,
-        fontSize: 14.5,
-        fontWeight: FontWeight.w500,
-      ),
-      decoration: InputDecoration(
-        hintText: hintText,
-        hintStyle: TextStyle(
-          color: colors.muted,
-          fontSize: 14.5,
-          fontWeight: FontWeight.w400,
-        ),
-        prefixIcon: Icon(icon, color: colors.muted, size: 19),
-        // Translucent, not solid -- so the field reads as part of the glass
-        // card rather than a disconnected opaque box sitting on top of it.
-        filled: true,
-        fillColor: colors.glassChipFill,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(13),
-          borderSide: BorderSide(color: colors.glassBorder, width: 1),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(13),
-          borderSide: BorderSide(color: colors.glassBorder, width: 1),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(13),
-          borderSide: BorderSide(color: primary, width: 1.5),
-        ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
-      ),
-    );
-  }
-}
-
-// ─── Primary Button (Log In) ──────────────────────────────────────────────────
-
-class _PrimaryButton extends StatelessWidget {
-  final String label;
-  final VoidCallback? onPressed;
-  final bool isLoading;
-
-  const _PrimaryButton({
-    required this.label,
-    required this.onPressed,
-    this.isLoading = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final primary = AppPreferences.palette.value.primary;
-
-    return SizedBox(
-      width: double.infinity,
-      height: 50,
-      child: OutlinedButton(
-        onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          foregroundColor: primary,
-          side: BorderSide(color: primary, width: 1),
-          elevation: 0,
-          shadowColor: Colors.transparent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(13),
-          ),
-        ),
-        child: isLoading
-            ? SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2, color: primary),
-              )
-            : Text(
-                label,
-                style:
-                    const TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5),
-              ),
       ),
     );
   }
@@ -313,13 +208,11 @@ class _PrimaryButton extends StatelessWidget {
 
 class _GoogleButton extends StatelessWidget {
   final VoidCallback onPressed;
-
   const _GoogleButton({required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
     final colors = AppTheme.colorsOf(context);
-
     return SizedBox(
       width: double.infinity,
       height: 50,
@@ -357,12 +250,10 @@ class _DividerOr extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppTheme.colorsOf(context);
-
     return Row(
       children: [
         Expanded(
-            child: Divider(
-                color: colors.glassBorderSoft, height: 1, thickness: 1)),
+            child: Divider(color: colors.border, height: 1, thickness: 1)),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Text(
@@ -375,8 +266,7 @@ class _DividerOr extends StatelessWidget {
           ),
         ),
         Expanded(
-            child: Divider(
-                color: colors.glassBorderSoft, height: 1, thickness: 1)),
+            child: Divider(color: colors.border, height: 1, thickness: 1)),
       ],
     );
   }

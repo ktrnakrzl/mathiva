@@ -71,11 +71,10 @@ class MathivaAppBar extends StatelessWidget implements PreferredSizeWidget {
             children: [
               Text(
                 title,
-                style: TextStyle(
+                style: AppTheme.serif(
                   color: colors.ink,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -0.3,
+                  fontSize: 19,
+                  fontWeight: FontWeight.w600,
                   height: 1,
                 ),
               ),

@@ -44,11 +44,10 @@ class MathivaTopBar extends StatelessWidget implements PreferredSizeWidget {
               const SizedBox(width: 9),
               Text(
                 'Mathiva',
-                style: TextStyle(
+                style: AppTheme.serif(
                   color: colors.ink,
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -0.02 * 17,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
               const Spacer(),

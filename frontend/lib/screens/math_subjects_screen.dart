@@ -62,11 +62,10 @@ class _MathSubjectsScreenState extends State<MathSubjectsScreen> {
                       if (!embedded) ...[
                         Text(
                           'Lessons',
-                          style: TextStyle(
-                            color: colors.ink,
+                          style: AppTheme.serif(
                             fontSize: 26,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: -0.5,
+                            fontWeight: FontWeight.w600,
+                            color: colors.ink,
                             height: 1.1,
                           ),
                         ),

@@ -52,11 +52,10 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                     padding: const EdgeInsets.only(bottom: 18),
                     child: Text(
                       'Settings',
-                      style: TextStyle(
-                        color: colors.ink,
+                      style: AppTheme.serif(
                         fontSize: 26,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: -0.5,
+                        fontWeight: FontWeight.w600,
+                        color: colors.ink,
                         height: 1.1,
                       ),
                     ),
@@ -286,10 +285,10 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
               const SizedBox(height: 14),
               Center(
                   child: Text('Mathivia',
-                      style: TextStyle(
+                      style: AppTheme.serif(
                           color: colors.ink,
                           fontSize: 26,
-                          fontWeight: FontWeight.w700))),
+                          fontWeight: FontWeight.w600))),
               const SizedBox(height: 4),
               Center(
                   child: Text('Version 1.0.0',

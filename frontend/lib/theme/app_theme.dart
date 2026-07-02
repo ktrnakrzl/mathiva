@@ -33,6 +33,26 @@ class AppTheme {
   static SemanticColors colorsOf(BuildContext context) =>
       Theme.of(context).extension<SemanticColors>()!;
 
+  /// The app-wide **headline** typeface (Fraunces serif) — the same display
+  /// serif used on the auth flow. Centralized here so every headline (page /
+  /// section titles, the home greeting name, detail-screen app-bar titles)
+  /// reads from one place and the whole app's headline font can be swapped by
+  /// editing this single method.
+  static TextStyle serif({
+    required double fontSize,
+    FontWeight fontWeight = FontWeight.w600,
+    Color? color,
+    double? height,
+    double? letterSpacing,
+  }) =>
+      GoogleFonts.fraunces(
+        fontSize: fontSize,
+        fontWeight: fontWeight,
+        color: color,
+        height: height,
+        letterSpacing: letterSpacing,
+      );
+
   static ThemeData light([MathiviaPalette? palette]) =>
       _build(Brightness.light, SemanticColors.light);
 

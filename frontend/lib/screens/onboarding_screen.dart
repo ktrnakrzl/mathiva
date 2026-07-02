@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
-import '../services/app_preferences.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../utils/route_names.dart';
-import '../presentation/widgets/animated_background.dart';
+import '../presentation/widgets/auth_art.dart';
 import '../presentation/widgets/fade_slide_in.dart';
-import '../presentation/widgets/glass_card.dart';
 import '../theme/app_theme.dart';
 
+/// Onboarding — three slides in the "mathematical notebook / blueprint" art
+/// direction: a graph-paper illustration panel with a hand-drawn vector math
+/// diagram per slide, an accent eyebrow, a serif display headline, and a muted
+/// description. (Distinct from the rest of the app's shadcn look, per the
+/// auth-flow design handoff.)
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
 
@@ -19,24 +23,30 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _controller = PageController();
   int _index = 0;
 
-  static const _slides = [
+  static const _slides = <_OnboardingSlide>[
     _OnboardingSlide(
-      title: 'Scan Any Math Problem',
+      fig: 'fig. 1',
+      eyebrow: 'SCAN',
+      title: 'Snap any\nmath problem',
       subtitle:
-          'Snap a photo of equations, word problems, or handwritten work and let Mathiva detect what you need.',
-      icon: Icons.document_scanner_rounded,
+          'Photograph equations, word problems, or handwritten work and let Mathiva read exactly what you need.',
+      diagram: ParabolaDiagram(),
     ),
     _OnboardingSlide(
-      title: 'Step-by-Step Solutions',
+      fig: 'fig. 2',
+      eyebrow: 'UNDERSTAND',
+      title: 'Follow every\nstep clearly',
       subtitle:
-          'Understand every move with clean explanations, visual cards, and final answers you can trust.',
-      icon: Icons.lightbulb_outline_rounded,
+          'See each move explained with clean, worked reasoning — not just a final answer dropped on the page.',
+      diagram: TriangleDiagram(),
     ),
     _OnboardingSlide(
-      title: 'Track Your Growth',
+      fig: 'fig. 3',
+      eyebrow: 'PROGRESS',
+      title: 'Track your\ngrowth over time',
       subtitle:
-          'Build streaks, monitor topic mastery, and keep practicing exactly where you need support.',
-      icon: Icons.trending_up_rounded,
+          'Build streaks, watch topic mastery climb, and keep practicing exactly where you need support.',
+      diagram: GrowthDiagram(),
     ),
   ];
 
@@ -59,100 +69,127 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final _palette = AppPreferences.palette.value;
-    final _primary = _palette.primary;
     final colors = AppTheme.colorsOf(context);
-    final _chip = colors.glassChipFill;
+    final isLast = _index == _slides.length - 1;
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: AnimatedBackground(
-        vivid: true,
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 14, 24, 28),
-            child: Column(
-              children: [
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
+      backgroundColor: colors.pageBg,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 10, 24, 26),
+          child: Column(
+            children: [
+              // ── Top bar: brand lockup + Skip ──
+              Row(
+                children: [
+                  const _LogoMark(),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Mathiva',
+                    style: AppTheme.serif(
+                      color: colors.ink,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const Spacer(),
+                  TextButton(
                     onPressed: () => context.go(RouteNames.login),
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 8),
+                          horizontal: 8, vertical: 6),
                       minimumSize: Size.zero,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      backgroundColor: _chip,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
+                      foregroundColor: colors.muted,
                     ),
-                    child: Text(
+                    child: const Text(
                       'Skip',
                       style: TextStyle(
-                        color: colors.ink.withOpacity(0.55),
                         fontSize: 13.5,
                         fontWeight: FontWeight.w600,
-                        letterSpacing: 0.1,
                       ),
                     ),
                   ),
+                ],
+              ),
+              const SizedBox(height: 8),
+
+              Expanded(
+                child: PageView.builder(
+                  controller: _controller,
+                  physics: const BouncingScrollPhysics(),
+                  onPageChanged: (v) => setState(() => _index = v),
+                  itemCount: _slides.length,
+                  itemBuilder: (_, i) => _SlidePage(slide: _slides[i]),
                 ),
-                Expanded(
-                  child: PageView.builder(
-                    controller: _controller,
-                    physics: const BouncingScrollPhysics(),
-                    onPageChanged: (value) => setState(() => _index = value),
-                    itemCount: _slides.length,
-                    itemBuilder: (context, index) => _SlidePage(
-                      slide: _slides[index],
+              ),
+
+              const SizedBox(height: 22),
+              // ── Expanding pill-dot indicator ──
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(_slides.length, (i) {
+                  final active = _index == i;
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 240),
+                    curve: Curves.easeOut,
+                    width: active ? 26 : 6,
+                    height: 6,
+                    margin: const EdgeInsets.symmetric(horizontal: 3),
+                    decoration: BoxDecoration(
+                      color: active ? colors.accent : colors.border,
+                      borderRadius: BorderRadius.circular(999),
                     ),
-                  ),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(
-                    _slides.length,
-                    (index) => AnimatedContainer(
-                      duration: const Duration(milliseconds: 220),
-                      width: _index == index ? 24 : 8,
-                      height: 8,
-                      margin: const EdgeInsets.symmetric(horizontal: 4),
-                      decoration: BoxDecoration(
-                        color: _index == index ? _primary : _chip,
-                        borderRadius: BorderRadius.circular(20),
+                  );
+                }),
+              ),
+              const SizedBox(height: 22),
+
+              // ── Continue / Get Started ──
+              SizedBox(
+                width: double.infinity,
+                height: 54,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: colors.accent.withOpacity(0.32),
+                        blurRadius: 22,
+                        offset: const Offset(0, 8),
                       ),
-                    ),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 32),
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: OutlinedButton(
+                  child: ElevatedButton(
                     onPressed: _next,
-                    style: OutlinedButton.styleFrom(
-                      backgroundColor: Colors.transparent,
-                      foregroundColor: _primary,
-                      side: BorderSide(color: _primary, width: 1),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: colors.accent,
+                      foregroundColor: colors.onAccent,
                       elevation: 0,
                       shadowColor: Colors.transparent,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(14),
                       ),
                     ),
-                    child: Text(
-                      _index == _slides.length - 1 ? 'Get Started' : 'Next',
-                      style: const TextStyle(
-                        fontSize: 15.5,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.2,
-                      ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          isLast ? 'Get Started' : 'Continue',
+                          style: const TextStyle(
+                            fontSize: 15.5,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        const Icon(Icons.chevron_right_rounded, size: 20),
+                      ],
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -160,51 +197,88 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 }
 
+// ─── Slide ───────────────────────────────────────────────────────────────────
+
 class _SlidePage extends StatelessWidget {
   final _OnboardingSlide slide;
-
   const _SlidePage({required this.slide});
 
   @override
   Widget build(BuildContext context) {
-    final _palette = AppPreferences.palette.value;
-    final _primary = _palette.primary;
     final colors = AppTheme.colorsOf(context);
 
     return FadeSlideIn(
       key: ValueKey(slide.title),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _Hero(slide: slide, primary: _primary),
-          const SizedBox(height: 30),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: Text(
-              slide.title,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: colors.ink,
-                fontSize: 26,
-                height: 1.22,
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.3,
+          const SizedBox(height: 6),
+          // Illustration panel: graph paper + fig caption + diagram.
+          Expanded(
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: colors.surface,
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(color: colors.border, width: 1),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(28),
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: CustomPaint(
+                        painter:
+                            GraphPaperPainter(line: graphPaperColor(context)),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(18),
+                      child: FigCaption(slide.fig),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(28, 44, 28, 28),
+                      child: Center(child: slide.diagram),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-          const SizedBox(height: 14),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18),
-            child: Text(
-              slide.subtitle,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: colors.muted,
-                fontSize: 14.5,
-                height: 1.65,
-                fontWeight: FontWeight.w400,
-                letterSpacing: 0.1,
-              ),
+          const SizedBox(height: 26),
+
+          // Accent eyebrow (colored text, no pill).
+          Text(
+            slide.eyebrow,
+            style: TextStyle(
+              color: colors.accent,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.12 * 12,
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          // Serif display headline.
+          Text(
+            slide.title,
+            style: GoogleFonts.fraunces(
+              color: colors.ink,
+              fontSize: 30,
+              height: 1.12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Muted description.
+          Text(
+            slide.subtitle,
+            style: TextStyle(
+              color: colors.muted,
+              fontSize: 14.5,
+              height: 1.55,
+              fontWeight: FontWeight.w400,
             ),
           ),
         ],
@@ -213,56 +287,33 @@ class _SlidePage extends StatelessWidget {
   }
 }
 
-/// Hero section: one calm focal plate behind the icon, framed by a thin
-/// outer ring for quiet depth. No competing shapes, no extra ornament —
-/// just enough structure that the circle reads as designed, not dropped in.
-class _Hero extends StatelessWidget {
-  final _OnboardingSlide slide;
-  final Color primary;
+// ─── Brand logo mark ("M") ────────────────────────────────────────────────────
 
-  const _Hero({
-    required this.slide,
-    required this.primary,
-  });
+class _LogoMark extends StatelessWidget {
+  const _LogoMark();
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      height: 220,
-      alignment: Alignment.center,
-      child: Container(
-        width: 152,
-        height: 152,
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: primary.withOpacity(0.14),
-            width: 1.2,
-          ),
-        ),
-        child: GlassCard(
-          borderRadius: BorderRadius.circular(76),
-          padding: EdgeInsets.zero,
-          blurSigma: 14,
-          child: Center(
-            child: Icon(slide.icon, color: primary, size: 52),
-          ),
-        ),
-      ),
+    return Image.asset(
+      'assets/mathiva_logo.png',
+      height: 28,
+      fit: BoxFit.contain,
     );
   }
 }
 
 class _OnboardingSlide {
+  final String fig;
+  final String eyebrow;
   final String title;
   final String subtitle;
-  final IconData icon;
+  final Widget diagram;
 
   const _OnboardingSlide({
+    required this.fig,
+    required this.eyebrow,
     required this.title,
     required this.subtitle,
-    required this.icon,
+    required this.diagram,
   });
 }
