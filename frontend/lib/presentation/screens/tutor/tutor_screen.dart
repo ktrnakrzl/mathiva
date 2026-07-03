@@ -39,7 +39,7 @@ class _TutorScreenState extends ConsumerState<TutorScreen> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: MathivaAppBar(
-        title: 'Math Tutor ✨',
+        title: 'MathivASK',
         subtitle: 'AI-powered math help',
         icon: Icons.smart_toy_rounded,
         showBack: true,

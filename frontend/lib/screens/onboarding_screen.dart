@@ -28,24 +28,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       fig: 'fig. 1',
       eyebrow: 'SCAN',
       title: 'Snap any\nmath problem',
-      subtitle:
-          'Photograph equations, word problems, or handwritten work and let Mathiva read exactly what you need.',
+      subtitle: 'Point your camera and Mathiva reads it.',
       diagram: ParabolaDiagram(),
     ),
     _OnboardingSlide(
       fig: 'fig. 2',
       eyebrow: 'UNDERSTAND',
       title: 'Follow every\nstep clearly',
-      subtitle:
-          'See each move explained with clean, worked reasoning — not just a final answer dropped on the page.',
+      subtitle: 'Every step explained, not just the answer.',
       diagram: TriangleDiagram(),
     ),
     _OnboardingSlide(
       fig: 'fig. 3',
       eyebrow: 'PROGRESS',
       title: 'Track your\ngrowth over time',
-      subtitle:
-          'Build streaks, watch topic mastery climb, and keep practicing exactly where you need support.',
+      subtitle: 'Build streaks and watch mastery climb.',
       diagram: GrowthDiagram(),
     ),
   ];
@@ -210,11 +207,14 @@ class _SlidePage extends StatelessWidget {
     return FadeSlideIn(
       key: ValueKey(slide.title),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 6),
-          // Illustration panel: graph paper + fig caption + diagram.
-          Expanded(
+          // Illustration panel: graph paper + fig caption + diagram. Given a
+          // fixed aspect (not Expanded) so the panel + title read as one block
+          // centred vertically in the page.
+          AspectRatio(
+            aspectRatio: 1.05,
             child: Container(
               width: double.infinity,
               decoration: BoxDecoration(
@@ -236,16 +236,23 @@ class _SlidePage extends StatelessWidget {
                       padding: const EdgeInsets.all(18),
                       child: FigCaption(slide.fig),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(28, 44, 28, 28),
-                      child: Center(child: slide.diagram),
+                    // Symmetric vertical padding so the diagram sits dead-centre
+                    // in the panel (the fig caption is a top-left overlay and
+                    // doesn't shift it); Positioned.fill guarantees the Center
+                    // measures against the whole panel, not a loose box.
+                    Positioned.fill(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 28, vertical: 44),
+                        child: Center(child: slide.diagram),
+                      ),
                     ),
                   ],
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 26),
+          const SizedBox(height: 28),
 
           // Accent eyebrow (colored text, no pill).
           Text(
@@ -269,15 +276,15 @@ class _SlidePage extends StatelessWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
 
-          // Muted description.
+          // Short one-line description.
           Text(
             slide.subtitle,
             style: TextStyle(
               color: colors.muted,
               fontSize: 14.5,
-              height: 1.55,
+              height: 1.4,
               fontWeight: FontWeight.w400,
             ),
           ),

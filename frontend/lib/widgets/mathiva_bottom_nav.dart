@@ -65,7 +65,7 @@ class MathivaBottomNav extends StatelessWidget {
               _NavItem(
                 icon: Icons.chat_bubble_outline_rounded,
                 activeIcon: Icons.chat_bubble_rounded,
-                label: 'Tutor',
+                label: 'Ask',
                 selected: selected == MathivaTab.tutor,
                 onTap: () => _go(context, MathivaTab.tutor),
               ),

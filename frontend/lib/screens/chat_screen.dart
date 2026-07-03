@@ -199,12 +199,11 @@ class _ChatHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Math Tutor',
-                style: TextStyle(
+                'MathivASK',
+                style: AppTheme.serif(
                   color: colors.ink,
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -0.3,
+                  fontSize: 19,
+                  fontWeight: FontWeight.w600,
                   height: 1.1,
                 ),
               ),
