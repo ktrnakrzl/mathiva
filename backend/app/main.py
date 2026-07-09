@@ -18,7 +18,10 @@ app = FastAPI(title="Mathiva API")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    # Auth is Bearer-token in the Authorization header, not cookies, so we don't
+    # need credentialed CORS -- and a wildcard origin with allow_credentials=True
+    # is rejected by browsers anyway. Keeping this False makes "*" valid.
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["*"],

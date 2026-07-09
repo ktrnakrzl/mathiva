@@ -1,5 +1,7 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
+from app.database.models import User
+from app.services.auth_service import get_current_user
 from app.services.solver_service import solve_problem
 
 router = APIRouter(
@@ -9,7 +11,10 @@ router = APIRouter(
 
 
 @router.post("/solve")
-def solve(equation: str = Query(...)):
+def solve(
+    equation: str = Query(...),
+    current_user: User = Depends(get_current_user),
+):
     try:
         return solve_problem(equation)
 

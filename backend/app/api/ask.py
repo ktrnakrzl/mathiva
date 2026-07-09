@@ -1,5 +1,7 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
+from app.database.models import User
+from app.services.auth_service import get_current_user
 from app.services.rag_service import retrieve_context
 from app.services.ai_service import generate_answer
 
@@ -10,7 +12,10 @@ router = APIRouter(
 
 
 @router.post("/ask")
-def ask(question: str = Query(...)):
+def ask(
+    question: str = Query(...),
+    current_user: User = Depends(get_current_user),
+):
     try:
 
         # Retrieve relevant chunks

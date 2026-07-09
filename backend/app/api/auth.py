@@ -4,7 +4,12 @@ from sqlalchemy.orm import Session
 
 from app.database.db import get_db
 from app.database.models import User
-from app.services.auth_service import create_access_token, hash_password, verify_password
+from app.services.auth_service import (
+    create_access_token,
+    get_current_user,
+    hash_password,
+    verify_password,
+)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -83,3 +88,25 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
         )
 
     return LoginResponse(access_token=create_access_token(user.id))
+
+
+class MeResponse(BaseModel):
+    id: int
+    email: str
+    full_name: str
+    section: str | None = None
+    enrollment_status: str | None = None
+
+
+@router.get("/me", response_model=MeResponse)
+def me(current_user: User = Depends(get_current_user)):
+    """Return the profile of the token's owner. The login response only carries
+    the JWT, so this is how the app fetches the student's name/section after
+    authenticating (e.g. to greet them on the home screen)."""
+    return MeResponse(
+        id=current_user.id,
+        email=current_user.email,
+        full_name=current_user.full_name,
+        section=current_user.section,
+        enrollment_status=current_user.enrollment_status,
+    )
