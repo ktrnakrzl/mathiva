@@ -1,3 +1,5 @@
+import '../models/user_profile.dart';
+
 /// Thrown when registration or login fails (bad credentials, duplicate
 /// email, network error, etc.) with a message safe to show the user.
 class AuthException implements Exception {
@@ -27,4 +29,9 @@ abstract class AuthRepository {
     required String email,
     required String password,
   });
+
+  /// Fetches the current token owner's profile from `/auth/me`. Requires a
+  /// saved token (attached by the AuthInterceptor). Throws [AuthException]
+  /// if the request fails.
+  Future<UserProfile> getProfile();
 }

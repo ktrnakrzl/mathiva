@@ -1,12 +1,17 @@
 import 'package:dio/dio.dart';
 
 import '../../core/constants/api_constants.dart';
+import '../../models/user_profile.dart';
 import '../auth_repository.dart';
+import 'auth_interceptor.dart';
 
 /// Real implementation of [AuthRepository] -- calls the FastAPI backend's
-/// `/auth/register` and `/auth/login` endpoints (unprefixed, same as
-/// `/health` and `/quiz`).
+/// `/auth/register`, `/auth/login`, and `/auth/me` endpoints (unprefixed, same
+/// as `/health` and `/quiz`).
 class ApiAuthRepository implements AuthRepository {
+  // The [AuthInterceptor] attaches the stored JWT when there is one. Register
+  // and login don't need it (no token yet), but `/auth/me` does -- it's read
+  // right after login, once the token has been saved.
   static final Dio _dio = Dio(
     BaseOptions(
       baseUrl: kBaseUrl,
@@ -16,7 +21,7 @@ class ApiAuthRepository implements AuthRepository {
         'Content-Type': 'application/json',
       },
     ),
-  );
+  )..interceptors.add(AuthInterceptor());
 
   @override
   Future<void> register({
@@ -50,6 +55,16 @@ class ApiAuthRepository implements AuthRepository {
       return response.data['access_token'] as String;
     } on DioException catch (e) {
       throw AuthException(_messageFor(e, 'Could not log in.'));
+    }
+  }
+
+  @override
+  Future<UserProfile> getProfile() async {
+    try {
+      final response = await _dio.get('/auth/me');
+      return UserProfile.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw AuthException(_messageFor(e, 'Could not load your profile.'));
     }
   }
 

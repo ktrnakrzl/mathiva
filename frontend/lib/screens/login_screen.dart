@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../repositories/api/api_auth_repository.dart';
 import '../repositories/auth_repository.dart';
+import '../services/app_preferences.dart';
 import '../services/auth_storage.dart';
 import '../utils/route_names.dart';
 import '../presentation/widgets/auth_widgets.dart';
@@ -51,6 +52,10 @@ class _LoginScreenState extends State<LoginScreen> {
       final token =
           await _authRepository.login(email: email, password: password);
       await AuthStorage.saveToken(token);
+      // Pull the student's profile so the home greeting shows their real name
+      // instead of the default. Non-fatal: a /auth/me hiccup shouldn't block
+      // an otherwise-successful login -- the greeting just falls back.
+      await _loadProfileName();
       if (!mounted) return;
       context.go(RouteNames.home);
     } catch (e) {
@@ -60,6 +65,18 @@ class _LoginScreenState extends State<LoginScreen> {
           : 'Could not log in. Please try again.');
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  /// Fetches the profile and pushes the student's name into [AppPreferences]
+  /// so the home greeting picks it up. Best-effort -- any failure is swallowed
+  /// so it can never block navigation to home after a valid login.
+  Future<void> _loadProfileName() async {
+    try {
+      final profile = await _authRepository.getProfile();
+      AppPreferences.studentName.value = profile.fullName;
+    } catch (_) {
+      // Leave the greeting on its default name.
     }
   }
 

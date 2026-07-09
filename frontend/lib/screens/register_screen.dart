@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../repositories/api/api_auth_repository.dart';
 import '../repositories/auth_repository.dart';
+import '../services/app_preferences.dart';
 import '../services/auth_storage.dart';
 import '../presentation/widgets/auth_widgets.dart';
 import '../presentation/widgets/fade_slide_in.dart';
@@ -73,6 +74,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       final token =
           await _authRepository.login(email: email, password: password);
       await AuthStorage.saveToken(token);
+      // We already have the name from the form (identical to what the server
+      // stored), so set the home greeting directly -- no /auth/me round-trip
+      // needed here, unlike the login path.
+      AppPreferences.studentName.value = name;
       if (!mounted) return;
       context.go(RouteNames.home);
     } catch (e) {
