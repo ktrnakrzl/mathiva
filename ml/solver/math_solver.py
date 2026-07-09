@@ -1,6 +1,32 @@
-from sympy import latex, symbols, solve, diff, integrate, simplify
+from sympy import Basic, latex, symbols, solve, diff, integrate, simplify
 from sympy.parsing.sympy_parser import parse_expr
 from sympy.parsing.latex import parse_latex
+
+
+# Student-facing message for when a scanned photo can't be turned into a
+# solvable equation. Deliberately generic -- the raw parser/OCR error ("I don't
+# understand this", stray-symbol names) is not something a Grade 11 student can
+# act on. The actionable advice is "retake the photo."
+UNREADABLE_MESSAGE = (
+    "Sorry, I couldn't read a clear equation from that image. Try retaking the "
+    "photo with good lighting and only the equation in the frame."
+)
+NO_REAL_SOLUTION_MESSAGE = "This equation has no real-number solution."
+
+
+def _is_real_number(sol):
+    """True only for a concrete, finite, real numeric solution (e.g. 2, -3/2).
+
+    Rejects the shapes garbled OCR tends to produce: dict solutions from
+    underdetermined systems (multiple stray symbols), purely symbolic answers,
+    and complex/infinite roots. This is the guard that stops a nonsense scan
+    from being reported as a confident, wrong answer."""
+    return (
+        isinstance(sol, Basic)
+        and sol.is_number
+        and bool(sol.is_real)
+        and bool(sol.is_finite)
+    )
 
 
 def _build_answer(variable, solutions):
@@ -20,27 +46,49 @@ def solve_latex(latex_str):
     Solves for whichever variable the OCR'd expression actually contains
     rather than assuming "x" — OCR output can render the variable as a
     different case (e.g. "X") than expected.
+
+    OCR output is untrusted: a blurry or handwritten photo can yield LaTeX that
+    still *parses* into a SymPy object but is mathematical nonsense (stray
+    symbols like "mathbf", no real roots, etc.). Each step below is guarded so
+    such input returns an honest failure instead of a confidently-wrong answer.
     """
     try:
         expr = parse_latex(latex_str)
+    except Exception:
+        return {"expression": latex_str, "error": UNREADABLE_MESSAGE, "success": False}
 
-        # parse_latex returns an Eq for "=" expressions, otherwise a bare expression
-        solutions = solve(expr)
-        variable = next(iter(expr.free_symbols), None)
-        variable_str = str(variable) if variable is not None else None
+    # A real scanned equation solves for exactly one unknown. Zero free symbols
+    # means no variable was read; more than one almost always means OCR invented
+    # junk symbols (e.g. "\mathbf{x}" -> a stray "mathbf" symbol).
+    variables = sorted(expr.free_symbols, key=str)
+    if len(variables) != 1:
+        return {"expression": latex_str, "error": UNREADABLE_MESSAGE, "success": False}
 
-        return {
-            "expression": latex_str,
-            "variable": variable_str,
-            "solutions": [str(sol) for sol in solutions],
-            "answer": _build_answer(variable_str, solutions),
-            "success": True
-        }
-    except Exception as e:
-        return {
-            "error": str(e),
-            "success": False
-        }
+    variable = variables[0]
+    try:
+        raw_solutions = solve(expr, variable)
+    except Exception:
+        return {"expression": latex_str, "error": UNREADABLE_MESSAGE, "success": False}
+
+    solutions = [sol for sol in raw_solutions if _is_real_number(sol)]
+    if not solutions:
+        # Distinguish "read fine but genuinely has no real answer" (e.g.
+        # x^2 + 4 = 0) from "couldn't make sense of the scan" -- the former is
+        # an honest math result, the latter tells the student to retake the photo.
+        concrete = raw_solutions and all(
+            isinstance(sol, Basic) and sol.is_number for sol in raw_solutions
+        )
+        message = NO_REAL_SOLUTION_MESSAGE if concrete else UNREADABLE_MESSAGE
+        return {"expression": latex_str, "error": message, "success": False}
+
+    variable_str = str(variable)
+    return {
+        "expression": latex_str,
+        "variable": variable_str,
+        "solutions": [str(sol) for sol in solutions],
+        "answer": _build_answer(variable_str, solutions),
+        "success": True,
+    }
 
 def solve_equation(equation_str, variable="x"):
     """
