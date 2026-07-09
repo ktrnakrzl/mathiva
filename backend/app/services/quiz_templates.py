@@ -126,13 +126,11 @@ def _mean_template(difficulty: str, rng: random.Random) -> GeneratedQuestion:
         last = target_mean * count - sum(values)
         tries += 1
     if not (1 <= last <= hi):
-        last = max(1, last)  # accept a slightly out-of-band value rather than loop forever
-        target_mean = (sum(values) + last) // count
-        # recompute exact integer mean for safety
-        total = sum(values) + last
-        target_mean = total // count
-        # nudge last so the mean is exact
-        last += total - target_mean * count
+        # Retries failed to land `last` in [1, hi]. Fall back to a construction
+        # that is always valid: pick the smallest positive `last` that makes the
+        # total an exact multiple of count, so the mean stays a whole number.
+        partial = sum(values)
+        last = count - (partial % count)  # in [1, count], always <= hi
     values.append(last)
     rng.shuffle(values)
 
@@ -221,7 +219,10 @@ def _quadratic_form_template(difficulty: str, rng: random.Random) -> GeneratedQu
         answer=answer,
         choices=_unique_choices(answer, distractors, rng),
         steps=steps,
-        must_keep=[str(a), str(b), str(c)],
+        # Only keep tokens that are actually rendered in the equation: a
+        # coefficient of 1 on a variable term prints implicitly (1x -> x), so
+        # its digit never appears in the text.
+        must_keep=[t for t in (str(a), str(b), str(c)) if t in equation],
     )
 
 
@@ -258,6 +259,9 @@ def _factoring_template(difficulty: str, rng: random.Random) -> GeneratedQuestio
     must_keep = [str(abs(c))]
     if b != 0:
         must_keep.append(str(abs(b)))
+    # Drop tokens not literally in the equation (a |coef| of 1 on x prints as
+    # "x", so "1" never appears in the text).
+    must_keep = [t for t in must_keep if t in equation]
     return GeneratedQuestion(
         template_id="factoring",
         question=f"Solve by factoring: {equation}",
