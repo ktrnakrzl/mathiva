@@ -69,3 +69,7 @@ ml/embeddings/
 
 # Claude Code local state (memory, plans, settings)
 .claude/
+
+# Fine-tuned T5 model (large; produced by Colab train, downloaded locally)
+ml/t5/model/
+ml/t5/mathiva_t5_model.zip

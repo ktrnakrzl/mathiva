@@ -1,0 +1,8 @@
+# Phase 3 (evaluation) deps, run locally. torch + transformers are already present
+# via the backend's sentence-transformers, so only the metric libraries are new.
+# These are light / mostly pure-Python and should install on the local Python 3.14
+# env; if bert_score's default roberta-large is too heavy, pass
+# --bertscore_model distilbert-base-uncased to eval.py.
+rouge_score
+sacrebleu
+bert_score
