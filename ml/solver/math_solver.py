@@ -1,3 +1,5 @@
+import re
+
 from sympy import Basic, latex, symbols, solve, diff, integrate, simplify
 from sympy.parsing.sympy_parser import parse_expr
 from sympy.parsing.latex import parse_latex
@@ -38,6 +40,47 @@ def _build_answer(variable, solutions):
         return " or ".join(f"\\({latex(sol)}\\)" for sol in solutions)
     return " or ".join(f"\\({variable} = {latex(sol)}\\)" for sol in solutions)
 
+# Pure styling commands pix2tex wraps around perfectly readable variables --
+# it renders letters in bold, so "x" comes back as "\mathbf{x}". These carry no
+# mathematical meaning; left in, they parse into a stray "mathbf" symbol and get
+# an otherwise-correct equation wrongly rejected as garbled.
+_FORMAT_CMDS = (
+    "mathbf", "mathrm", "mathit", "mathsf", "mathtt", "mathcal",
+    "textbf", "textrm", "text", "operatorname", "bf", "rm", "it", "displaystyle",
+)
+
+# LaTeX commands that can legitimately appear in a Grade-11 scanned equation.
+# After we strip the formatting above, ANY other surviving command is treated
+# as a garbled-scan signal (see _has_unreadable_command): removing \mathbf also
+# removed the extra free symbol the old guard relied on, so junk like a stray
+# "\times" in an exponent would otherwise slip through as a confident wrong
+# answer. Failing safe (ask for a clearer photo) is the whole module's posture.
+_SAFE_COMMANDS = frozenset({"frac", "sqrt", "cdot", "left", "right"})
+
+
+def _normalize_ocr_latex(latex_str):
+    """Strip pix2tex's formatting-only wrappers, e.g. '\\mathbf{x}' -> 'x'.
+
+    Handles both the braced form (\\mathbf{x}) and the bare group form
+    ({\\bf x}); loops until stable so nested wrappers are fully removed."""
+    prev = None
+    while prev != latex_str:
+        prev = latex_str
+        for cmd in _FORMAT_CMDS:
+            latex_str = re.sub(r"\\" + cmd + r"\s*\{([^{}]*)\}", r"\1", latex_str)
+            latex_str = re.sub(r"\\" + cmd + r"(?![a-zA-Z])", "", latex_str)
+    return latex_str
+
+
+def _has_unreadable_command(latex_str):
+    """True if a non-math LaTeX command survives normalization -- a reliable
+    signal the scan was garbled rather than a solvable equation."""
+    return any(
+        m.group(1) not in _SAFE_COMMANDS
+        for m in re.finditer(r"\\([a-zA-Z]+)", latex_str)
+    )
+
+
 def solve_latex(latex_str):
     """
     Solve an equation given as a LaTeX string (e.g. output from pix2tex OCR).
@@ -52,6 +95,13 @@ def solve_latex(latex_str):
     symbols like "mathbf", no real roots, etc.). Each step below is guarded so
     such input returns an honest failure instead of a confidently-wrong answer.
     """
+    # Drop pix2tex's cosmetic bolding first (so a correctly-read equation isn't
+    # rejected), then bail if any non-math command remains (so garbled scans
+    # that were only being caught *by* that bolding are still rejected).
+    latex_str = _normalize_ocr_latex(latex_str)
+    if _has_unreadable_command(latex_str):
+        return {"expression": latex_str, "error": UNREADABLE_MESSAGE, "success": False}
+
     try:
         expr = parse_latex(latex_str)
     except Exception:

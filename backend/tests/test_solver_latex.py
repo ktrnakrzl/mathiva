@@ -37,6 +37,39 @@ def test_quadratic_equation_solves():
     assert sorted(result["solutions"], key=int) == ["-2", "2"]
 
 
+# --- pix2tex cosmetic formatting: strip it, then solve normally -------------
+
+def test_bolded_variable_still_solves():
+    # pix2tex renders variables in bold, so a correctly-read "2x + 5 = 13"
+    # comes back as this. The \mathbf wrapper must not get it rejected.
+    result = solve_latex(r"2\mathbf{x}+5=13")
+    assert result["success"] is True
+    assert result["variable"] == "x"
+    assert result["solutions"] == ["4"]
+
+
+def test_bolded_variables_on_both_sides_solve():
+    result = solve_latex(r"3\mathbf{x}-7=2\mathbf{x}+1")
+    assert result["success"] is True
+    assert result["solutions"] == ["8"]
+
+
+def test_bare_bold_group_form_solves():
+    # The other bold form pix2tex emits: {\bf x} instead of \mathbf{x}.
+    result = solve_latex(r"{\bf x}^2-4=0")
+    assert result["success"] is True
+    assert sorted(result["solutions"], key=int) == ["-2", "2"]
+
+
+def test_garbled_scan_under_bold_is_still_rejected():
+    # Stripping \mathbf must NOT rescue a genuinely garbled scan: the leftover
+    # stray "\times" in the exponent means this is not a real equation, so it
+    # must fail rather than surface a confident wrong answer.
+    result = solve_latex(r"\mathbf{x}^{\times}2-4=0")
+    assert result["success"] is False
+    assert "answer" not in result
+
+
 # --- untrusted / garbled OCR: must fail honestly, never fake-succeed --------
 
 def test_garbled_ocr_with_stray_symbols_is_rejected():
