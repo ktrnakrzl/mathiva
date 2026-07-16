@@ -1,9 +1,7 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import sys
 import os
-import json
-import random
 
 # Load backend/.env FIRST -- DATABASE_URL and JWT_SECRET are read from
 # os.environ at import time by app.database.db / app.services.auth_service,
@@ -69,38 +67,6 @@ def warm_up_ollama():
 @app.get("/health")
 def health():
     return {"status": "ok"}
-
-
-@app.post("/quiz")
-def quiz(subject: str = "General Mathematics", difficulty: str = "Easy", count: int = 5):
-    """Generate quiz questions from Q&A pairs. Unrelated to the
-    /api/quiz/submit and /api/user/progress routes (app.api.quiz) -- this
-    is the older Q&A-sampling endpoint, different path prefix, no overlap."""
-    try:
-        qa_path = os.path.join(os.path.dirname(__file__), "../../ml/retrieval/genmath_qa_pairs.json")
-        with open(qa_path, 'r') as f:
-            all_qa = json.load(f)
-        
-        if not all_qa:
-            raise HTTPException(status_code=404, detail="No Q&A pairs found")
-        
-        selected = random.sample(all_qa, min(count, len(all_qa)))
-        
-        questions = []
-        for i, qa in enumerate(selected):
-            questions.append({
-                "id": i + 1,
-                "question": qa.get("question"),
-                "answer": qa.get("answer"),
-                "topic": qa.get("topic", "Unknown"),
-                "difficulty": difficulty,
-                "chunk_id": qa.get("chunk_id")
-            })
-        
-        return {"subject": subject, "difficulty": difficulty, "questions": questions}
-    
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 if __name__ == "__main__":
