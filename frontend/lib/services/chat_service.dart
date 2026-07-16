@@ -8,6 +8,7 @@ import '../repositories/tutor_repository.dart';
 class ChatService {
   static TutorRepository repository = ApiTutorRepository();
 
-  /// Send a question to the backend and return the answer.
-  static Future<String> ask(String question) => repository.ask(question);
+  /// Send a question to the backend and stream the answer back as incremental
+  /// text chunks (concatenate them for the full reply).
+  static Stream<String> ask(String question) => repository.ask(question);
 }

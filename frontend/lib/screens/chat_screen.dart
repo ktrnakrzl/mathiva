@@ -45,7 +45,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     ),
   ];
 
+  // _isTyping drives the animated "typing…" bubble, shown only until the first
+  // token arrives. _isSending stays true for the whole request so the input bar
+  // is disabled until the streamed answer finishes.
   bool _isTyping = false;
+  bool _isSending = false;
 
   @override
   void initState() {
@@ -66,7 +70,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
 
   Future<void> _sendMessage() async {
     final question = _controller.text.trim();
-    if (question.isEmpty || _isTyping) return;
+    if (question.isEmpty || _isSending) return;
 
     setState(() {
       _messages.add(ChatMessage(
@@ -75,33 +79,64 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
         timestamp: DateTime.now(),
       ));
       _controller.clear();
+      _isSending = true;
       _isTyping = true;
     });
     _scrollToBottom();
 
-    String answer;
+    // The assistant message is created on the first token, then rebuilt in place
+    // as more text streams in (ChatMessage is immutable, so we replace it).
+    int? answerIndex;
+    String answer = '';
+
+    void applyChunk(String chunk) {
+      answer += chunk;
+      if (!mounted) return;
+      setState(() {
+        if (answerIndex == null) {
+          _isTyping = false; // first token replaces the typing bubble
+          _messages.add(ChatMessage(
+            text: answer,
+            isUser: false,
+            timestamp: DateTime.now(),
+          ));
+          answerIndex = _messages.length - 1;
+        } else {
+          _messages[answerIndex!] = ChatMessage(
+            text: answer,
+            isUser: false,
+            timestamp: _messages[answerIndex!].timestamp,
+          );
+        }
+      });
+      _scrollToBottom();
+    }
+
     try {
-      // Calls the real backend (/api/ask, RAG + Phi-3) via the repository
-      // pattern's swappable facade — see lib/repositories/tutor_repository.dart.
-      answer = await ChatService.ask(question);
+      // Streams from the real backend (/api/ask/stream, RAG + Phi-3) via the
+      // repository pattern's swappable facade — see repositories/tutor_repository.dart.
+      await for (final chunk in ChatService.ask(question)) {
+        applyChunk(chunk);
+      }
+      // Stream completed but produced nothing usable.
+      if (answerIndex == null) {
+        applyChunk('Sorry, I could not get an answer.');
+      }
     } catch (_) {
       // Surface a real failure instead of silently faking a plausible-looking
       // answer — a previous version of this screen did that and it read as
       // the tutor "hallucinating" when the request had actually failed.
-      answer = 'Sorry, I couldn\'t reach the tutor right now. Please check '
-          'your connection and try again.';
+      const message = 'Sorry, I couldn\'t reach the tutor right now. Please '
+          'check your connection and try again.';
+      applyChunk(answerIndex == null ? message : '\n\n$message');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSending = false;
+          _isTyping = false;
+        });
+      }
     }
-
-    if (!mounted) return;
-    setState(() {
-      _isTyping = false;
-      _messages.add(ChatMessage(
-        text: answer,
-        isUser: false,
-        timestamp: DateTime.now(),
-      ));
-    });
-    _scrollToBottom();
   }
 
   void _scrollToBottom() {
@@ -153,7 +188,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
               ),
               _InputBar(
                 controller: _controller,
-                enabled: !_isTyping,
+                enabled: !_isSending,
                 primary: primary,
                 onSend: _sendMessage,
                 onSuggestionTap: _useSuggestion,

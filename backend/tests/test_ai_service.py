@@ -11,21 +11,26 @@ ConnectionError/ValueError/KeyError.
 import pytest
 import requests
 
-from app.services.ai_service import AIServiceError, generate_answer
+from app.services.ai_service import AIServiceError, generate_answer, stream_answer
 
 
 class _FakeResponse:
-    """Stand-in for requests.Response: .json() returns preset data, or raises
-    ValueError to simulate a non-JSON body."""
+    """Stand-in for requests.Response: .json() returns preset data (or raises
+    ValueError for a non-JSON body); .iter_lines() replays preset byte lines for
+    the streaming path."""
 
-    def __init__(self, json_data=None, raise_on_json=False):
+    def __init__(self, json_data=None, raise_on_json=False, lines=None):
         self._json_data = json_data
         self._raise_on_json = raise_on_json
+        self._lines = lines or []
 
     def json(self):
         if self._raise_on_json:
             raise ValueError("no JSON could be decoded")
         return self._json_data
+
+    def iter_lines(self):
+        return iter(self._lines)
 
 
 def _patch_post(monkeypatch, response=None, exc=None):
@@ -73,3 +78,26 @@ def test_missing_response_key_without_error(monkeypatch):
     _patch_post(monkeypatch, _FakeResponse({"something_else": 1}))
     with pytest.raises(AIServiceError):
         generate_answer("hi")
+
+
+# --- streaming path ---------------------------------------------------------
+
+def test_stream_yields_pieces_in_order_and_stops_on_done(monkeypatch):
+    lines = [
+        b'{"response": "2x", "done": false}',
+        b'',                                    # blank keep-alive line, skipped
+        b'{"response": " = 8", "done": false}',
+        b'not json',                            # malformed line, skipped
+        b'{"response": ", so x = 4", "done": false}',
+        b'{"done": true}',                      # end marker
+        b'{"response": "IGNORED AFTER DONE"}',  # never reached
+    ]
+    _patch_post(monkeypatch, _FakeResponse(lines=lines))
+    assert list(stream_answer("hi")) == ["2x", " = 8", ", so x = 4"]
+
+
+def test_stream_connection_error_becomes_ai_service_error(monkeypatch):
+    _patch_post(monkeypatch, exc=requests.ConnectionError("refused"))
+    with pytest.raises(AIServiceError):
+        # The request is issued when iteration starts, so drain the generator.
+        list(stream_answer("hi"))
