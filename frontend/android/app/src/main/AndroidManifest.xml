@@ -39,6 +39,13 @@
             android:name="flutterEmbedding"
             android:value="2" />
 
+        <!-- image_cropper's crop screen (uCrop). Required, or launching the
+             cropper crashes with ActivityNotFoundException. -->
+        <activity
+            android:name="com.yalantis.ucrop.UCropActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+
         <!-- flutter_local_notifications: rebroadcasts after device reboot so the
              daily streak reminder keeps firing without the student reopening the app. -->
         <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
