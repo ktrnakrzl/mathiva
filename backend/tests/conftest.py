@@ -6,6 +6,17 @@ importing app.main (which loads the OCR + RAG models at import time) and keeps
 every test isolated -- each test gets a fresh, empty database.
 """
 
+import os
+import sys
+
+# The `solver` package lives under ml/, which the running app puts on sys.path
+# in app.main. Replicate that here (before any test imports app.services.*) so
+# services like solver_service can `import solver.math_solver` regardless of
+# which test files run or in what order.
+_ML_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "ml"))
+if _ML_DIR not in sys.path:
+    sys.path.insert(0, _ML_DIR)
+
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient

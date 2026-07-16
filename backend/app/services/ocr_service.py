@@ -35,7 +35,7 @@ class OCRServiceError(RuntimeError):
     surfaces this as a clear failure instead of leaking a raw error."""
 
 
-def _gemini_configured() -> bool:
+def gemini_available() -> bool:
     return bool(os.getenv("GEMINI_API_KEY"))
 
 
@@ -65,7 +65,7 @@ def _clean_latex(text: str) -> str:
     return t.strip()
 
 
-def _gemini_image_to_latex(image_bytes: bytes) -> str:
+def gemini_to_latex(image_bytes: bytes) -> str:
     """Send the photo to Gemini and return the recognised LaTeX equation.
 
     Requires GEMINI_API_KEY in the environment (backend/.env); get a free key
@@ -130,17 +130,7 @@ def _get_model():
     return _model
 
 
-def _pix2tex_image_to_latex(image_bytes: bytes) -> str:
+def pix2tex_to_latex(image_bytes: bytes) -> str:
+    """Read the image with the local pix2tex model (printed math only)."""
     image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
     return _get_model()(image)
-
-
-def image_to_latex(image_bytes: bytes) -> str:
-    """Turn a photo into a LaTeX string.
-
-    Prefers Gemini (reads handwriting/photos) when GEMINI_API_KEY is set; falls
-    back to the local pix2tex model (printed math only) otherwise.
-    """
-    if _gemini_configured():
-        return _gemini_image_to_latex(image_bytes)
-    return _pix2tex_image_to_latex(image_bytes)
