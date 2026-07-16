@@ -1,3 +1,4 @@
+import base64
 import io
 import json
 import os
@@ -5,48 +6,93 @@ import os
 import requests
 from PIL import Image
 
-# Mathpix's text endpoint reads *handwritten* math -> LaTeX, which the local
-# pix2tex model (trained on printed/typeset math only) can't do. When Mathpix
-# credentials are configured we prefer it; otherwise we fall back to pix2tex so
-# the app still works offline in development.
-MATHPIX_URL = "https://api.mathpix.com/v3/text"
+# Google's Gemini is a multimodal model with a genuinely free API tier (no card
+# needed via Google AI Studio). Unlike pix2tex -- which only reads printed math
+# and garbles real photos -- Gemini reads handwriting and photographed problems
+# and can transcribe them to LaTeX. When GEMINI_API_KEY is set we use it;
+# otherwise we fall back to the local pix2tex model so dev still works offline.
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+GEMINI_URL = (
+    "https://generativelanguage.googleapis.com/v1beta/models/"
+    "{model}:generateContent"
+)
+
+# Asks for bare LaTeX only, so the result feeds straight into solve_latex.
+_OCR_PROMPT = (
+    "You are an OCR engine for mathematics. Transcribe the mathematical "
+    "expression or equation in this image into a single line of LaTeX. "
+    "Output ONLY the LaTeX code -- no explanation, no surrounding text, no "
+    "$ or \\( \\) delimiters, and no code fences. Preserve the '=' sign if the "
+    "image shows an equation."
+)
 
 _model = None
 
 
 class OCRServiceError(RuntimeError):
-    """Raised when OCR can't turn the image into LaTeX (Mathpix unreachable,
-    misconfigured, or returned no usable result). The /solve-image endpoint
+    """Raised when OCR can't turn the image into LaTeX (Gemini unreachable,
+    misconfigured, or returned nothing usable). The /solve-image endpoint
     surfaces this as a clear failure instead of leaking a raw error."""
 
 
-def _mathpix_configured() -> bool:
-    return bool(os.getenv("MATHPIX_APP_ID") and os.getenv("MATHPIX_APP_KEY"))
+def _gemini_configured() -> bool:
+    return bool(os.getenv("GEMINI_API_KEY"))
 
 
-def _mathpix_image_to_latex(image_bytes: bytes) -> str:
-    """Send the photo to Mathpix and return the recognised LaTeX equation.
+def _detect_mime(image_bytes: bytes) -> str:
+    try:
+        fmt = Image.open(io.BytesIO(image_bytes)).format
+        return {
+            "JPEG": "image/jpeg",
+            "PNG": "image/png",
+            "WEBP": "image/webp",
+        }.get(fmt, "image/jpeg")
+    except Exception:
+        return "image/jpeg"
 
-    Requires MATHPIX_APP_ID / MATHPIX_APP_KEY in the environment (backend/.env).
-    We ask only for `latex_styled` -- the bare LaTeX of the equation -- which
-    feeds straight into solver.math_solver.solve_latex.
-    """
+
+def _clean_latex(text: str) -> str:
+    """Strip anything Gemini wraps around the bare LaTeX (code fences, $ or
+    \\(...\\) delimiters), which parse_latex can't handle."""
+    t = text.strip()
+    if t.startswith("```"):
+        t = t.strip("`").strip()
+        if t.lower().startswith("latex"):
+            t = t[len("latex"):].strip()
+    for open_d, close_d in (("$$", "$$"), ("$", "$"), (r"\(", r"\)"), (r"\[", r"\]")):
+        if t.startswith(open_d) and t.endswith(close_d) and len(t) > len(open_d) + len(close_d):
+            t = t[len(open_d):-len(close_d)].strip()
+    return t.strip()
+
+
+def _gemini_image_to_latex(image_bytes: bytes) -> str:
+    """Send the photo to Gemini and return the recognised LaTeX equation.
+
+    Requires GEMINI_API_KEY in the environment (backend/.env); get a free key
+    from https://aistudio.google.com. temperature=0 for a deterministic
+    transcription rather than a creative one."""
+    body = {
+        "contents": [
+            {
+                "parts": [
+                    {"text": _OCR_PROMPT},
+                    {
+                        "inline_data": {
+                            "mime_type": _detect_mime(image_bytes),
+                            "data": base64.b64encode(image_bytes).decode("ascii"),
+                        }
+                    },
+                ]
+            }
+        ],
+        "generationConfig": {"temperature": 0},
+    }
+
     try:
         response = requests.post(
-            MATHPIX_URL,
-            files={"file": ("image", image_bytes)},
-            data={
-                "options_json": json.dumps(
-                    {
-                        "formats": ["latex_styled"],
-                        "data_options": {"include_latex": True},
-                    }
-                )
-            },
-            headers={
-                "app_id": os.getenv("MATHPIX_APP_ID"),
-                "app_key": os.getenv("MATHPIX_APP_KEY"),
-            },
+            GEMINI_URL.format(model=GEMINI_MODEL),
+            params={"key": os.getenv("GEMINI_API_KEY")},
+            json=body,
             timeout=30,
         )
     except requests.RequestException as e:
@@ -57,21 +103,26 @@ def _mathpix_image_to_latex(image_bytes: bytes) -> str:
     except ValueError as e:
         raise OCRServiceError("OCR service returned a non-JSON response") from e
 
-    # Mathpix reports failures in an `error` field rather than a non-2xx status.
-    if payload.get("error"):
-        detail = (payload.get("error_info") or {}).get("message") or payload["error"]
-        raise OCRServiceError(str(detail))
+    # Gemini reports auth/quota errors in an `error` object.
+    if isinstance(payload.get("error"), dict):
+        raise OCRServiceError(payload["error"].get("message", "OCR service error"))
 
-    latex = payload.get("latex_styled") or payload.get("text")
+    try:
+        text = payload["candidates"][0]["content"]["parts"][0]["text"]
+    except (KeyError, IndexError, TypeError):
+        # No candidate usually means the prompt/image was blocked or empty.
+        raise OCRServiceError("Couldn't read an equation from that image.")
+
+    latex = _clean_latex(text)
     if not latex:
         raise OCRServiceError("Couldn't read an equation from that image.")
-    return latex.strip()
+    return latex
 
 
 def _get_model():
     global _model
     if _model is None:
-        # Imported lazily so a Mathpix-only deployment never loads pix2tex/torch,
+        # Imported lazily so a Gemini-only deployment never loads pix2tex/torch,
         # and so importing this module (e.g. in tests) stays cheap.
         from pix2tex.cli import LatexOCR
 
@@ -87,9 +138,9 @@ def _pix2tex_image_to_latex(image_bytes: bytes) -> str:
 def image_to_latex(image_bytes: bytes) -> str:
     """Turn a photo into a LaTeX string.
 
-    Prefers Mathpix (handles handwriting) when MATHPIX_APP_ID/KEY are set; falls
+    Prefers Gemini (reads handwriting/photos) when GEMINI_API_KEY is set; falls
     back to the local pix2tex model (printed math only) otherwise.
     """
-    if _mathpix_configured():
-        return _mathpix_image_to_latex(image_bytes)
+    if _gemini_configured():
+        return _gemini_image_to_latex(image_bytes)
     return _pix2tex_image_to_latex(image_bytes)
