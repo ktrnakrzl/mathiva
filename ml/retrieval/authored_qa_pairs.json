@@ -1,0 +1,308 @@
+[
+  {
+    "topic": "functions",
+    "source": "authored",
+    "question": "If f(x) = 2x^2 - 3x + 1, what is f(-2)?",
+    "answer": "Substitute x = -2: f(-2) = 2(-2)^2 - 3(-2) + 1 = 2(4) + 6 + 1 = 8 + 6 + 1 = 15."
+  },
+  {
+    "topic": "functions",
+    "source": "authored",
+    "question": "Given f(x) = 3x - 4 and g(x) = x^2, what is the value of the composite (f o g)(2)?",
+    "answer": "First apply g: g(2) = 2^2 = 4. Then apply f: f(4) = 3(4) - 4 = 12 - 4 = 8. So (f o g)(2) = 8."
+  },
+  {
+    "topic": "functions",
+    "source": "authored",
+    "question": "What is the domain of the function f(x) = sqrt(x - 5)?",
+    "answer": "The expression under a square root must be non-negative, so x - 5 >= 0, which gives x >= 5. The domain is [5, +infinity)."
+  },
+  {
+    "topic": "functions",
+    "source": "authored",
+    "question": "What is the domain of the function f(x) = (x + 1) / (x - 3)?",
+    "answer": "The denominator cannot be zero, so x - 3 != 0, meaning x != 3. The domain is all real numbers except 3."
+  },
+  {
+    "topic": "functions",
+    "source": "authored",
+    "question": "A jeepney charges 13 pesos for the first 4 km and 2 pesos for each additional km. What is the fare for a 10 km ride?",
+    "answer": "For d > 4, F(d) = 13 + 2(d - 4). For d = 10: F(10) = 13 + 2(10 - 4) = 13 + 2(6) = 13 + 12 = 25 pesos."
+  },
+  {
+    "topic": "functions",
+    "source": "authored",
+    "question": "Is the relation {(1, 2), (2, 3), (1, 4)} a function?",
+    "answer": "No. A relation is a function only if every input maps to exactly one output. Here the input 1 maps to both 2 and 4, so the relation is not a function."
+  },
+  {
+    "topic": "functions",
+    "source": "authored",
+    "question": "If f(x) = 5x + 2, what is f(a + 1) in simplified form?",
+    "answer": "Substitute x = a + 1: f(a + 1) = 5(a + 1) + 2 = 5a + 5 + 2 = 5a + 7."
+  },
+  {
+    "topic": "rational-functions",
+    "source": "authored",
+    "question": "What are the vertical asymptotes of the rational function f(x) = (x + 2) / (x^2 - 9)?",
+    "answer": "Factor the denominator: x^2 - 9 = (x - 3)(x + 3). Setting it to zero gives x = 3 and x = -3, and the numerator is not zero there, so the vertical asymptotes are x = 3 and x = -3."
+  },
+  {
+    "topic": "rational-functions",
+    "source": "authored",
+    "question": "What is the horizontal asymptote of f(x) = (2x + 1) / (x^2 - 4)?",
+    "answer": "The degree of the numerator (1) is less than the degree of the denominator (2), so the horizontal asymptote is y = 0."
+  },
+  {
+    "topic": "rational-functions",
+    "source": "authored",
+    "question": "What is the horizontal asymptote of f(x) = (3x^2 + 1) / (x^2 - 5)?",
+    "answer": "The numerator and denominator have the same degree (2), so the horizontal asymptote is the ratio of the leading coefficients, y = 3/1 = 3."
+  },
+  {
+    "topic": "rational-functions",
+    "source": "authored",
+    "question": "What is the solution of the rational equation (x + 1) / (x - 2) = 3?",
+    "answer": "Multiply both sides by (x - 2): x + 1 = 3(x - 2) = 3x - 6. Then 1 + 6 = 3x - x, so 7 = 2x, giving x = 3.5. Since x = 3.5 does not make the denominator zero, it is valid."
+  },
+  {
+    "topic": "rational-functions",
+    "source": "authored",
+    "question": "What is the x-intercept of the rational function f(x) = (x - 4) / (x + 2)?",
+    "answer": "The x-intercept occurs when f(x) = 0, which happens when the numerator is zero: x - 4 = 0, so x = 4. The x-intercept is (4, 0)."
+  },
+  {
+    "topic": "rational-functions",
+    "source": "authored",
+    "question": "What is the solution set of the rational inequality (x - 1) / (x + 3) >= 0?",
+    "answer": "The critical values are x = 1 (numerator zero) and x = -3 (denominator zero). Testing intervals, the expression is non-negative when x < -3 or x >= 1. Since x = -3 is excluded, the solution is x < -3 or x >= 1."
+  },
+  {
+    "topic": "inverse-functions",
+    "source": "authored",
+    "question": "What is the inverse of the function f(x) = 3x - 6?",
+    "answer": "Let y = 3x - 6. Swap x and y: x = 3y - 6. Solve for y: x + 6 = 3y, so y = (x + 6)/3. Thus f^{-1}(x) = (x + 6)/3."
+  },
+  {
+    "topic": "inverse-functions",
+    "source": "authored",
+    "question": "What is the inverse of the rational function f(x) = (2x + 3) / (x - 1)?",
+    "answer": "Let y = (2x + 3)/(x - 1). Then y(x - 1) = 2x + 3, so yx - y = 2x + 3. Group x-terms: yx - 2x = y + 3, so x(y - 2) = y + 3, giving x = (y + 3)/(y - 2). Therefore f^{-1}(x) = (x + 3)/(x - 2)."
+  },
+  {
+    "topic": "inverse-functions",
+    "source": "authored",
+    "question": "If f(x) = x^3 + 1, what is f^{-1}(9)?",
+    "answer": "We need x such that f(x) = 9: x^3 + 1 = 9, so x^3 = 8, giving x = 2. Therefore f^{-1}(9) = 2."
+  },
+  {
+    "topic": "inverse-functions",
+    "source": "authored",
+    "question": "Why must a function be one-to-one to have an inverse function?",
+    "answer": "If a function is not one-to-one, two different inputs share the same output. Reversing the mapping would then send that one output to two inputs, which violates the definition of a function. So only one-to-one functions have inverse functions."
+  },
+  {
+    "topic": "exponential-functions",
+    "source": "authored",
+    "question": "What is the solution of the exponential equation 2^(x + 1) = 32?",
+    "answer": "Write 32 as a power of 2: 32 = 2^5. So 2^(x + 1) = 2^5, and since the bases are equal, x + 1 = 5, giving x = 4."
+  },
+  {
+    "topic": "exponential-functions",
+    "source": "authored",
+    "question": "What is the solution of the exponential equation 3^(2x) = 81?",
+    "answer": "Write 81 as a power of 3: 81 = 3^4. So 3^(2x) = 3^4, meaning 2x = 4, giving x = 2."
+  },
+  {
+    "topic": "exponential-functions",
+    "source": "authored",
+    "question": "A bacteria culture starts with 500 cells and doubles every 3 hours. How many cells are there after 9 hours?",
+    "answer": "The number after t hours is N = 500 * 2^(t/3). After 9 hours: N = 500 * 2^(9/3) = 500 * 2^3 = 500 * 8 = 4000 cells."
+  },
+  {
+    "topic": "exponential-functions",
+    "source": "authored",
+    "question": "What is the solution of the exponential inequality 2^x > 16?",
+    "answer": "Write 16 = 2^4, so 2^x > 2^4. Since the base 2 is greater than 1, the inequality direction is preserved: x > 4."
+  },
+  {
+    "topic": "exponential-functions",
+    "source": "authored",
+    "question": "What is the y-intercept of the exponential function f(x) = 5 * 2^x?",
+    "answer": "The y-intercept occurs at x = 0: f(0) = 5 * 2^0 = 5 * 1 = 5. The y-intercept is (0, 5)."
+  },
+  {
+    "topic": "logarithmic-functions",
+    "source": "authored",
+    "question": "What is the value of log base 2 of 32?",
+    "answer": "We need the exponent that gives 32 from base 2. Since 2^5 = 32, log base 2 of 32 = 5."
+  },
+  {
+    "topic": "logarithmic-functions",
+    "source": "authored",
+    "question": "What is the solution of the logarithmic equation log base 2 of x + log base 2 of (x - 2) = 3?",
+    "answer": "Combine using the product law: log base 2 of [x(x - 2)] = 3, so x(x - 2) = 2^3 = 8. Then x^2 - 2x - 8 = 0, which factors as (x - 4)(x + 2) = 0, giving x = 4 or x = -2. Reject x = -2 (log of a negative is undefined), so x = 4."
+  },
+  {
+    "topic": "logarithmic-functions",
+    "source": "authored",
+    "question": "What is the expanded form of log(xy^2 / z) using the laws of logarithms?",
+    "answer": "Apply the quotient and product laws: log(xy^2) - log(z) = log(x) + log(y^2) - log(z). Then apply the power law: log(x) + 2 log(y) - log(z)."
+  },
+  {
+    "topic": "logarithmic-functions",
+    "source": "authored",
+    "question": "What is the solution of the equation log base 5 of (2x + 1) = 2?",
+    "answer": "Rewrite in exponential form: 2x + 1 = 5^2 = 25. Then 2x = 24, so x = 12."
+  },
+  {
+    "topic": "logarithmic-functions",
+    "source": "authored",
+    "question": "What is the domain of the logarithmic function f(x) = log(x - 4)?",
+    "answer": "The argument of a logarithm must be positive: x - 4 > 0, so x > 4. The domain is (4, +infinity)."
+  },
+  {
+    "topic": "simple-interest",
+    "source": "authored",
+    "question": "What is the simple interest on a principal of 15,000 pesos at an annual rate of 8% for 3 years?",
+    "answer": "Use I = Prt. I = 15000 * 0.08 * 3 = 3600 pesos."
+  },
+  {
+    "topic": "simple-interest",
+    "source": "authored",
+    "question": "How much is the maturity (future) value of 20,000 pesos invested at 5% simple interest for 4 years?",
+    "answer": "Interest I = Prt = 20000 * 0.05 * 4 = 4000 pesos. Maturity value = principal + interest = 20000 + 4000 = 24000 pesos."
+  },
+  {
+    "topic": "simple-interest",
+    "source": "authored",
+    "question": "At what simple interest rate will 10,000 pesos earn 1,800 pesos of interest in 3 years?",
+    "answer": "Use I = Prt, so r = I / (Pt) = 1800 / (10000 * 3) = 1800 / 30000 = 0.06 = 6%."
+  },
+  {
+    "topic": "compound-interest",
+    "source": "authored",
+    "question": "What is the compound amount when 10,000 pesos is invested at 6% compounded annually for 3 years?",
+    "answer": "Use A = P(1 + r)^t = 10000(1 + 0.06)^3 = 10000(1.06)^3. Since 1.06^3 = 1.191016, A = 11,910.16 pesos."
+  },
+  {
+    "topic": "compound-interest",
+    "source": "authored",
+    "question": "What is the maturity value of 10,000 pesos invested at 6% compounded quarterly for 3 years?",
+    "answer": "Use A = P(1 + r/n)^(nt) with r = 0.06, n = 4, t = 3: A = 10000(1 + 0.06/4)^(4*3) = 10000(1.015)^12. Since 1.015^12 = 1.195618, A = 11,956.18 pesos."
+  },
+  {
+    "topic": "compound-interest",
+    "source": "authored",
+    "question": "What is the compound interest earned on 25,000 pesos at 4% compounded annually for 2 years?",
+    "answer": "Maturity value A = 25000(1.04)^2 = 25000(1.0816) = 27,040 pesos. Compound interest = A - P = 27040 - 25000 = 2,040 pesos."
+  },
+  {
+    "topic": "annuities",
+    "source": "authored",
+    "question": "What is the future value of an ordinary annuity of 2,000 pesos deposited at the end of each year for 10 years at 5% compounded annually?",
+    "answer": "Use F = R[((1 + i)^n - 1)/i] with R = 2000, i = 0.05, n = 10. (1.05^10 - 1)/0.05 = (1.628895 - 1)/0.05 = 0.628895/0.05 = 12.57789. F = 2000 * 12.57789 = 25,155.79 pesos."
+  },
+  {
+    "topic": "annuities",
+    "source": "authored",
+    "question": "What is the present value of an ordinary annuity paying 5,000 pesos at the end of each year for 4 years at 6% compounded annually?",
+    "answer": "Use P = R[(1 - (1 + i)^(-n))/i] with R = 5000, i = 0.06, n = 4. (1 - 1.06^(-4))/0.06 = (1 - 0.792094)/0.06 = 0.207906/0.06 = 3.465106. P = 5000 * 3.465106 = 17,325.53 pesos."
+  },
+  {
+    "topic": "annuities",
+    "source": "authored",
+    "question": "What is the difference between an ordinary annuity and an annuity due?",
+    "answer": "In an ordinary annuity the payments are made at the END of each payment period, while in an annuity due the payments are made at the BEGINNING of each period. Because payments in an annuity due earn interest one extra period, its value is higher."
+  },
+  {
+    "topic": "stocks-and-bonds",
+    "source": "authored",
+    "question": "A stock has a par value of 100 pesos and declares a 6% dividend. How much dividend is earned on 200 shares?",
+    "answer": "Dividend per share = 6% of par value = 0.06 * 100 = 6 pesos. For 200 shares: 6 * 200 = 1,200 pesos."
+  },
+  {
+    "topic": "stocks-and-bonds",
+    "source": "authored",
+    "question": "A bond has a face value of 50,000 pesos with a coupon rate of 8% paid annually. How much is the annual coupon payment?",
+    "answer": "Annual coupon = coupon rate * face value = 0.08 * 50000 = 4,000 pesos."
+  },
+  {
+    "topic": "stocks-and-bonds",
+    "source": "authored",
+    "question": "What is the difference between a stock and a bond?",
+    "answer": "A stock represents part ownership (equity) in a company and may pay dividends that vary with profit, while a bond is a debt instrument in which the holder lends money and receives fixed interest (coupon) payments plus the face value at maturity. Stockholders are owners; bondholders are creditors."
+  },
+  {
+    "topic": "loans",
+    "source": "authored",
+    "question": "A consumer borrows 30,000 pesos to be repaid with 10% simple interest after 1 year. How much must be repaid in total?",
+    "answer": "Interest I = Prt = 30000 * 0.10 * 1 = 3000 pesos. Total repayment = 30000 + 3000 = 33,000 pesos."
+  },
+  {
+    "topic": "loans",
+    "source": "authored",
+    "question": "What is the difference between a business loan and a consumer loan?",
+    "answer": "A business loan is money borrowed to fund or expand a business, such as buying equipment or inventory, while a consumer loan is borrowed by an individual for personal needs, such as a car, house, or appliances. Their purpose is the main distinction."
+  },
+  {
+    "topic": "logic",
+    "source": "authored",
+    "question": "Given the statement 'If it rains, then the ground is wet,' what is its contrapositive?",
+    "answer": "The contrapositive negates and swaps both parts: 'If the ground is not wet, then it does not rain.' A conditional and its contrapositive are logically equivalent."
+  },
+  {
+    "topic": "logic",
+    "source": "authored",
+    "question": "Given the statement 'If a number is even, then it is divisible by 2,' what is its converse?",
+    "answer": "The converse swaps the hypothesis and conclusion: 'If a number is divisible by 2, then it is even.'"
+  },
+  {
+    "topic": "logic",
+    "source": "authored",
+    "question": "For the conditional p -> q, in which case is the statement false?",
+    "answer": "A conditional p -> q is false only when the hypothesis p is true and the conclusion q is false. In all other combinations it is true."
+  },
+  {
+    "topic": "logic",
+    "source": "authored",
+    "question": "If p is true and q is false, what is the truth value of the conjunction p AND q?",
+    "answer": "A conjunction p AND q is true only when both parts are true. Since q is false, p AND q is false."
+  },
+  {
+    "topic": "logic",
+    "source": "authored",
+    "question": "If p is true and q is false, what is the truth value of the disjunction p OR q?",
+    "answer": "A disjunction p OR q is true when at least one part is true. Since p is true, p OR q is true."
+  },
+  {
+    "topic": "logic",
+    "source": "authored",
+    "question": "What is a tautology in logic?",
+    "answer": "A tautology is a compound proposition that is true for every possible combination of truth values of its component propositions. For example, p OR (NOT p) is always true."
+  },
+  {
+    "topic": "logic",
+    "source": "authored",
+    "question": "Given 'If a figure is a square, then it has four sides,' what is its inverse?",
+    "answer": "The inverse negates both the hypothesis and the conclusion without swapping them: 'If a figure is not a square, then it does not have four sides.'"
+  },
+  {
+    "topic": "functions",
+    "source": "authored",
+    "question": "If f(x) = x^2 - 4 and g(x) = x + 2, what is (f/g)(x) in simplified form and its restriction?",
+    "answer": "(f/g)(x) = (x^2 - 4)/(x + 2) = ((x - 2)(x + 2))/(x + 2) = x - 2, provided x != -2 so the original denominator is not zero."
+  },
+  {
+    "topic": "exponential-functions",
+    "source": "authored",
+    "question": "An investment grows according to A = 8000(1.03)^t where t is in years. What is the investment worth after 5 years?",
+    "answer": "Substitute t = 5: A = 8000(1.03)^5 = 8000(1.159274) = 9,274.19 pesos."
+  },
+  {
+    "topic": "logarithmic-functions",
+    "source": "authored",
+    "question": "What is the logarithmic form of the exponential equation 10^3 = 1000?",
+    "answer": "In logarithmic form, b^y = x becomes log base b of x = y. So 10^3 = 1000 becomes log base 10 of 1000 = 3."
+  }
+]

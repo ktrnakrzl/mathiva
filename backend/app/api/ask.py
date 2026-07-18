@@ -4,7 +4,8 @@ from fastapi.responses import StreamingResponse
 from app.database.models import User
 from app.services.auth_service import get_current_user
 from app.services.rag_service import retrieve_context
-from app.services.ai_service import AIServiceError, generate_answer, stream_answer
+from app.services.ai_service import AIServiceError, stream_answer
+from app.services.answer_service import answer_question, build_tutor_prompt
 
 router = APIRouter(
     prefix="/api",
@@ -13,30 +14,12 @@ router = APIRouter(
 
 
 def _retrieve_and_build_prompt(question: str):
-    """Run RAG retrieval and assemble the tutor prompt. Shared by the JSON and
-    streaming endpoints so both feed Phi exactly the same context + prompt."""
+    """Run RAG retrieval and assemble the tutor prompt. Used by the streaming
+    endpoint (the non-streaming /ask goes through the full answer cascade in
+    answer_service instead)."""
     context_data = retrieve_context(question)
     context = "\n\n".join(context_data["chunks"])
-
-    prompt = f"""You are Mathiva, a helpful math tutor.
-
-Use the following course material to answer the student's question.
-
-Course Material:
-{context}
-
-Student Question:
-{question}
-
-Instructions:
-- Answer clearly and concisely.
-- Do not repeat the course material.
-- Do not repeat these instructions.
-- Wrap every math expression in \\( and \\), e.g. \\(2x + 5 = 13\\), so it can be rendered properly.
-
-Answer:"""
-
-    return prompt, context_data
+    return build_tutor_prompt(context, question), context_data
 
 
 @router.post("/ask")
@@ -44,31 +27,16 @@ def ask(
     question: str = Query(...),
     current_user: User = Depends(get_current_user),
 ):
+    # Full answer cascade: RAG context -> T5 + Phi-3 (local combination) ->
+    # Gemini only if the local answer is still weak. Returns `model_used` so the
+    # UI can show which tier answered.
     try:
-        prompt, context_data = _retrieve_and_build_prompt(question)
-
-        # Generate answer using Phi
-        answer = generate_answer(prompt)
-
-        return {
-            "question": question,
-            "answer": answer,
-            "sources": [
-                {
-                    # FAISS returns numpy.int64 indices, which the JSON
-                    # encoder can't serialize — cast to a plain Python int.
-                    "chunk_id": int(idx),
-                    "content": context_data["all_chunks"][idx]["content"][:200]
-                }
-                for idx in context_data["indices"]
-            ]
-        }
-
+        return answer_question(question)
+    except AIServiceError as e:
+        # Every model tier was unavailable / produced junk.
+        raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/ask/stream")

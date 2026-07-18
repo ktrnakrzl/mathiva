@@ -72,4 +72,15 @@ ml/embeddings/
 
 # Fine-tuned T5 model (large; produced by Colab train, downloaded locally)
 ml/t5/model/
+ml/t5/model_stageA/
 ml/t5/mathiva_t5_model.zip
+
+# DeepMind generic-math warm-up data (large; regenerate via ml/t5/deepmind/load_data.py)
+ml/t5/deepmind/*.jsonl
+ml/t5/deepmind/*.csv
+ml/t5/deepmind/*.zip
+
+# Dataset-pipeline backups and resume/cache files (regenerated)
+ml/retrieval/*.backup.*
+ml/retrieval/_qa_progress.json
+ml/retrieval/_judge_verdicts.json

@@ -5,6 +5,10 @@ directory is that fine-tuned model: a `flan-t5` trained to answer Grade-11
 General-Mathematics questions from RAG-retrieved context, plus the evaluation
 that compares it against the general-purpose Phi-3 the app ships today.
 
+> **New to this? Read [`HOW_TRAINING_WORKS.md`](./HOW_TRAINING_WORKS.md) first** —
+> a plain-language walkthrough of what fine-tuning is, where the data comes from,
+> and how the training runs. This README is the command reference.
+
 ## Why a fine-tuned model at all
 
 The live `/ask` path retrieves course context and hands it to Phi-3 (via Ollama).
@@ -32,28 +36,42 @@ or degenerate.
 python prepare_dataset.py        # -> data/{train,val,test}.jsonl + manifest.json
 ```
 
-Each row: `input = instruction + top-3 retrieved chunks + question`,
+`prepare_dataset.py` reads the **quality-judged** pairs
+(`../retrieval/genmath_qa_pairs.judged.json` — the survivors of the
+`generate_qa.py` → `judge_qa.py` pipeline). Each row:
+`input = instruction + top-3 retrieved chunks + question`,
 `target = reference answer`. Split is grouped by source chunk so no chunk's
-context appears in both train and test. 298 / 39 / 36 examples.
+context appears in both train and test. **50 / 7 / 5 examples** (from 62 judged
+pairs; gold source chunk retrieved in top-3 only 48% of the time).
+
+There is also a large generic **warm-up** dataset in `deepmind/` (100k symbolic-
+math Q&A) for optional Stage-A pre-training before the curriculum set — see
+`train_flan_t5_deepmind.ipynb` and [`HOW_TRAINING_WORKS.md`](./HOW_TRAINING_WORKS.md) §5.
 
 ### Phase 2 — fine-tune (Colab)
 
-Local training is blocked: the repo venv is Python 3.14 / CPU-only and is missing
-`datasets`, `accelerate`, `sentencepiece`. So training runs on Colab's free T4.
+The real `flan-t5-base` run uses Colab's free T4 (a 4 GB laptop GPU is too small
+for base in fp32).
 
 1. Open `train_flan_t5.ipynb` in Colab, set the runtime to **T4 GPU**.
 2. Upload `data/train.jsonl`, `data/val.jsonl`, and `train.py` when prompted.
 3. Run all cells. It trains up to 20 epochs with **early stopping on validation
-   loss** (overfitting is the real risk with only ~298 examples) and downloads
+   loss** (overfitting is the real risk with only ~50 examples) and downloads
    `mathiva_t5_model.zip`.
 4. Unzip it into `ml/t5/model/` locally.
 
 `train.py` is parameterized, so the same script trains the CPU-friendly fallback
-locally if you ever need it offline:
+locally — and this now works in the repo venv (Python 3.14) after installing the
+deps (`datasets>=4`, `accelerate`); a 1-epoch smoke test runs end-to-end:
 
 ```
 python train.py --model_name google/flan-t5-small --batch_size 8
 ```
+
+Note on `datasets`: training needs `datasets>=4` (v3 crashes on Python 3.14), but
+`deepmind/load_data.py`'s *download* needs `datasets<4`. See
+`requirements-train.txt` — the download is a one-time step whose output is
+committed, so keep `datasets>=4` for training.
 
 Notes: trained in **fp32** (flan-t5 produces NaN logits in fp16); flan-t5's fast
 tokenizer means `sentencepiece` isn't actually required.
@@ -66,7 +84,7 @@ pip install -r requirements-eval.txt        # rouge_score, sacrebleu, bert_score
 python eval.py
 ```
 
-`eval.py` runs the fine-tuned T5 (CPU, only 36 test examples) and Phi-3 on the
+`eval.py` runs the fine-tuned T5 (CPU, only 5 test examples) and Phi-3 on the
 **same context+question** from `test.jsonl`, scores both against the gold answer
 with ROUGE-L / BLEU / BERTScore, prints a comparison table, and writes
 `eval_report.json`. Use `--skip_phi` to score only T5 if Ollama isn't up, and

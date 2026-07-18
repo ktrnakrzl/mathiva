@@ -1,8 +1,15 @@
-# Phase 2 (fine-tuning) deps. Install on Colab; NOT needed for the backend.
-# The local repo venv (Python 3.14, CPU-only) is missing datasets/accelerate/
-# sentencepiece, which is why training runs on Colab's free T4 instead.
-transformers
-datasets
-accelerate
+# Phase 2 (fine-tuning) deps. Runs on Colab's free T4, and verified to run on the
+# local Python 3.14 CPU venv with the versions pinned below.
+#
+# NOTE on datasets: training needs datasets>=4 -- on Python 3.14, datasets 3.x's
+# dill-based fingerprinting crashes (Pickler._batch_setitems signature change).
+# But ml/t5/deepmind/load_data.py DOWNLOADS deepmind/math_dataset, a script-based
+# dataset that needs datasets<4 (v4 dropped script loading). Those two needs
+# conflict; the download is a one-time step and its output is committed as files,
+# so keep datasets>=4 here for training and only pin <4 in a throwaway env if you
+# ever need to re-download.
+transformers>=5.0
+datasets>=4.0
+accelerate>=1.1.0
 sentencepiece   # belt-and-suspenders; flan-t5's fast tokenizer doesn't require it
 torch

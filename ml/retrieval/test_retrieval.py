@@ -12,7 +12,7 @@ def load_index_and_chunks():
     chunks_path = os.path.join(current_dir, "output_chunks.json")
     
     index = faiss.read_index(index_path)
-    with open(chunks_path, "r") as f:
+    with open(chunks_path, "r", encoding="utf-8") as f:
         chunks = json.load(f)
     
     return index, chunks

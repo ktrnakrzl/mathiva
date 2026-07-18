@@ -1,0 +1,74 @@
+[
+  {
+    "question": "What is the solution to the inequality (x - 1)/(x + 2) > 0?",
+    "answer": "The inequality (x - 1)/(x + 2) > 0 is true for all real numbers x such that x > 1 or x < -2.",
+    "chunk_id": 8,
+    "reason": "The answer is not entirely supported by the reference material. The solution to the inequality (x - 1)/(x + 2) > 0 requires knowledge of rational function properties and domain analysis, which are not explicitly covered in the provided lessons."
+  },
+  {
+    "question": "If p and q are propositions, what is the logical equivalence of (p → q) ∧ (q → p)?",
+    "answer": "(p ∧ q) ∨ (¬p ∧ ¬q)",
+    "chunk_id": 17,
+    "reason": "The question requires knowledge of logical operators and equivalence, which is covered in the reference material. The answer is supported by Lessons 36-39."
+  },
+  {
+    "question": "Which of the following relations are functions?",
+    "answer": "f and h are functions because no two ordered pairs have the same x-value but different y-values.",
+    "chunk_id": 21,
+    "reason": "The answer is grounded in the reference material, but it's not entirely correct. The reference material only explains why f and h are functions, but doesn't provide enough information to determine whether g is a function or not."
+  },
+  {
+    "question": "What is the condition for a relation to be a function?",
+    "answer": "No two ordered pairs have the same x-value but different y-values.",
+    "chunk_id": 21,
+    "reason": "The question relies on the student recalling the definition of a function from the reference material. However, it is grounded in the provided solution."
+  },
+  {
+    "question": "What is a necessary condition for a graph to be a function?",
+    "answer": "It must pass the vertical line test.",
+    "chunk_id": 25,
+    "reason": "The question asks for a necessary condition, but the reference material provides more specific information about the vertical line test. A student may not be able to answer this question solely based on the provided reference."
+  },
+  {
+    "question": "Can all relations pass the vertical line test?",
+    "answer": "No, not all relations do not pass the vertical line test.",
+    "chunk_id": 26,
+    "reason": "The question does not contain the equation or numbers needed to answer it, but the answer is supported by the reference material and is mathematically correct."
+  },
+  {
+    "question": "For what value of d is the jeepney fare P10.00?",
+    "answer": "Let F(d) = 10.00. If d <= 4, then 8.00 = 10.00, which is not possible. If d > 4, then 8.00 + 1.50(d - 4) = 10.00. Solving for d, we get d = 6.33 (not an integer). Since the distance must be an integer kilometer, there is no value of d that satisfies F(d) = 10.00.",
+    "chunk_id": 32,
+    "reason": "The answer is mathematically correct, but the conclusion that there is no value of d that satisfies F(d) = 10.00 is incorrect because d = 6 does satisfy this equation."
+  },
+  {
+    "question": "What is the highest possible temperature that can be reached by steam?",
+    "answer": "Above 100°C (no specific value given)",
+    "chunk_id": 34,
+    "reason": "The question does not contain any equation or numbers needed to answer it, but the answer is supported by the reference material and mathematically correct."
+  },
+  {
+    "question": "How many Joules of heat are required to melt the ice into liquid water?",
+    "answer": "6,950 J",
+    "chunk_id": 35,
+    "reason": "The question relies on the reference material for the given information, but the answer is directly supported by the melting points and heat values provided."
+  },
+  {
+    "question": "Is the given temperature rise function a piecewise function?",
+    "answer": "Yes. The function can be expressed as linear with positive slope until it hits 0°C, then becomes constant until the total heat reaches 6,950K J, and so on.",
+    "chunk_id": 37,
+    "reason": "The question asks if the given temperature rise function is piecewise, which requires knowledge of the reference material. However, the answer is supported by the provided description and is mathematically correct."
+  },
+  {
+    "question": "How many times does the temperature rise function change from linear to constant and back again?",
+    "answer": "It changes three times: until it hits 0°C, then until the total heat reaches 6,950K J, and finally until the temperature reaches 100°C.",
+    "chunk_id": 37,
+    "reason": "The question relies on the reference material for the temperature rise function, but the answer is supported by the given description."
+  },
+  {
+    "question": "Is the given relation a function?",
+    "answer": "Yes, it is a function.",
+    "chunk_id": 38,
+    "reason": "The question is not self-contained as it relies on the reference material to define what a function is. However, the answer is grounded in the reference material and mathematically correct."
+  }
+]

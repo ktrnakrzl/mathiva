@@ -21,13 +21,15 @@ This document specifies the **full target system** (Sections 1–12 below). This
 | Endpoint | Status |
 |---|---|
 | `POST /auth/register`, `POST /auth/login` | ✅ Live (bcrypt + JWT, 24h expiry) |
-| `POST /ask` (as `/api/ask`) | ✅ Live — SBERT → FAISS → **Ollama "phi"** (not the specified T5 fine-tuned model; no Phi-3/Claude fallback chain) |
+| `POST /ask` (as `/api/ask`) | ✅ Live — SBERT → FAISS → **answer cascade** (Phi-3 primary + fine-tuned T5 backup + Gemini free-tier escalation; returns `model_used`). `/api/ask/stream` still streams Phi-3 only. |
 | `POST /solve` | ✅ Live (SymPy) |
 | `POST /quiz` | 🟡 Partial — generates questions from `genmath_qa_pairs.json`, but no scoring |
 | `POST /quiz/submit` | ❌ Not implemented |
 | `GET /user/profile`, `GET /user/progress` | ❌ Not implemented |
 
 **§3 Architecture / §9 Deployment** — running locally (FastAPI dev server), not deployed to AWS EC2 + Supabase as specified. No Nginx, systemd, or CI/CD pipeline yet.
+
+**T5 fine-tuning (FR-RAG-04) — 🔄 pipeline built, not yet integrated (as of 2026-07-18).** The full training pipeline exists and `train.py` is verified end-to-end, but the model is not yet trained-to-convergence or wired into `/ask` (which still calls Ollama "phi" only). Two datasets are prepared: a **curriculum QA set** (DepEd General Mathematics textbook → llama3 generation → llama3 LLM-judge → **62 kept pairs**, RAG-augmented and grouped-split into 50/7/5) and a **DeepMind Mathematics warm-up set** (100k generic Q&A, split 96k/2k/2k). Planned training is two-stage (generic warm-up → curriculum), `flan-t5-base` on a free Colab T4, evaluated with ROUGE-L/BLEU and a T5-vs-Phi-3 comparison. Full detail: [BLUEPRINT → In progress: T5 fine-tuning pipeline](./MATHIVA_SYSTEM_BLUEPRINT.md#-in-progress-t5-fine-tuning-pipeline-as-of-2026-07-18).
 
 **Runway:** thesis deadline is ~mid-August 2026 (6 weeks out as of this writing) — the gaps above are this stretch's actual work, not just documentation debt. Update this section as each lands.
 
@@ -87,7 +89,7 @@ MATHIVA serves as a supplementary tutoring tool for STEM students, addressing:
 | FR-RAG-01 | Ask Endpoint | System must provide `/ask` endpoint accepting user questions and returning curated answers with citations |
 | FR-RAG-02 | Semantic Search | System must perform semantic similarity search across FAISS indices using SBERT embeddings |
 | FR-RAG-03 | Context Retrieval | System must retrieve top-K relevant chunks (K=3 default) and rank by relevance |
-| FR-RAG-04 | Fallback Chain | System must implement 3-tier fallback: RAG + T5 → Phi-3 Mini (local) → Claude API (post-defense optional) |
+| FR-RAG-04 | Answer Cascade | ✅ Built. With retrieved context, Phi-3 and the fine-tuned T5 both generate (a combination, not a wait-to-fail chain); the better local answer is chosen, and **Gemini (free tier)** is a bounded escalation used only when the local answer is empty/degenerate. Simple output-sanity guard, not a tuned confidence score. Phi-3 is preferred over T5 for now (T5 weaker at current data size). |
 | FR-RAG-05 | Citation Tracking | System must track and return source citations for all RAG responses |
 
 #### 2.1.3 Mathematics Solver
@@ -804,6 +806,8 @@ Supabase PostgreSQL
 |---|---|---|---|
 | 1.0 | June 2026 | Kat | Initial system specification for thesis submission |
 | 1.1 | 2026-06-25 | Kat | Added Implementation Status section distinguishing built vs. planned components |
+| 1.2 | 2026-07-18 | Kat | Documented T5 fine-tuning pipeline status (dataset engineering, DeepMind warm-up, two-stage training); refined FR-RAG-04 to the output-sanity fallback cascade |
+| 1.3 | 2026-07-19 | Kat | Answer cascade built and live at `/api/ask` (Phi-3 + T5 + Gemini free-tier escalation, `model_used`); T5 trained (two-stage) and evaluated; updated FR-RAG-04 and §6 status |
 
 ---
 
@@ -812,8 +816,12 @@ Supabase PostgreSQL
 - **RAG:** Retrieval-Augmented Generation — combines information retrieval with language models
 - **SBERT:** Sentence-BERT — semantic embeddings for similarity search
 - **FAISS:** Facebook AI Similarity Search — vector database for fast similarity queries
-- **T5:** Text-to-Text Transfer Transformer — fine-tuned for mathematics Q&A
-- **Phi-3 Mini:** Lightweight language model fallback
+- **T5:** Text-to-Text Transfer Transformer — fine-tuned (flan-t5-base) for mathematics Q&A
+- **flan-t5:** Instruction-tuned T5 variant used as the base for fine-tuning (base on Colab T4; small as the CPU offline fallback)
+- **Phi-3 Mini:** Lightweight local language model, the fallback generator in the cascade
+- **LLM-as-judge:** Using a language model (local llama3) to score generated QA pairs for self-containment, grounding, and correctness before they become training data
+- **DeepMind Mathematics dataset:** 100k generic symbolic-math Q&A pairs used as a Stage-A general-math warm-up before curriculum fine-tuning
+- **Grouped split:** Train/val/test partition by source chunk so a chunk's context never leaks across splits
 - **pgvector:** PostgreSQL extension for vector similarity search
 - **JWT:** JSON Web Token — stateless authentication mechanism
 - **SymPy:** Python library for symbolic mathematics

@@ -18,12 +18,12 @@ Everything in Sections 1–11 below describes the **full target design**. The ta
 |---|---|
 | FastAPI backend (`backend/app/main.py`) | Running, CORS configured, routers registered |
 | `POST /api/ask` (RAG) | Real pipeline: SBERT (`all-MiniLM-L6-v2`) → FAISS top-k search → prompt assembly → generation |
-| Text generation | **Ollama "phi" only** — single hardcoded model call, no fine-tuning, no fallback |
+| Text generation | **Answer cascade (as of 2026-07-19)** in `answer_service.py`: RAG context → **Phi-3 (primary) + fine-tuned T5 (backup)** both run as a combination → **Gemini free-tier** escalation only when the local answer is weak (empty/degenerate). Response carries `model_used`. Wired into `POST /api/ask`. (Phi-3 is preferred for now because Phase-3 eval showed T5 is the weaker generator at the current dataset size.) |
 | `POST /solve` | SymPy-based solver, live |
 | OCR endpoint (`api/ocr.py`) | Live (image → text for the solver flow) |
 | Auth (`POST /auth/register`, `POST /auth/login`) | Real: bcrypt password hashing, JWT (HS256, 24h expiry). `get_current_user` dependency exists but **no other route requires login yet** |
 | Database | SQLAlchemy ORM, but only the **`users`** table exists. Defaults to local SQLite (`DATABASE_URL` env var swaps to Postgres — not yet pointed at Supabase) |
-| `POST /quiz` | Generation-only — randomly samples from `genmath_qa_pairs.json` (373 Q&A pairs). No grading. |
+| `POST /quiz` | Generation-only — randomly samples from `genmath_qa_pairs.json` (currently 74 raw Q&A pairs; 62 after quality-judging). No grading. |
 | Frontend (Flutter) | Two screen trees: the active `lib/screens/*` (current, theme-aware) and a legacy `lib/presentation/screens/**` tree (still live-routed at `/quiz`, `/review`, `/mastery`, `/rewards`, `/tutor`) |
 | Frontend Repository Pattern | Real, but only on the frontend (`lib/repositories/` — abstract + API/mock implementations) |
 | Frontend state management | Riverpod is only used in the **legacy** screen tree (7 files); the active app flow uses plain `StatefulWidget` + `ValueNotifier` |
@@ -32,10 +32,10 @@ Everything in Sections 1–11 below describes the **full target design**. The ta
 
 | Component | Status |
 |---|---|
-| T5 fine-tuned model | Not started — confirmed as upcoming work (data prep + fine-tuning + eval) |
-| Phi-3 Mini fallback | Not implemented |
-| Claude API fallback | Not implemented |
-| Fallback / Circuit Breaker pattern (§11.1.4) | Not implemented — there's only the one Ollama call, nothing to fall back from |
+| T5 fine-tuned model | 🔄 **In progress** — full dataset pipeline built and `train.py` verified end-to-end; not yet trained-to-convergence or integrated into `/ask`. See [🔄 In progress: T5 fine-tuning pipeline](#-in-progress-t5-fine-tuning-pipeline-as-of-2026-07-18) below |
+| ~~Phi-3 Mini fallback~~ | ✅ Built — Phi-3 is the primary local generator in the answer cascade (`answer_service.py`) |
+| Cloud API fallback | ✅ Built as **Gemini free tier** (not Claude — respects the no-paid-API rule; reuses the OCR key). Bounded escalation, fires only when the local answer is weak |
+| Fallback / Circuit Breaker pattern (§11.1.4) | ✅ Built — the answer cascade escalates on a cheap "is the output empty/degenerate?" guard |
 | Adapter Pattern across models (§11.1.6) | Not implemented — no unified model interface exists yet |
 | `POST /quiz/submit`, scoring, points/rewards persistence | Not implemented |
 | DB tables: `sessions`, `quiz_attempts`, `quiz_responses`, `knowledge_base_metadata`, `faiss_indices` | Not implemented (only `users` exists) |
@@ -48,6 +48,31 @@ Everything in Sections 1–11 below describes the **full target design**. The ta
 | Appendix A file structure | Describes the **target** repo layout, not the current one — actual backend lives at `backend/app/` with a flatter structure than shown |
 
 **Runway:** thesis deadline is ~mid-August 2026 (6 weeks out as of this writing), so the planned items above are realistic to build before defense, not just aspirational — this section should be revisited and updated as each one lands.
+
+---
+
+### 🔄 In progress: T5 fine-tuning pipeline (as of 2026-07-18)
+
+The fine-tuned transformer is a **required** thesis contribution — the abstract claims *"RAG with fine-tuned transformer models,"* so a trained model must exist. The full data + training pipeline is now built and the training script is verified end-to-end; what remains is a converged training run, evaluation, and integration into `/ask`. All model building uses **local, free tooling only** (Ollama + Hugging Face on a free Colab T4) — no paid APIs.
+
+**Inference design — answer cascade (built 2026-07-19, `backend/app/services/answer_service.py`).** At `/ask`: RAG retrieves context → the **local layer (Phi-3 + fine-tuned T5) both generate** as a combination (neither waits for the other to fail) → the better local answer is chosen → **Gemini (free tier) escalation** only when that local answer is still "not great". "Not great" is a cheap, objective guard (`is_bad_answer`: empty or degenerate/repetition output), not a tuned confidence score — deliberately simple. Phi-3 is preferred over T5 for now because Phase-3 eval showed T5 is the weaker generator at 62 training pairs; the preference flips back to T5 once a larger dataset makes it competitive. The response carries `model_used` (`t5` / `phi3` / `gemini`) so the tier is visible. Note: `POST /api/ask/stream` still streams Phi-3 only, since token-streaming can't wait for the full answer the guard needs.
+
+**Dataset engineering.** Two datasets feed a two-stage fine-tune:
+
+1. **Curriculum QA set (domain + format aligned).** Built from the DepEd *General Mathematics* textbook:
+   - `chunk_pdf.py` → **1,108** text chunks → SBERT (`all-MiniLM-L6-v2`) embeddings → FAISS index (`build_faiss.py`). Corpus is **General-Math-only** (other SHS subjects blocked by LRMDS access).
+   - `generate_qa.py` — local **llama3** (Ollama) turns each cleaned chunk into 2–3 *self-contained* Q&A pairs. `text_clean.py` strips front-matter/boilerplate; regex validation rejects non-self-contained questions (e.g. "what is x?" with no equation) and ungrounded answers; questions are globally de-duplicated.
+   - `judge_qa.py` — a second **llama3** pass (LLM-as-judge) scores every pair against its source chunk on three axes: *self-contained*, *grounded*, *correct*; only pairs passing all three are kept. Result so far: **74 raw → 62 kept (84%), 12 rejected.** This is the quality backstop before training.
+   - `authored_qa_pairs.json` — **51** hand-authored, curriculum-aligned pairs covering strands the PDF extraction under-covers (logic, stocks/bonds, exponential/logarithmic). Kept separate pending source-chunk mapping.
+   - `prepare_dataset.py` — assembles the training set so each example matches the **live inference distribution**: `input = instruction + top-3 retrieved context + question`, `target = answer`. Split is **grouped by source chunk** so no chunk's context leaks across train/val/test. Current build (from the judged pairs): **62 examples → train 50 / val 7 / test 5**. A measured retrieval-quality signal: the gold source chunk is retrieved in the top-3 only **48%** of the time (ties to the RAG corpus-quality gap; when it misses, the gold chunk is prepended so the target is always supported).
+
+2. **Generic warm-up set (general math ability).** `ml/t5/deepmind/` — the **DeepMind Mathematics** dataset, **100,000** Q&A pairs streamed from Hugging Face across 5 modules (linear algebra, arithmetic, GCD), exported as CSV + JSONL (`input`/`target`), split **96k / 2k / 2k**. This is generic symbolic math (no curriculum, no context) — a Stage-A pre-fine-tune warm-up, **not** a substitute for the curriculum set.
+
+**Training (`train.py`, verified end-to-end).** `flan-t5-base` in **fp32** (flan-t5 is NaN-unstable in fp16), 512-token input / 256-token target, `Seq2SeqTrainer` with early stopping on validation loss. **Two-stage plan:** Stage A on the 100k generic set → Stage B continues the same weights on the curriculum set. Real runs use a **free Colab T4** (`train_flan_t5.ipynb`, `train_flan_t5_deepmind.ipynb`); `flan-t5-small` trains locally on CPU as an offline fallback. A 1-epoch `flan-t5-small` smoke test has run clean end-to-end (tokenize → train → eval → save).
+
+**Evaluation (`eval.py`, pending a trained model).** ROUGE-L / BLEU on the held-out test split, plus a **head-to-head of T5 vs Phi-3 on identical retrieved context** — this comparison is the core empirical contribution and the check on whether the simple output-sanity guards suffice.
+
+**Open constraints.** The curriculum set is small (**~62**); the lever to grow it is finishing the textbook QA-generation pass (only **40 / 1,108** chunks processed so far). Corpus breadth is limited to General Mathematics.
 
 ---
 
@@ -1136,6 +1161,8 @@ Log Retention:
 |---|---|---|---|
 | 1.0 | June 2026 | Kat | Initial system blueprint for thesis submission |
 | 1.1 | 2026-06-25 | Kat | Added Implementation Status section distinguishing built vs. planned components |
+| 1.2 | 2026-07-18 | Kat | Added "In progress: T5 fine-tuning pipeline" — dataset engineering (llama3 generation + LLM-judge, 62 curriculum pairs; DeepMind 100k warm-up), two-stage training, fallback-cascade inference design; updated T5 status row |
+| 1.3 | 2026-07-19 | Kat | Answer cascade built (`answer_service.py`): RAG + T5 + Phi-3 + Gemini free-tier escalation, `model_used` field; two-stage T5 trained (Stage A on DeepMind 100k, Stage B on curriculum) and evaluated (T5 vs Phi-3 — Phi-3 currently stronger); updated status tables |
 
 ---
 

@@ -7,7 +7,8 @@ and generate the answer. So each training example is
     input  = "<instruction>\nContext: <top-k retrieved chunks>\nQuestion: <q>"
     target = "<reference answer>"
 
-built from the 373 pairs in ml/retrieval/genmath_qa_pairs.json.
+built from the quality-judged pairs in
+ml/retrieval/genmath_qa_pairs.judged.json (the pairs judge_qa.py kept).
 
 Two deliberate choices worth defending at review:
 
@@ -17,8 +18,8 @@ Two deliberate choices worth defending at review:
    prepend it so the target answer is always supported. `gold_retrieved` is
    recorded per example so retrieval quality is measurable.
 
-2. Grouped split by source chunk. The 373 pairs come from only ~157 chunks
-   (~2.4 questions each). A naive per-question split would put a chunk's context
+2. Grouped split by source chunk. The pairs come from relatively few source
+   chunks (several questions each). A naive per-question split would put a chunk's context
    in train and another of its questions in test -- context leakage that
    inflates scores. We split by source chunk instead, so no chunk is seen in
    training and evaluated on.
@@ -43,7 +44,7 @@ VAL_FRAC = 0.10
 TEST_FRAC = 0.10
 INSTRUCTION = "Answer the Grade 11 General Mathematics question using the context."
 
-QA_PATH = os.path.join(ML_DIR, "retrieval", "genmath_qa_pairs.json")
+QA_PATH = os.path.join(ML_DIR, "retrieval", "genmath_qa_pairs.judged.json")
 CHUNKS_PATH = os.path.join(ML_DIR, "retrieval", "output_chunks.json")
 OUT_DIR = os.path.join(HERE, "data")
 

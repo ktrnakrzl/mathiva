@@ -2,27 +2,27 @@
   "seed": 42,
   "top_k": 3,
   "instruction": "Answer the Grade 11 General Mathematics question using the context.",
-  "total_examples": 373,
-  "gold_retrieved_rate": 0.528,
+  "total_examples": 62,
+  "gold_retrieved_rate": 0.484,
   "split_strategy": "grouped by source_chunk_index (no context leakage)",
   "splits": {
     "train": {
-      "examples": 298,
-      "source_chunks": 125,
-      "avg_input_words": 259.7,
-      "avg_target_words": 38.0
+      "examples": 50,
+      "source_chunks": 26,
+      "avg_input_words": 197.6,
+      "avg_target_words": 13.8
     },
     "val": {
-      "examples": 39,
-      "source_chunks": 16,
-      "avg_input_words": 255.5,
-      "avg_target_words": 40.4
+      "examples": 7,
+      "source_chunks": 3,
+      "avg_input_words": 159.7,
+      "avg_target_words": 13.1
     },
     "test": {
-      "examples": 36,
-      "source_chunks": 16,
-      "avg_input_words": 257.1,
-      "avg_target_words": 41.8
+      "examples": 5,
+      "source_chunks": 3,
+      "avg_input_words": 195.2,
+      "avg_target_words": 13.6
     }
   }
 }

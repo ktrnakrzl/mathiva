@@ -20,11 +20,6 @@
     "chunk_id": 8
   },
   {
-    "question": "What is the solution to the inequality (x - 1)/(x + 2) > 0?",
-    "answer": "The inequality (x - 1)/(x + 2) > 0 is true for all real numbers x such that x > 1 or x < -2.",
-    "chunk_id": 8
-  },
-  {
     "question": "What is the degree of f(x) = (x^3 + 2x^2 - 5x + 1) / (x + 1)?",
     "answer": "The degree of the numerator is 3, and the degree of the denominator is 1. Therefore, the degree of the rational function is 3.",
     "chunk_id": 9
@@ -130,11 +125,6 @@
     "chunk_id": 17
   },
   {
-    "question": "If p and q are propositions, what is the logical equivalence of (p → q) ∧ (q → p)?",
-    "answer": "(p ∧ q) ∨ (¬p ∧ ¬q)",
-    "chunk_id": 17
-  },
-  {
     "question": "What is the domain of f(x) = (x - 1)/2?",
     "answer": "All real numbers except x = 1, since division by zero is undefined.",
     "chunk_id": 18
@@ -175,18 +165,8 @@
     "chunk_id": 20
   },
   {
-    "question": "Which of the following relations are functions?",
-    "answer": "f and h are functions because no two ordered pairs have the same x-value but different y-values.",
-    "chunk_id": 21
-  },
-  {
     "question": "Why is g not a function?",
     "answer": "Because (1,3) and (1,4) are ordered pairs with the same x-value but different y-values.",
-    "chunk_id": 21
-  },
-  {
-    "question": "What is the condition for a relation to be a function?",
-    "answer": "No two ordered pairs have the same x-value but different y-values.",
     "chunk_id": 21
   },
   {
@@ -235,18 +215,8 @@
     "chunk_id": 25
   },
   {
-    "question": "What is a necessary condition for a graph to be a function?",
-    "answer": "It must pass the vertical line test.",
-    "chunk_id": 25
-  },
-  {
     "question": "What is an example of a rule that relates two values?",
     "answer": "A relation is a rule that relates two values, one from a set of inputs and the second from the set of outputs.",
-    "chunk_id": 26
-  },
-  {
-    "question": "Can all relations pass the vertical line test?",
-    "answer": "No, not all relations do not pass the vertical line test.",
     "chunk_id": 26
   },
   {
@@ -300,11 +270,6 @@
     "chunk_id": 32
   },
   {
-    "question": "For what value of d is the jeepney fare P10.00?",
-    "answer": "Let F(d) = 10.00. If d <= 4, then 8.00 = 10.00, which is not possible. If d > 4, then 8.00 + 1.50(d - 4) = 10.00. Solving for d, we get d = 6.33 (not an integer). Since the distance must be an integer kilometer, there is no value of d that satisfies F(d) = 10.00.",
-    "chunk_id": 32
-  },
-  {
     "question": "What does the floor function give, for example ?",
     "answer": "the largest integer less than or equal to",
     "chunk_id": 33
@@ -313,16 +278,6 @@
     "question": "What happens to the temperature of ice as it is heated?",
     "answer": "it rises until it hits the melting point",
     "chunk_id": 33
-  },
-  {
-    "question": "What is the highest possible temperature that can be reached by steam?",
-    "answer": "Above 100°C (no specific value given)",
-    "chunk_id": 34
-  },
-  {
-    "question": "How many Joules of heat are required to melt the ice into liquid water?",
-    "answer": "6,950 J",
-    "chunk_id": 35
   },
   {
     "question": "How many Joules of heat are required to reach a temperature of 0°C?",
@@ -340,24 +295,9 @@
     "chunk_id": 36
   },
   {
-    "question": "Is the given temperature rise function a piecewise function?",
-    "answer": "Yes. The function can be expressed as linear with positive slope until it hits 0°C, then becomes constant until the total heat reaches 6,950K J, and so on.",
-    "chunk_id": 37
-  },
-  {
     "question": "What is the condition for the temperature rise to become a constant function?",
     "answer": "The temperature hits 0°C or the total heat reaches 6,950K J.",
     "chunk_id": 37
-  },
-  {
-    "question": "How many times does the temperature rise function change from linear to constant and back again?",
-    "answer": "It changes three times: until it hits 0°C, then until the total heat reaches 6,950K J, and finally until the temperature reaches 100°C.",
-    "chunk_id": 37
-  },
-  {
-    "question": "Is the given relation a function?",
-    "answer": "Yes, it is a function.",
-    "chunk_id": 38
   },
   {
     "question": "Which of the given diagrams do NOT represent a function?",
