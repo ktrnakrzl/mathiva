@@ -44,11 +44,22 @@ app.include_router(auth_router)
 from app.api.quiz import router as quiz_router
 app.include_router(quiz_router)
 
+from app.config import settings
+
+# Fail fast on a misconfigured production deployment (dev secret / SQLite / weak
+# key). No-op in development so the zero-setup defaults keep working.
+settings.validate_runtime()
+
 from app.database.db import Base, engine
 # app.api.auth/app.api.quiz (imported above) already import
-# app.database.models, which registers User/QuizAttempt on Base -- so
-# create_all below picks both up.
-Base.metadata.create_all(bind=engine)
+# app.database.models, which registers User/QuizAttempt on Base.
+#
+# On SQLite (local dev) we auto-create the tables so the app runs with zero
+# setup. On Postgres (production) schema is managed by Alembic instead -- run
+# `alembic upgrade head` before starting the server -- so we do NOT create_all
+# there and let migrations be the single source of truth.
+if settings.is_sqlite:
+    Base.metadata.create_all(bind=engine)
 
 
 @app.on_event("startup")

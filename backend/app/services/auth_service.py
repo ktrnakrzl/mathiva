@@ -1,4 +1,3 @@
-import os
 from datetime import datetime, timedelta, timezone
 
 import bcrypt
@@ -7,15 +6,16 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.database.db import get_db
 from app.database.models import User
 
-# Must be overridden via the JWT_SECRET env var (backend/.env) for any real
-# deployment -- this fallback only exists so auth works out of the box for
-# local thesis development.
-JWT_SECRET = os.getenv("JWT_SECRET", "dev-secret-change-in-production")
-JWT_ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE = timedelta(hours=24)
+# Auth config comes from the central settings (backend/.env). The JWT_SECRET
+# default is an insecure dev fallback so auth works out of the box locally;
+# settings.validate_runtime() rejects it when ENVIRONMENT=production.
+JWT_SECRET = settings.jwt_secret
+JWT_ALGORITHM = settings.jwt_algorithm
+ACCESS_TOKEN_EXPIRE = timedelta(minutes=settings.access_token_expire_minutes)
 
 # tokenUrl points Swagger's "Authorize" button at the real login endpoint.
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login", auto_error=False)

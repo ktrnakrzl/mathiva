@@ -1,0 +1,83 @@
+"""Central application settings.
+
+Every environment-driven value the backend needs is declared here once, typed and
+validated, instead of scattered `os.getenv` calls. Modules import the singleton
+`settings` rather than reading the environment directly.
+
+Values come from real environment variables first, then `backend/.env` as a
+fallback (the app also calls `load_dotenv()` at startup, so in practice the
+values are already in the environment by the time this loads). Defaults keep the
+app runnable with zero setup for local development and tests.
+
+Call `settings.validate_runtime()` once at startup (main.py) so a misconfigured
+*production* deployment fails fast and loudly instead of silently running with a
+dev secret or a throwaway SQLite file.
+"""
+
+from pathlib import Path
+
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# backend/.env, resolved from this file's location so it works regardless of the
+# process's current working directory.
+_ENV_FILE = Path(__file__).resolve().parent.parent / ".env"
+
+_DEV_JWT_SECRET = "dev-secret-change-in-production"
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=str(_ENV_FILE),
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore",
+    )
+
+    # "development" (default) | "production". Flips the strict validation below.
+    environment: str = Field(default="development", validation_alias="ENVIRONMENT")
+
+    # Database. Defaults to a local SQLite file so auth works with zero setup;
+    # set DATABASE_URL to a Postgres URL (e.g. Supabase) for a real deployment.
+    database_url: str = Field(default="sqlite:///./mathiva.db", validation_alias="DATABASE_URL")
+
+    # Auth / JWT.
+    jwt_secret: str = Field(default=_DEV_JWT_SECRET, validation_alias="JWT_SECRET")
+    jwt_algorithm: str = Field(default="HS256", validation_alias="JWT_ALGORITHM")
+    access_token_expire_minutes: int = Field(
+        default=24 * 60, validation_alias="ACCESS_TOKEN_EXPIRE_MINUTES"
+    )
+
+    # Gemini free-tier fallback (also used by OCR). Optional: absent key just
+    # disables the Gemini tier.
+    gemini_api_key: str | None = Field(default=None, validation_alias="GEMINI_API_KEY")
+    gemini_model: str = Field(default="gemini-2.5-flash", validation_alias="GEMINI_MODEL")
+
+    @property
+    def is_production(self) -> bool:
+        return self.environment.strip().lower() in ("production", "prod")
+
+    @property
+    def is_sqlite(self) -> bool:
+        return self.database_url.startswith("sqlite")
+
+    def validate_runtime(self) -> None:
+        """Fail fast on a misconfigured *production* deployment. No-op in dev/test
+        so the zero-setup defaults keep working."""
+        if not self.is_production:
+            return
+        problems = []
+        if self.jwt_secret == _DEV_JWT_SECRET:
+            problems.append("JWT_SECRET is still the insecure dev default.")
+        if len(self.jwt_secret.encode("utf-8")) < 32:
+            problems.append("JWT_SECRET must be at least 32 bytes for HS256.")
+        if self.is_sqlite:
+            problems.append("DATABASE_URL points at SQLite; use Postgres in production.")
+        if problems:
+            raise RuntimeError(
+                "Invalid production configuration:\n  - " + "\n  - ".join(problems)
+            )
+
+
+# Import-time singleton: read the environment once, reuse everywhere.
+settings = Settings()

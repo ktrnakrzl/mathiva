@@ -5,6 +5,8 @@ python-dotenv
 psycopg2-binary
 pgvector
 sqlalchemy
+alembic
+pydantic-settings
 requests
 sympy
 antlr4-python3-runtime==4.11

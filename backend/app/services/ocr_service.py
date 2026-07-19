@@ -1,17 +1,17 @@
 import base64
 import io
 import json
-import os
 
 import requests
 from PIL import Image
+
+from app.config import settings
 
 # Google's Gemini is a multimodal model with a genuinely free API tier (no card
 # needed via Google AI Studio). Unlike pix2tex -- which only reads printed math
 # and garbles real photos -- Gemini reads handwriting and photographed problems
 # and can transcribe them to LaTeX. When GEMINI_API_KEY is set we use it;
 # otherwise we fall back to the local pix2tex model so dev still works offline.
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 GEMINI_URL = (
     "https://generativelanguage.googleapis.com/v1beta/models/"
     "{model}:generateContent"
@@ -36,7 +36,7 @@ class OCRServiceError(RuntimeError):
 
 
 def gemini_available() -> bool:
-    return bool(os.getenv("GEMINI_API_KEY"))
+    return bool(settings.gemini_api_key)
 
 
 def _detect_mime(image_bytes: bytes) -> str:
@@ -90,8 +90,8 @@ def gemini_to_latex(image_bytes: bytes) -> str:
 
     try:
         response = requests.post(
-            GEMINI_URL.format(model=GEMINI_MODEL),
-            params={"key": os.getenv("GEMINI_API_KEY")},
+            GEMINI_URL.format(model=settings.gemini_model),
+            params={"key": settings.gemini_api_key},
             json=body,
             timeout=30,
         )

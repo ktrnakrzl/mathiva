@@ -7,11 +7,10 @@ It fires only on escalation (see answer_service.answer_question), so the free
 tier's quota isn't spent on every question.
 """
 
-import os
-
 import requests
 
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+from app.config import settings
+
 GEMINI_URL = (
     "https://generativelanguage.googleapis.com/v1beta/models/"
     "{model}:generateContent"
@@ -28,7 +27,7 @@ class GeminiServiceError(RuntimeError):
 def gemini_available() -> bool:
     """True only when a free API key is configured (backend/.env). Lets the
     cascade skip the Gemini tier cleanly on a key-less dev machine."""
-    return bool(os.getenv("GEMINI_API_KEY"))
+    return bool(settings.gemini_api_key)
 
 
 def gemini_generate(prompt: str) -> str:
@@ -45,8 +44,8 @@ def gemini_generate(prompt: str) -> str:
 
     try:
         response = requests.post(
-            GEMINI_URL.format(model=GEMINI_MODEL),
-            params={"key": os.getenv("GEMINI_API_KEY")},
+            GEMINI_URL.format(model=settings.gemini_model),
+            params={"key": settings.gemini_api_key},
             json=body,
             timeout=REQUEST_TIMEOUT,
         )

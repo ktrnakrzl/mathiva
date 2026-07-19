@@ -8,6 +8,27 @@ down the generator falls back to the template wording, which is fine here.
 
 import re
 
+import pytest
+
+from app.services import question_generator
+
+
+@pytest.fixture(autouse=True)
+def _deterministic_question_wording(monkeypatch):
+    """Serve the template wording verbatim, never an LLM rephrase.
+
+    These tests re-derive the correct answer from the question text, which only
+    holds for the stable template wording. With Ollama running, /api/quiz/next
+    reworded via phi could add stray numbers (e.g. "the mean of these 3 numbers:
+    4, 8, 6") -- valid for a student but breaking the naive re-derivation here.
+    Patching the rephrase to a no-op enforces this module's "never hit Ollama"
+    assumption whether or not Ollama is actually up, so the tests are
+    deterministic."""
+    monkeypatch.setattr(
+        question_generator, "_rephrase", lambda question, must_keep: question
+    )
+
+
 # A concept that has a template and an easily re-derivable answer.
 CONCEPT = {
     "subject_id": "general_math",

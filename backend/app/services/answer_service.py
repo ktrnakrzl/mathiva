@@ -19,8 +19,17 @@ The response carries `model_used` so the UI/analysis can see which tier answered
 """
 
 from app.services.ai_service import AIServiceError, generate_answer
-from app.services.rag_service import retrieve_context
 from app.services import gemini_service, t5_service
+
+
+def _retrieve(question: str):
+    """Indirection over rag_service.retrieve_context. rag_service loads the SBERT
+    model + FAISS index at import time, so we import it lazily here -- this keeps
+    `answer_service` importable (and mockable) in tests without paying that cost.
+    Production is unaffected: api/ask.py imports rag_service at startup anyway."""
+    from app.services.rag_service import retrieve_context
+
+    return retrieve_context(question)
 
 
 def is_bad_answer(text) -> bool:
@@ -79,7 +88,7 @@ def _sources(context_data):
 
 def answer_question(question: str) -> dict:
     """Run the full cascade and return {question, answer, model_used, sources}."""
-    context_data = retrieve_context(question)
+    context_data = _retrieve(question)
     context = "\n\n".join(context_data["chunks"])
     prompt = build_tutor_prompt(context, question)
 

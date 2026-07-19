@@ -1,8 +1,16 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, JSON, String
 
 from .db import Base
+
+
+def _utcnow() -> datetime:
+    """Naive UTC 'now'. Replaces the deprecated datetime.utcnow() (removed in a
+    future Python) while storing exactly the same value it did -- a UTC datetime
+    with no tzinfo -- so existing rows and the progress-aggregation queries that
+    compare these timestamps keep working unchanged."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 class User(Base):
@@ -17,8 +25,8 @@ class User(Base):
     full_name = Column(String(255), nullable=False)
     section = Column(String(100), nullable=True)
     enrollment_status = Column(String(50), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
 
 class QuizAttempt(Base):
@@ -49,7 +57,7 @@ class QuizAttempt(Base):
     # rows from the legacy client-trusted /api/quiz/submit path still fit.
     question_id = Column(Integer, ForeignKey("quiz_questions.id"), nullable=True, index=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=_utcnow, index=True)
 
 
 class QuizQuestion(Base):
@@ -90,4 +98,4 @@ class QuizQuestion(Base):
     # rack up duplicate attempts (one generated question = one attempt).
     answered = Column(Boolean, nullable=False, default=False)
 
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=_utcnow, index=True)
