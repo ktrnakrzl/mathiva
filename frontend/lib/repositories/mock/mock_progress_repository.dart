@@ -63,6 +63,14 @@ class MockProgressRepository implements ProgressRepository {
   }
 
   @override
+  Future<ReviewTarget> fetchReviewNext(
+      List<Map<String, String>> candidates) async {
+    await Future.delayed(const Duration(milliseconds: 200));
+    // Offline: pretend there's nothing due so the "all caught up" path shows.
+    return const ReviewTarget(available: false);
+  }
+
+  @override
   Future<AnswerResult> submitAnswer({
     required int questionId,
     required String selectedAnswer,

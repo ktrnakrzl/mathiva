@@ -109,6 +109,35 @@ def select_difficulty(attempts: Sequence, concept_id: str) -> str:
     return DIFFICULTY_LEVELS[idx]
 
 
+# A concept counts as "reviewed enough" once recent accuracy reaches this, so it
+# drops out of the review queue (spaced-repetition-lite: master it and it stops
+# resurfacing until the record slips again).
+_MASTERY_THRESHOLD = 0.8
+
+
+def review_pool(
+    attempts: Sequence, candidates: Sequence[str], mastery_threshold: float = _MASTERY_THRESHOLD
+) -> List[str]:
+    """The concepts worth REVIEWING: ones the student has attempted but not yet
+    mastered (recent accuracy below the threshold).
+
+    Differs from the practice pool in two ways: unseen concepts are excluded
+    (there's nothing to review in something never studied), and concepts the
+    student is currently getting right are excluded (recent accuracy tracks the
+    latest window, so a concept they've since mastered leaves the queue).
+    """
+    due: List[str] = []
+    for concept_id in candidates:
+        ca = _concept_attempts(attempts, concept_id)
+        if not ca:
+            continue  # never attempted -> not review material
+        recent = sorted(ca, key=lambda a: a.created_at)[-_RECENT_WINDOW:]
+        accuracy = sum(1 for a in recent if a.is_correct) / len(recent)
+        if accuracy < mastery_threshold:
+            due.append(concept_id)
+    return due
+
+
 def choose_next(
     attempts: Sequence,
     candidates: Sequence[str],

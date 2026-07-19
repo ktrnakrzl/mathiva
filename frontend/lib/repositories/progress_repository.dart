@@ -43,6 +43,12 @@ abstract class ProgressRepository {
     required List<String> candidateConcepts,
   });
 
+  /// Asks the server which concept the student should REVIEW next -- one they've
+  /// attempted but not recently mastered (`POST /api/quiz/review-next`). Sends
+  /// every concept with its content-tree context; gets back the chosen concept
+  /// (or `available == false` when the student is caught up).
+  Future<ReviewTarget> fetchReviewNext(List<Map<String, String>> candidates);
+
   /// Submits the chosen answer for a previously-served question
   /// (`POST /api/quiz/answer`). The server grades it against the answer it
   /// stored at generation time and returns the verdict + answer + steps.
@@ -51,6 +57,33 @@ abstract class ProgressRepository {
     required String selectedAnswer,
     required int elapsedSeconds,
   });
+}
+
+/// The concept the server chose for review, or `available == false` when there
+/// is nothing due. Carries the content-tree context so the practice attempt is
+/// attributed to the right subject/topic/lesson.
+class ReviewTarget {
+  final bool available;
+  final String? conceptId;
+  final String? subjectId;
+  final String? topicId;
+  final String? lessonId;
+
+  const ReviewTarget({
+    required this.available,
+    this.conceptId,
+    this.subjectId,
+    this.topicId,
+    this.lessonId,
+  });
+
+  factory ReviewTarget.fromJson(Map<String, dynamic> json) => ReviewTarget(
+        available: json['review_available'] as bool? ?? false,
+        conceptId: json['concept_id'] as String?,
+        subjectId: json['subject_id'] as String?,
+        topicId: json['topic_id'] as String?,
+        lessonId: json['lesson_id'] as String?,
+      );
 }
 
 /// A server-generated question (`GET /api/quiz/next`). There is intentionally

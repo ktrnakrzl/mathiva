@@ -129,3 +129,41 @@ def test_choose_next_ignores_concepts_without_templates():
 def test_choose_next_raises_when_no_candidate_has_a_template():
     with pytest.raises(ValueError):
         adaptive_quiz.choose_next([], ["nope", "still_nope"], random.Random(0))
+
+
+# ---- review_pool (spaced-repetition-lite) ----------------------------------
+
+def test_review_pool_excludes_unseen_concepts():
+    # Never attempted -> nothing to review.
+    assert adaptive_quiz.review_pool([], ["mean", "factoring"]) == []
+
+
+def test_review_pool_includes_attempted_but_weak():
+    attempts = [_attempt("mean", False, minute=i) for i in range(3)]
+    assert adaptive_quiz.review_pool(attempts, ["mean"]) == ["mean"]
+
+
+def test_review_pool_excludes_mastered():
+    attempts = [_attempt("mean", True, minute=i) for i in range(4)]  # 100% recent
+    assert adaptive_quiz.review_pool(attempts, ["mean"]) == []
+
+
+def test_review_pool_drops_a_concept_once_recently_recovered():
+    # Old failures then a recent run of successes -> mastered now -> not due,
+    # because the recent window (not lifetime accuracy) decides.
+    attempts = (
+        [_attempt("mean", False, minute=i) for i in range(3)]
+        + [_attempt("mean", True, minute=10 + i) for i in range(4)]
+    )
+    assert adaptive_quiz.review_pool(attempts, ["mean"]) == []
+
+
+def test_review_pool_keeps_below_threshold_accuracy():
+    # 2/4 recent correct = 0.5 < 0.8 -> still needs review.
+    attempts = [
+        _attempt("mean", True, minute=0),
+        _attempt("mean", False, minute=1),
+        _attempt("mean", True, minute=2),
+        _attempt("mean", False, minute=3),
+    ]
+    assert adaptive_quiz.review_pool(attempts, ["mean"]) == ["mean"]

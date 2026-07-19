@@ -28,6 +28,41 @@ class _HomeScreenState extends State<HomeScreen> {
     ProgressStore.refresh();
   }
 
+  /// Ask the server what to review next -- a concept the student has been
+  /// missing -- and jump straight into adaptive practice on it, or tell them
+  /// they're caught up.
+  Future<void> _startReview() async {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.showSnackBar(const SnackBar(
+      content: Text('Finding what to review…'),
+      duration: Duration(milliseconds: 800),
+    ));
+    try {
+      final target = await ProgressService.fetchReviewNext(
+        LocalContentService().allConceptsWithContext(),
+      );
+      if (!mounted) return;
+      if (!target.available) {
+        messenger.showSnackBar(const SnackBar(
+          content: Text("You're all caught up — nothing to review right now."),
+        ));
+        return;
+      }
+      context.push(RouteNames.practice, extra: {
+        'subjectId': target.subjectId,
+        'topicId': target.topicId,
+        'lessonId': target.lessonId,
+        'conceptId': target.conceptId,
+        'candidateConcepts': [target.conceptId],
+      });
+    } catch (_) {
+      if (!mounted) return;
+      messenger.showSnackBar(const SnackBar(
+        content: Text("Couldn't start review. Check your connection and try again."),
+      ));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final subjects = LocalContentService().getSubjects();
@@ -90,6 +125,14 @@ class _HomeScreenState extends State<HomeScreen> {
                         RouteNames.lessons,
                         extra: {'subjectId': firstSubject.id},
                       ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _ActionTile(
+                      label: 'Review',
+                      icon: Icons.refresh_rounded,
+                      onTap: _startReview,
                     ),
                   ),
                   const SizedBox(width: 10),

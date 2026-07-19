@@ -61,6 +61,10 @@ class ProgressService {
         candidateConcepts: candidateConcepts,
       );
 
+  static Future<ReviewTarget> fetchReviewNext(
+          List<Map<String, String>> candidates) =>
+      repository.fetchReviewNext(candidates);
+
   static Future<AnswerResult> submitAnswer({
     required int questionId,
     required String selectedAnswer,

@@ -83,6 +83,15 @@ class ApiProgressRepository implements ProgressRepository {
   }
 
   @override
+  Future<ReviewTarget> fetchReviewNext(
+      List<Map<String, String>> candidates) async {
+    final response = await _dio.post('/api/quiz/review-next', data: {
+      'candidates': candidates,
+    });
+    return ReviewTarget.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  @override
   Future<AnswerResult> submitAnswer({
     required int questionId,
     required String selectedAnswer,

@@ -28,4 +28,27 @@ class LocalContentService {
 
   List<MathTopic> allTopics() =>
       getSubjects().expand((subject) => subject.topics).toList();
+
+  /// Every concept in the curriculum, each tagged with its full location in the
+  /// content tree. Sent to the backend's /quiz/review-next so it can pick what
+  /// the student should review and still attribute the attempt correctly (the
+  /// content tree lives here in the app, not the backend).
+  List<Map<String, String>> allConceptsWithContext() {
+    final out = <Map<String, String>>[];
+    for (final subject in getSubjects()) {
+      for (final topic in subject.topics) {
+        for (final lesson in topic.lessons) {
+          for (final concept in lesson.concepts) {
+            out.add({
+              'concept_id': concept.id,
+              'subject_id': subject.id,
+              'topic_id': topic.id,
+              'lesson_id': lesson.id,
+            });
+          }
+        }
+      }
+    }
+    return out;
+  }
 }

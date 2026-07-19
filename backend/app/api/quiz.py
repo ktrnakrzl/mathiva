@@ -1,3 +1,4 @@
+import random
 from collections import defaultdict
 from datetime import date, datetime, timedelta
 
@@ -218,6 +219,64 @@ def next_question_adaptive(
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+class ReviewCandidate(BaseModel):
+    concept_id: str
+    subject_id: str
+    topic_id: str
+    lesson_id: str
+
+
+class ReviewNextRequest(BaseModel):
+    # Every concept the app knows about, each with its place in the content tree
+    # (which lives in the app). Sending the context per concept lets the server
+    # attribute the review attempt to the right subject/topic/lesson.
+    candidates: List[ReviewCandidate]
+
+
+class ReviewNextResponse(BaseModel):
+    review_available: bool
+    concept_id: Optional[str] = None
+    subject_id: Optional[str] = None
+    topic_id: Optional[str] = None
+    lesson_id: Optional[str] = None
+
+
+@router.post("/quiz/review-next", response_model=ReviewNextResponse)
+def review_next(
+    request: ReviewNextRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Pick the concept the student most needs to REVIEW -- one they've attempted
+    but not recently mastered -- weighted toward their weakest.
+
+    Returns just the chosen concept + its content-tree context (or
+    review_available=false when the student is caught up). The app then runs
+    normal adaptive practice on it, so difficulty still adapts and the attempt is
+    attributed to the correct subject/topic/lesson.
+    """
+    # Only concepts we can actually generate a question for are reviewable.
+    by_id = {
+        c.concept_id: c for c in request.candidates if has_template(c.concept_id)
+    }
+    attempts = (
+        db.query(QuizAttempt).filter(QuizAttempt.user_id == current_user.id).all()
+    )
+    due = adaptive_quiz.review_pool(attempts, list(by_id.keys()))
+    if not due:
+        return ReviewNextResponse(review_available=False)
+
+    concept_id = adaptive_quiz.select_concept(attempts, due, random.Random())
+    ctx = by_id[concept_id]
+    return ReviewNextResponse(
+        review_available=True,
+        concept_id=concept_id,
+        subject_id=ctx.subject_id,
+        topic_id=ctx.topic_id,
+        lesson_id=ctx.lesson_id,
+    )
 
 
 class AnswerRequest(BaseModel):
