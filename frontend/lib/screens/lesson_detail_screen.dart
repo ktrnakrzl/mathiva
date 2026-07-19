@@ -150,6 +150,25 @@ class LessonDetailScreen extends StatelessWidget {
                           },
                         ),
                       ),
+                      const SizedBox(height: 10),
+                      // Smart Practice: the server picks WHICH concept in this
+                      // lesson to drill (the student's weakest) and at what
+                      // difficulty, from their history -- see /quiz/next-adaptive.
+                      _PrimaryButton(
+                        label: 'Smart Practice',
+                        primary: primary,
+                        onPressed: () => context.push(
+                          RouteNames.practice,
+                          extra: {
+                            'subjectId': subjectId,
+                            'topicId': topicId,
+                            'lessonId': lessonId,
+                            'conceptId': lesson.concepts.first.id,
+                            'candidateConcepts':
+                                lesson.concepts.map((c) => c.id).toList(),
+                          },
+                        ),
+                      ),
                     ],
                   ),
                 ),

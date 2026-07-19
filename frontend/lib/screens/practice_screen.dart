@@ -21,6 +21,11 @@ class PracticeScreen extends StatefulWidget {
   final String conceptId;
   final String difficulty;
 
+  /// Smart Practice: when set, the server chooses WHICH of these concepts to
+  /// serve based on the student's history (weakest first). When null, practice
+  /// is scoped to the single [conceptId] the student opened.
+  final List<String>? candidateConcepts;
+
   const PracticeScreen({
     super.key,
     required this.subjectId,
@@ -28,6 +33,7 @@ class PracticeScreen extends StatefulWidget {
     required this.lessonId,
     required this.conceptId,
     required this.difficulty,
+    this.candidateConcepts,
   });
 
   @override
@@ -79,7 +85,9 @@ class _PracticeScreenState extends State<PracticeScreen> {
         subjectId: widget.subjectId,
         topicId: widget.topicId,
         lessonId: widget.lessonId,
-        candidateConcepts: [widget.conceptId],
+        // Smart Practice passes the lesson's concepts (server picks the weakest);
+        // concept-scoped practice passes just the one concept the student opened.
+        candidateConcepts: widget.candidateConcepts ?? [widget.conceptId],
       );
       if (!mounted) return;
       setState(() {

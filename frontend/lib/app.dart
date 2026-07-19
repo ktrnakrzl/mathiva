@@ -6,8 +6,6 @@ import 'package:go_router/go_router.dart';
 import 'models/mathiva_models.dart';
 import 'presentation/screens/progress/mastery_heatmap_screen.dart';
 import 'presentation/screens/progress/rewards_screen.dart';
-import 'presentation/screens/quiz/quiz_screen.dart';
-import 'presentation/screens/review/review_queue_screen.dart';
 import 'presentation/screens/tutor/tutor_screen.dart';
 import 'screens/chat_screen.dart';
 import 'screens/concept_progress_screen.dart';
@@ -70,8 +68,6 @@ class MathivaApp extends StatelessWidget {
           path: RouteNames.solution,
           builder: (_, state) =>
               SolutionScreen(problem: state.extra as PracticeProblem?)),
-      GoRoute(path: '/quiz', builder: (_, __) => const QuizScreen()),
-      GoRoute(path: '/review', builder: (_, __) => const ReviewQueueScreen()),
       GoRoute(
           path: '/mastery', builder: (_, __) => const MasteryHeatmapScreen()),
       GoRoute(path: '/rewards', builder: (_, __) => const RewardsScreen()),
@@ -116,6 +112,9 @@ class MathivaApp extends StatelessWidget {
             lessonId: args['lessonId'] as String,
             conceptId: args['conceptId'] as String,
             difficulty: args['difficulty'] as String? ?? 'Easy',
+            candidateConcepts: (args['candidateConcepts'] as List?)
+                ?.map((e) => e as String)
+                .toList(),
           );
         },
       ),
