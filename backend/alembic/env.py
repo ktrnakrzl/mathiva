@@ -24,7 +24,10 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Drive the connection from the app's settings, not the alembic.ini placeholder.
-config.set_main_option("sqlalchemy.url", settings.database_url)
+# configparser treats '%' as interpolation syntax, so a URL-encoded password
+# (e.g. '%40' for '@') would raise "invalid interpolation syntax". Escape '%' as
+# '%%'; configparser un-escapes it back to the real URL when the value is read.
+config.set_main_option("sqlalchemy.url", settings.database_url.replace("%", "%%"))
 
 target_metadata = Base.metadata
 
