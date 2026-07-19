@@ -1,8 +1,22 @@
 import re
 
 from sympy import Basic, latex, symbols, solve, diff, integrate, simplify
-from sympy.parsing.sympy_parser import parse_expr
+from sympy.parsing.sympy_parser import (
+    parse_expr,
+    standard_transformations,
+    implicit_multiplication_application,
+    convert_xor,
+)
 from sympy.parsing.latex import parse_latex
+
+# Accept the notation students actually type, not strict Python syntax:
+#   "2x"  -> 2*x   (implicit multiplication)
+#   "x^2" -> x**2  (caret as exponent)
+# Without these, parse_expr rejects "2x + 3 = 13" with "invalid syntax".
+_TRANSFORMS = standard_transformations + (
+    implicit_multiplication_application,
+    convert_xor,
+)
 
 
 # Student-facing message for when a scanned photo can't be turned into a
@@ -150,9 +164,11 @@ def solve_equation(equation_str, variable="x"):
         # Handle "=" in equation
         if "=" in equation_str:
             left, right = equation_str.split("=")
-            expr = parse_expr(left) - parse_expr(right)
+            expr = parse_expr(left, transformations=_TRANSFORMS) - parse_expr(
+                right, transformations=_TRANSFORMS
+            )
         else:
-            expr = parse_expr(equation_str)
+            expr = parse_expr(equation_str, transformations=_TRANSFORMS)
         
         # Solve
         solutions = solve(expr, x)
@@ -174,7 +190,7 @@ def get_derivative(expr_str, variable="x"):
     """Return the derivative of an expression."""
     try:
         x = symbols(variable)
-        expr = parse_expr(expr_str)
+        expr = parse_expr(expr_str, transformations=_TRANSFORMS)
         derivative = diff(expr, x)
         return {
             "expression": expr_str,
