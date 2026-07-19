@@ -4,9 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'models/mathiva_models.dart';
-import 'presentation/screens/progress/mastery_heatmap_screen.dart';
-import 'presentation/screens/progress/rewards_screen.dart';
-import 'presentation/screens/tutor/tutor_screen.dart';
 import 'screens/chat_screen.dart';
 import 'screens/concept_progress_screen.dart';
 import 'screens/concept_reading_screen.dart';
@@ -68,10 +65,6 @@ class MathivaApp extends StatelessWidget {
           path: RouteNames.solution,
           builder: (_, state) =>
               SolutionScreen(problem: state.extra as PracticeProblem?)),
-      GoRoute(
-          path: '/mastery', builder: (_, __) => const MasteryHeatmapScreen()),
-      GoRoute(path: '/rewards', builder: (_, __) => const RewardsScreen()),
-      GoRoute(path: '/tutor', builder: (_, __) => const TutorScreen()),
       GoRoute(
         path: RouteNames.lessons,
         builder: (_, state) {
