@@ -46,6 +46,10 @@ def wired(monkeypatch):
         lambda q: {"chunks": ["ctx"], "indices": [0],
                    "all_chunks": [{"content": "some source chunk"}]},
     )
+    # The T5 tier is enabled by default here regardless of the local .env's
+    # DISABLE_T5 (which a dev may have set for a Gemini-only deployment) -- the
+    # test that exercises the disabled path sets it True explicitly.
+    monkeypatch.setattr(answer_service.settings, "disable_t5", False)
 
     state = {"phi": None, "t5": None, "gemini": None,
              "t5_available": True, "gemini_available": True}

@@ -11,6 +11,7 @@ from app.database.models import QuizAttempt, QuizQuestion, User
 from app.services.auth_service import get_current_user
 from app.services.question_generator import generate_question
 from app.services.quiz_templates import has_template
+from app.services import adaptive_quiz, quiz_templates
 
 router = APIRouter(prefix="/api", tags=["quiz"])
 
@@ -114,6 +115,76 @@ def next_question(
             subject_id=subject_id,
             topic_id=topic_id,
             lesson_id=lesson_id,
+            concept_id=concept_id,
+            difficulty=difficulty,
+            template_id=generated.template_id,
+            question_text=generated.question_text,
+            choices=generated.choices,
+            correct_answer=generated.correct_answer,
+            steps=generated.steps,
+            answered=False,
+        )
+        db.add(question)
+        db.commit()
+        db.refresh(question)
+
+        return NextQuestionResponse(
+            question_id=question.id,
+            subject_id=question.subject_id,
+            topic_id=question.topic_id,
+            lesson_id=question.lesson_id,
+            concept_id=question.concept_id,
+            difficulty=question.difficulty,
+            question=question.question_text,
+            choices=question.choices,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class AdaptiveNextRequest(BaseModel):
+    subject_id: str
+    topic_id: str
+    lesson_id: str
+    # The concepts available where the student currently is (the content tree
+    # lives in the app, not the backend). The server picks the best one for THIS
+    # student from these; if empty, it considers every concept it can generate.
+    candidate_concepts: List[str] = []
+
+
+@router.post("/quiz/next-adaptive", response_model=NextQuestionResponse)
+def next_question_adaptive(
+    request: AdaptiveNextRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Personalized counterpart to /quiz/next.
+
+    Instead of the client choosing the concept and difficulty, the SERVER picks
+    them from this student's own attempt history -- weighting toward weak/unseen
+    concepts and adapting the difficulty to recent performance -- then generates,
+    stores, and serves the question (minus the answer). The response reports which
+    concept + difficulty were chosen so the UI can show what's being practiced.
+    """
+    # Candidate pool: the lesson's concepts we can actually generate; if none are
+    # usable, fall back to every templated concept so the endpoint still works.
+    pool = [c for c in request.candidate_concepts if has_template(c)]
+    if not pool:
+        pool = quiz_templates.list_concepts()
+
+    attempts = (
+        db.query(QuizAttempt).filter(QuizAttempt.user_id == current_user.id).all()
+    )
+    concept_id, difficulty = adaptive_quiz.choose_next(attempts, pool)
+
+    try:
+        generated = generate_question(concept_id, difficulty)
+
+        question = QuizQuestion(
+            user_id=current_user.id,
+            subject_id=request.subject_id,
+            topic_id=request.topic_id,
+            lesson_id=request.lesson_id,
             concept_id=concept_id,
             difficulty=difficulty,
             template_id=generated.template_id,

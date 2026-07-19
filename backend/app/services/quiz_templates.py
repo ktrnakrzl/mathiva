@@ -34,9 +34,12 @@ class GeneratedQuestion:
     must_keep: List[str] = field(default_factory=list)
 
 
-# Difficulty knobs shared across numeric templates. Kept in one place so
-# "Hard" means roughly the same jump everywhere.
-_DIFFICULTY_RANK = {"Easy": 0, "Medium": 1, "Hard": 2}
+# Difficulty ladder, easiest -> hardest. One source of truth for the levels,
+# shared with the adaptive selector (adaptive_quiz.py) so "step up a difficulty"
+# means the same thing everywhere. Kept in one place so "Hard" is a consistent
+# jump across templates.
+DIFFICULTY_LEVELS = ("Easy", "Medium", "Hard")
+_DIFFICULTY_RANK = {name: i for i, name in enumerate(DIFFICULTY_LEVELS)}
 
 
 def _rank(difficulty: str) -> int:
@@ -489,6 +492,11 @@ TEMPLATES: Dict[str, Callable[[str, random.Random], GeneratedQuestion]] = {
 
 def has_template(concept_id: str) -> bool:
     return concept_id in TEMPLATES
+
+
+def list_concepts() -> List[str]:
+    """Every concept the generator can currently produce a question for."""
+    return list(TEMPLATES.keys())
 
 
 def generate(concept_id: str, difficulty: str, rng: random.Random) -> GeneratedQuestion:
