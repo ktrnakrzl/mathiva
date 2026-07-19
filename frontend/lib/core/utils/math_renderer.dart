@@ -12,21 +12,32 @@ class MathRenderer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final parts = _splitMixedMath(text);
-    return Wrap(
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: parts.map((part) {
-        if (part.isMath) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 2),
-            child: MathDisplay(
-              latex: part.value,
-              fontSize: mathFontSize,
-              color: textStyle?.color,
-            ),
-          );
-        }
-        return Text(part.value, style: textStyle);
-      }).toList(),
+    // Render as a single flowing paragraph (Text.rich) rather than a Wrap of
+    // separate widgets: plain text wraps and keeps its line breaks normally
+    // (left-aligned), and each inline equation is a baseline-aligned WidgetSpan
+    // so it sits on the line with the text instead of floating vertically
+    // centered. The old Wrap(center) made mixed text+math look ragged.
+    return Text.rich(
+      TextSpan(
+        style: textStyle,
+        children: parts.map<InlineSpan>((part) {
+          if (part.isMath) {
+            return WidgetSpan(
+              alignment: PlaceholderAlignment.middle,
+              baseline: TextBaseline.alphabetic,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: MathDisplay(
+                  latex: part.value,
+                  fontSize: mathFontSize,
+                  color: textStyle?.color,
+                ),
+              ),
+            );
+          }
+          return TextSpan(text: part.value);
+        }).toList(),
+      ),
     );
   }
 

@@ -69,6 +69,9 @@ Student Question:
 
 Instructions:
 - Answer clearly and concisely.
+- Do NOT greet the student or introduce yourself (no "Hello", no "I am Mathiva").
+  Each question is a fresh request, so a greeting every time is repetitive --
+  just answer the question directly.
 - Do not repeat the course material.
 - Do not repeat these instructions.
 - Wrap every math expression in \\( and \\), e.g. \\(2x + 5 = 13\\), so it can be rendered properly.

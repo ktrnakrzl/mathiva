@@ -7,21 +7,10 @@ import '../core/utils/math_renderer.dart';
 import '../presentation/widgets/animated_background.dart';
 import '../services/app_preferences.dart';
 import '../services/chat_service.dart';
+import '../services/chat_store.dart';
 import '../theme/app_theme.dart';
 import '../widgets/mathiva_bottom_nav.dart';
 import '../widgets/mathiva_top_bar.dart';
-
-class ChatMessage {
-  final String text;
-  final bool isUser;
-  final DateTime timestamp;
-
-  const ChatMessage({
-    required this.text,
-    required this.isUser,
-    required this.timestamp,
-  });
-}
 
 class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({super.key});
@@ -36,20 +25,28 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   final ScrollController _scrollController = ScrollController();
   late final AnimationController _typingController;
 
-  final List<ChatMessage> _messages = [
-    ChatMessage(
-      text:
-          'Hi! I\'m your Mathivia tutor. Ask me to solve, explain, or check any math problem. I\'ll include the steps and why each step works.',
-      isUser: false,
-      timestamp: DateTime.now(),
-    ),
-  ];
+  // Backed by the app-session ChatStore so the conversation survives leaving and
+  // returning to the Ask tab (go_router rebuilds this screen otherwise). Mutated
+  // in place (add / replace) — the store holds the same list instance.
+  List<ChatMessage> get _messages => ChatStore.messages.value;
 
   // _isTyping drives the animated "typing…" bubble, shown only until the first
   // token arrives. _isSending stays true for the whole request so the input bar
   // is disabled until the streamed answer finishes.
   bool _isTyping = false;
   bool _isSending = false;
+
+  // Typewriter reveal (ChatGPT/Claude style): the answer is "typed out"
+  // progressively rather than popping in all at once. _fullAnswer holds the full
+  // text received from the backend (one chunk for Gemini, many for a live Ollama
+  // stream); _revealTimer advances how much of it the active bubble shows, so the
+  // construction effect looks the same either way. _caretTimer blinks the caret.
+  Timer? _revealTimer;
+  Timer? _caretTimer;
+  bool _caretOn = true;
+  bool _constructing = false;
+  int? _activeAnswerIndex;
+  String _fullAnswer = '';
 
   @override
   void initState() {
@@ -58,10 +55,26 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       vsync: this,
       duration: const Duration(milliseconds: 900),
     )..repeat();
+    // Blink the trailing caret only while an answer is being typed out.
+    _caretTimer = Timer.periodic(const Duration(milliseconds: 530), (_) {
+      if (mounted && _constructing) setState(() => _caretOn = !_caretOn);
+    });
   }
 
   @override
   void dispose() {
+    // If we leave the tab mid-typewriter, snap the active answer to its full
+    // text so the persisted history doesn't keep a half-typed message.
+    final index = _activeAnswerIndex;
+    if (_constructing && index != null && index < _messages.length) {
+      _messages[index] = ChatMessage(
+        text: _fullAnswer,
+        isUser: false,
+        timestamp: _messages[index].timestamp,
+      );
+    }
+    _revealTimer?.cancel();
+    _caretTimer?.cancel();
     _controller.dispose();
     _scrollController.dispose();
     _typingController.dispose();
@@ -84,43 +97,36 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     });
     _scrollToBottom();
 
-    // The assistant message is created on the first token, then rebuilt in place
-    // as more text streams in (ChatMessage is immutable, so we replace it).
-    int? answerIndex;
-    String answer = '';
+    // The answer text accumulates in _fullAnswer as it arrives (one chunk for
+    // Gemini, many for a live Ollama stream); a reveal timer types it into the
+    // bubble so the construction effect looks the same either way.
+    _fullAnswer = '';
+    _activeAnswerIndex = null;
 
-    void applyChunk(String chunk) {
-      answer += chunk;
-      if (!mounted) return;
-      setState(() {
-        if (answerIndex == null) {
-          _isTyping = false; // first token replaces the typing bubble
-          _messages.add(ChatMessage(
-            text: answer,
-            isUser: false,
-            timestamp: DateTime.now(),
-          ));
-          answerIndex = _messages.length - 1;
-        } else {
-          _messages[answerIndex!] = ChatMessage(
-            text: answer,
-            isUser: false,
-            timestamp: _messages[answerIndex!].timestamp,
-          );
-        }
-      });
-      _scrollToBottom();
+    void ensureAnswerBubble() {
+      if (_activeAnswerIndex != null) return;
+      _isTyping = false; // first content replaces the typing-dots bubble
+      _messages.add(ChatMessage(
+        text: '',
+        isUser: false,
+        timestamp: DateTime.now(),
+      ));
+      _activeAnswerIndex = _messages.length - 1;
+      _startReveal();
     }
 
     try {
-      // Streams from the real backend (/api/ask/stream, RAG + Phi-3) via the
-      // repository pattern's swappable facade — see repositories/tutor_repository.dart.
+      // Streams from the real backend (/api/ask/stream) via the repository
+      // pattern's swappable facade — see repositories/tutor_repository.dart.
       await for (final chunk in ChatService.ask(question)) {
-        applyChunk(chunk);
+        _fullAnswer += chunk;
+        if (!mounted) return;
+        if (_activeAnswerIndex == null) setState(ensureAnswerBubble);
       }
       // Stream completed but produced nothing usable.
-      if (answerIndex == null) {
-        applyChunk('Sorry, I could not get an answer.');
+      if (_activeAnswerIndex == null) {
+        _fullAnswer = 'Sorry, I could not get an answer.';
+        if (mounted) setState(ensureAnswerBubble);
       }
     } catch (_) {
       // Surface a real failure instead of silently faking a plausible-looking
@@ -128,8 +134,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       // the tutor "hallucinating" when the request had actually failed.
       const message = 'Sorry, I couldn\'t reach the tutor right now. Please '
           'check your connection and try again.';
-      applyChunk(answerIndex == null ? message : '\n\n$message');
+      if (_activeAnswerIndex == null) {
+        _fullAnswer = message;
+        if (mounted) setState(ensureAnswerBubble);
+      } else {
+        _fullAnswer += '\n\n$message';
+      }
     } finally {
+      // Backend is done; the reveal timer keeps typing until it catches up to
+      // _fullAnswer, then clears the caret and re-enables the input.
       if (mounted) {
         setState(() {
           _isSending = false;
@@ -137,6 +150,39 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
         });
       }
     }
+  }
+
+  /// Advances the active bubble's visible text toward _fullAnswer a few
+  /// characters per tick, producing a typed-out (typewriter) effect. Stops once
+  /// the visible text has caught up AND the backend has finished sending.
+  void _startReveal() {
+    _constructing = true;
+    _revealTimer?.cancel();
+    _revealTimer = Timer.periodic(const Duration(milliseconds: 16), (timer) {
+      final index = _activeAnswerIndex;
+      if (index == null || !mounted) {
+        timer.cancel();
+        return;
+      }
+      final shown = _messages[index].text.length;
+      if (shown >= _fullAnswer.length) {
+        // Caught up. If the backend has also finished, stop and drop the caret.
+        if (!_isSending) {
+          timer.cancel();
+          setState(() => _constructing = false);
+        }
+        return;
+      }
+      final next = (shown + 3).clamp(0, _fullAnswer.length);
+      setState(() {
+        _messages[index] = ChatMessage(
+          text: _fullAnswer.substring(0, next),
+          isUser: false,
+          timestamp: _messages[index].timestamp,
+        );
+      });
+      _scrollToBottom();
+    });
   }
 
   void _scrollToBottom() {
@@ -181,14 +227,24 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                       return _TypingBubble(
                           controller: _typingController, primary: primary);
                     }
-                    return _ChatBubble(
-                        message: _messages[index], primary: primary);
+                    final message = _messages[index];
+                    // Blink a trailing caret on the answer still being typed out.
+                    final isActive =
+                        _constructing && index == _activeAnswerIndex;
+                    final display = (isActive && _caretOn)
+                        ? ChatMessage(
+                            text: '${message.text}▌',
+                            isUser: message.isUser,
+                            timestamp: message.timestamp,
+                          )
+                        : message;
+                    return _ChatBubble(message: display, primary: primary);
                   },
                 ),
               ),
               _InputBar(
                 controller: _controller,
-                enabled: !_isSending,
+                enabled: !_isSending && !_constructing,
                 primary: primary,
                 onSend: _sendMessage,
                 onSuggestionTap: _useSuggestion,
