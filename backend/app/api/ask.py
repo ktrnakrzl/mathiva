@@ -46,17 +46,33 @@ def ask_stream(
 ):
     """Same RAG + Phi answer as /ask, streamed token-by-token as plain text so
     the chat UI can render it as it arrives (the useful answer lands in the
-    first ~40 tokens, so this makes the tutor feel near-instant)."""
+    first ~40 tokens, so this makes the tutor feel near-instant).
+
+    When Ollama isn't reachable -- e.g. the hosted, Gemini-backed deployment has
+    no local LLM -- true token streaming isn't possible, so we fall back to the
+    full /ask cascade (which escalates to Gemini) and deliver its answer as a
+    single chunk. The client consumes the same text/plain stream either way; it
+    just arrives all at once instead of token-by-token."""
     prompt, _ = _retrieve_and_build_prompt(question)
 
-    # Prime the generator so a can't-reach-Ollama failure becomes a clean 503
-    # *before* we commit to a 200 streaming response. Once the first chunk is
-    # out, a mid-stream drop simply ends the stream with whatever arrived.
+    # Prime the generator so a can't-reach-Ollama failure is caught here, before
+    # we commit to a 200 streaming response. Once the first chunk is out, a
+    # mid-stream drop simply ends the stream with whatever arrived.
     generator = stream_answer(prompt)
     try:
         first_chunk = next(generator)
-    except AIServiceError as e:
-        raise HTTPException(status_code=503, detail=str(e))
+    except AIServiceError:
+        # No local Ollama -> answer via the cascade (Gemini) instead of 503ing.
+        try:
+            result = answer_question(question)
+        except AIServiceError as e:
+            # Every tier is down (no Ollama, no T5, no Gemini) -> genuine 503.
+            raise HTTPException(status_code=503, detail=str(e))
+
+        def cascade_body():
+            yield result["answer"]
+
+        return StreamingResponse(cascade_body(), media_type="text/plain")
     except StopIteration:
         first_chunk = None
 
