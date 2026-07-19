@@ -48,6 +48,19 @@ class ProgressService {
         difficulty: difficulty,
       );
 
+  static Future<GeneratedQuestion> fetchAdaptiveQuestion({
+    required String subjectId,
+    required String topicId,
+    required String lessonId,
+    required List<String> candidateConcepts,
+  }) =>
+      repository.fetchAdaptiveQuestion(
+        subjectId: subjectId,
+        topicId: topicId,
+        lessonId: lessonId,
+        candidateConcepts: candidateConcepts,
+      );
+
   static Future<AnswerResult> submitAnswer({
     required int questionId,
     required String selectedAnswer,

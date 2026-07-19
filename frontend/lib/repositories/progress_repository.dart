@@ -31,6 +31,18 @@ abstract class ProgressRepository {
     required String difficulty,
   });
 
+  /// Asks the server to choose the next question ADAPTIVELY from the student's
+  /// own history (`POST /api/quiz/next-adaptive`). Instead of the client picking
+  /// the concept + difficulty, the server picks the concept (from
+  /// [candidateConcepts]) and the difficulty that best fit what this student
+  /// needs next. The returned [GeneratedQuestion] reports what was chosen.
+  Future<GeneratedQuestion> fetchAdaptiveQuestion({
+    required String subjectId,
+    required String topicId,
+    required String lessonId,
+    required List<String> candidateConcepts,
+  });
+
   /// Submits the chosen answer for a previously-served question
   /// (`POST /api/quiz/answer`). The server grades it against the answer it
   /// stored at generation time and returns the verdict + answer + steps.

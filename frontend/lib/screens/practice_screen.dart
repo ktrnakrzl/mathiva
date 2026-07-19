@@ -71,12 +71,15 @@ class _PracticeScreenState extends State<PracticeScreen> {
       _selected = null;
     });
     try {
-      final question = await ProgressService.fetchNextQuestion(
+      // Adaptive: the server picks the difficulty from THIS student's history on
+      // the concept (see /api/quiz/next-adaptive) instead of the client dictating
+      // it. The pool is the concept the student opened, so a strong student gets
+      // a harder question and a struggling one gets an easier one automatically.
+      final question = await ProgressService.fetchAdaptiveQuestion(
         subjectId: widget.subjectId,
         topicId: widget.topicId,
         lessonId: widget.lessonId,
-        conceptId: widget.conceptId,
-        difficulty: widget.difficulty,
+        candidateConcepts: [widget.conceptId],
       );
       if (!mounted) return;
       setState(() {
@@ -161,8 +164,11 @@ class _PracticeScreenState extends State<PracticeScreen> {
         'subjectId': widget.subjectId,
         'topicId': widget.topicId,
         'lessonId': widget.lessonId,
-        'conceptId': widget.conceptId,
-        'difficulty': widget.difficulty,
+        // The concept + difficulty the SERVER actually served (adaptive), not
+        // whatever the client requested -- so the result screen and any retry
+        // reflect what the student really practiced.
+        'conceptId': question.conceptId,
+        'difficulty': question.difficulty,
         'selectedAnswer': selected,
         'elapsedSeconds': _elapsedSeconds,
         'isCorrect': result.isCorrect,
@@ -200,7 +206,9 @@ class _PracticeScreenState extends State<PracticeScreen> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: MathivaAppBar(
-        title: '${widget.difficulty} Practice',
+        // Difficulty is chosen adaptively by the server, so show what was
+        // actually served once it's loaded (a neutral title until then).
+        title: _question != null ? '${_question!.difficulty} Practice' : 'Practice',
         subtitle: 'Choose your answer carefully',
         icon: Icons.edit_note_rounded,
         onBack: () => context.canPop() ? context.pop() : context.go('/concept'),

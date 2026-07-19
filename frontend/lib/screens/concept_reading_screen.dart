@@ -252,7 +252,7 @@ class ConceptReadingScreen extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    'Choose Difficulty',
+                    'Ready to practice?',
                     style: TextStyle(
                       color: colors.ink,
                       fontSize: 18,
@@ -267,27 +267,31 @@ class ConceptReadingScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
-            for (final difficulty in ['Easy', 'Medium', 'Hard'])
-              Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: _DifficultyTile(
-                  label: difficulty,
-                  primary: primary,
-                  onTap: () {
-                    sheetContext.pop();
-                    context.push(
-                      RouteNames.practice,
-                      extra: {
-                        'subjectId': subjectId,
-                        'topicId': topicId,
-                        'lessonId': lessonId,
-                        'conceptId': conceptId,
-                        'difficulty': difficulty,
-                      },
-                    );
-                  },
-                ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 14),
+              child: Text(
+                "We'll pick the right difficulty for you based on how you've "
+                "been doing on this concept.",
+                style: TextStyle(color: colors.muted, height: 1.4),
               ),
+            ),
+            _DifficultyTile(
+              label: 'Start Practice',
+              primary: primary,
+              onTap: () {
+                sheetContext.pop();
+                context.push(
+                  RouteNames.practice,
+                  extra: {
+                    'subjectId': subjectId,
+                    'topicId': topicId,
+                    'lessonId': lessonId,
+                    'conceptId': conceptId,
+                    // No 'difficulty' -- the server chooses it adaptively.
+                  },
+                );
+              },
+            ),
           ],
         ),
       ),

@@ -42,6 +42,27 @@ class MockProgressRepository implements ProgressRepository {
   }
 
   @override
+  Future<GeneratedQuestion> fetchAdaptiveQuestion({
+    required String subjectId,
+    required String topicId,
+    required String lessonId,
+    required List<String> candidateConcepts,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    // Offline: just echo the first candidate at Easy so the flow can be demoed.
+    return GeneratedQuestion(
+      questionId: 1,
+      subjectId: subjectId,
+      topicId: topicId,
+      lessonId: lessonId,
+      conceptId: candidateConcepts.isNotEmpty ? candidateConcepts.first : 'mean',
+      difficulty: 'Easy',
+      question: 'What is the mean of 4, 8, and 12?',
+      choices: const ['8', '6', '12', '24'],
+    );
+  }
+
+  @override
   Future<AnswerResult> submitAnswer({
     required int questionId,
     required String selectedAnswer,

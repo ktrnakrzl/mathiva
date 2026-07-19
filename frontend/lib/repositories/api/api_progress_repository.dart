@@ -67,6 +67,22 @@ class ApiProgressRepository implements ProgressRepository {
   }
 
   @override
+  Future<GeneratedQuestion> fetchAdaptiveQuestion({
+    required String subjectId,
+    required String topicId,
+    required String lessonId,
+    required List<String> candidateConcepts,
+  }) async {
+    final response = await _dio.post('/api/quiz/next-adaptive', data: {
+      'subject_id': subjectId,
+      'topic_id': topicId,
+      'lesson_id': lessonId,
+      'candidate_concepts': candidateConcepts,
+    });
+    return GeneratedQuestion.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  @override
   Future<AnswerResult> submitAnswer({
     required int questionId,
     required String selectedAnswer,

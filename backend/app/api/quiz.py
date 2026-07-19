@@ -166,10 +166,18 @@ def next_question_adaptive(
     stores, and serves the question (minus the answer). The response reports which
     concept + difficulty were chosen so the UI can show what's being practiced.
     """
-    # Candidate pool: the lesson's concepts we can actually generate; if none are
-    # usable, fall back to every templated concept so the endpoint still works.
-    pool = [c for c in request.candidate_concepts if has_template(c)]
-    if not pool:
+    # Explicit candidates (e.g. the lesson's concepts) -> choose among the ones we
+    # can actually generate; if NONE of them have a template that's a content gap
+    # (422), not a reason to serve an unrelated concept. No candidates at all ->
+    # the student wants "anything", so consider every concept we can generate.
+    if request.candidate_concepts:
+        pool = [c for c in request.candidate_concepts if has_template(c)]
+        if not pool:
+            raise HTTPException(
+                status_code=422,
+                detail="No question template for these concepts yet.",
+            )
+    else:
         pool = quiz_templates.list_concepts()
 
     attempts = (
