@@ -18,6 +18,7 @@ modes the fine-tuned T5 showed in evaluation (repetition loops like "x 0 x 0..."
 The response carries `model_used` so the UI/analysis can see which tier answered.
 """
 
+from app.config import settings
 from app.services.ai_service import AIServiceError, generate_answer
 from app.services import gemini_service, t5_service
 
@@ -93,8 +94,11 @@ def answer_question(question: str) -> dict:
     prompt = build_tutor_prompt(context, question)
 
     # --- local layer: T5 and Phi-3 both attempt the answer -------------------
+    # T5 is skipped entirely when DISABLE_T5 is set (the hosted, no-Ollama
+    # deployment) -- see settings.disable_t5 for why -- so the cascade there is
+    # RAG -> Phi-3(absent) -> Gemini rather than letting a degenerate T5 answer.
     t5_answer = None
-    if t5_service.t5_available():
+    if t5_service.t5_available() and not settings.disable_t5:
         try:
             t5_answer = t5_service.t5_generate(context, question)
         except t5_service.T5ServiceError:

@@ -57,6 +57,14 @@ class Settings(BaseSettings):
     # reproducible behavior.
     gemini_model: str = Field(default="gemini-flash-latest", validation_alias="GEMINI_MODEL")
 
+    # Skip the fine-tuned T5 tier in the /ask cascade. Set true in the hosted
+    # (Gemini-backed, no-Ollama) deployment: with no Phi-3 there, T5 would be the
+    # primary local generator, but at its current tiny-dataset quality it emits
+    # degenerate/wrong answers that can slip past the is_bad_answer guard and
+    # block Gemini. Leave false for local dev / the defense demo, where T5 is the
+    # thesis contribution being showcased. Flip back to false once T5 is improved.
+    disable_t5: bool = Field(default=False, validation_alias="DISABLE_T5")
+
     @property
     def is_production(self) -> bool:
         return self.environment.strip().lower() in ("production", "prod")

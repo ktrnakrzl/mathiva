@@ -124,3 +124,26 @@ def test_response_carries_sources(wired):
     wired["set_phi"]("Answer with sources.")
     res = answer_service.answer_question("q")
     assert res["sources"] == [{"chunk_id": 0, "content": "some source chunk"}]
+
+
+def test_t5_skipped_when_disabled(wired, monkeypatch):
+    """With DISABLE_T5 set (the hosted no-Ollama deploy), T5 must not answer even
+    when a model is available -- the cascade escalates to Gemini instead. Guards
+    against the degenerate T5 blocking Gemini in production."""
+    monkeypatch.setattr(answer_service.settings, "disable_t5", True)
+
+    called = {"t5": False}
+
+    def spy_t5(ctx, q):
+        called["t5"] = True
+        return "A T5 answer that would otherwise be used."
+
+    monkeypatch.setattr(answer_service.t5_service, "t5_generate", spy_t5)
+
+    wired["set_phi"](None)                       # Ollama down (prod has no Phi-3)
+    wired["set_gemini"]("Gemini's answer.")
+    res = answer_service.answer_question("q")
+
+    assert called["t5"] is False                 # T5 never invoked
+    assert res["model_used"] == "gemini"
+    assert res["answer"] == "Gemini's answer."
