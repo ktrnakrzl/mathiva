@@ -1,7 +1,12 @@
-// Testing on a real device over Wi-Fi: 127.0.0.1 means "the phone itself",
-// so it must point at this PC's LAN IP instead. Revert to 127.0.0.1 for
-// desktop/web testing, or 10.0.2.2 for the Android emulator.
-const String kBaseUrl = 'http://192.168.8.33:8000';
+// Backend base URL -- configurable at build/run time WITHOUT editing code:
+//   flutter run  --dart-define=API_BASE_URL=http://192.168.8.35:8000   (phone/Wi-Fi)
+//   flutter build web --dart-define=API_BASE_URL=https://api.example.com  (production)
+// Defaults to localhost for desktop/web dev. On a real device over Wi-Fi pass
+// this PC's LAN IP; for the Android emulator pass http://10.0.2.2:8000.
+const String kBaseUrl = String.fromEnvironment(
+  'API_BASE_URL',
+  defaultValue: 'http://127.0.0.1:8000',
+);
 
 // When true, ChatService/SolverService are wired to their mock repositories
 // instead of the real backend (see main.dart) — useful for developing or
