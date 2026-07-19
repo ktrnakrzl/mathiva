@@ -51,7 +51,11 @@ class Settings(BaseSettings):
     # Gemini free-tier fallback (also used by OCR). Optional: absent key just
     # disables the Gemini tier.
     gemini_api_key: str | None = Field(default=None, validation_alias="GEMINI_API_KEY")
-    gemini_model: str = Field(default="gemini-2.5-flash", validation_alias="GEMINI_MODEL")
+    # "gemini-flash-latest" is an alias that always tracks Google's current free
+    # flash model, so a specific version being retired (as gemini-2.5-flash was)
+    # never breaks the tutor/OCR. Pin a concrete version here only if you need
+    # reproducible behavior.
+    gemini_model: str = Field(default="gemini-flash-latest", validation_alias="GEMINI_MODEL")
 
     @property
     def is_production(self) -> bool:
