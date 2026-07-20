@@ -1,0 +1,24 @@
+# Convenience wrapper for building and running the MATHIVA backend image.
+#   docker compose up --build
+#
+# Configuration is read from backend/.env (DATABASE_URL, JWT_SECRET,
+# GEMINI_API_KEY, ENVIRONMENT, DISABLE_T5). For a real deployment set those to
+# production values (ENVIRONMENT=production, the Supabase DATABASE_URL, a strong
+# JWT_SECRET, DISABLE_T5=true) -- see DEPLOY.md.
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: mathiva-backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - backend/.env
+    environment:
+      # Recommended for the containerized (no-Ollama) deployment: the tutor
+      # cascade uses Gemini, and the degenerate T5 tier is skipped. These win
+      # over env_file if both set the key.
+      DISABLE_T5: "true"
+    restart: unless-stopped
