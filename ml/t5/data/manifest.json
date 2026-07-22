@@ -1,28 +1,27 @@
 {
+  "mode": "tutor",
   "seed": 42,
-  "top_k": 3,
-  "instruction": "Answer the Grade 11 General Mathematics question using the context.",
-  "total_examples": 62,
-  "gold_retrieved_rate": 0.484,
-  "split_strategy": "grouped by source_chunk_index (no context leakage)",
+  "total_examples": 184,
+  "instruction": "Answer the Senior High School mathematics question.",
+  "split_strategy": "stratified by topic (every topic in each split)",
   "splits": {
     "train": {
-      "examples": 50,
-      "source_chunks": 26,
-      "avg_input_words": 197.6,
-      "avg_target_words": 13.8
+      "examples": 140,
+      "topics": 32,
+      "avg_input_words": 18.0,
+      "avg_target_words": 16.0
     },
     "val": {
-      "examples": 7,
-      "source_chunks": 3,
-      "avg_input_words": 159.7,
-      "avg_target_words": 13.1
+      "examples": 22,
+      "topics": 22,
+      "avg_input_words": 20.0,
+      "avg_target_words": 15.5
     },
     "test": {
-      "examples": 5,
-      "source_chunks": 3,
-      "avg_input_words": 195.2,
-      "avg_target_words": 13.6
+      "examples": 22,
+      "topics": 22,
+      "avg_input_words": 18.8,
+      "avg_target_words": 18.5
     }
   }
 }

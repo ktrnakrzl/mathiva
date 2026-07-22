@@ -1,0 +1,667 @@
+[
+  {
+    "topic": "functions (evaluating, operations, composition)",
+    "question": "Given f(x) = 3x - 2, find f(5).",
+    "answer": "Substitute x = 5 into f(x):\nf(5) = 3(5) - 2 = 15 - 2 = 13."
+  },
+  {
+    "topic": "functions (evaluating, operations, composition)",
+    "question": "If f(x) = x^2 and g(x) = 2x + 1, find (f + g)(x).",
+    "answer": "(f + g)(x) = f(x) + g(x) = x^2 + (2x + 1) = x^2 + 2x + 1."
+  },
+  {
+    "topic": "functions (evaluating, operations, composition)",
+    "question": "Given f(x) = x + 4 and g(x) = x^2, find (f ∘ g)(3).",
+    "answer": "Step 1: g(3) = 3^2 = 9.\nStep 2: f(g(3)) = f(9) = 9 + 4 = 13.\nSo (f ∘ g)(3) = 13."
+  },
+  {
+    "topic": "functions (evaluating, operations, composition)",
+    "question": "Find (g ∘ f)(x) if f(x) = 2x and g(x) = x + 5.",
+    "answer": "(g ∘ f)(x) = g(f(x)) = g(2x) = 2x + 5."
+  },
+  {
+    "topic": "functions (evaluating, operations, composition)",
+    "question": "Explain the difference between (f - g)(x) and (f ∘ g)(x) using f(x)=x+2 and g(x)=x^2.",
+    "answer": "(f - g)(x) = f(x) - g(x) = (x+2) - x^2.\n(f ∘ g)(x) = f(g(x)) = f(x^2) = x^2 + 2.\nDifference: subtraction combines outputs, composition substitutes one function into another."
+  },
+  {
+    "topic": "rational functions (domain, asymptotes, equations)",
+    "question": "Find the domain of f(x) = 1/(x - 5).",
+    "answer": "Denominator cannot be zero.\nx - 5 = 0 → x = 5.\nDomain: all real numbers except x = 5."
+  },
+  {
+    "topic": "rational functions (domain, asymptotes, equations)",
+    "question": "Find the vertical asymptote of f(x) = (x + 2)/(x - 1).",
+    "answer": "Vertical asymptote occurs where denominator = 0.\nx - 1 = 0 → x = 1.\nSo vertical asymptote: x = 1."
+  },
+  {
+    "topic": "rational functions (domain, asymptotes, equations)",
+    "question": "Find the horizontal asymptote of f(x) = (4x)/(2x + 1).",
+    "answer": "Degrees are equal.\nHorizontal asymptote = ratio of leading coefficients = 4/2 = 2.\nSo y = 2."
+  },
+  {
+    "topic": "rational functions (domain, asymptotes, equations)",
+    "question": "Solve: (x + 1)/(x - 2) = 3.",
+    "answer": "Multiply both sides by (x - 2):\nx + 1 = 3(x - 2)\nx + 1 = 3x - 6\n1 + 6 = 3x - x\n7 = 2x\nx = 7/2.\nCheck x ≠ 2, valid."
+  },
+  {
+    "topic": "rational functions (domain, asymptotes, equations)",
+    "question": "Why must values that make the denominator zero be excluded from the domain?",
+    "answer": "Division by zero is undefined in mathematics, so any value that makes the denominator zero cannot be included in the domain."
+  },
+  {
+    "topic": "inverse functions",
+    "question": "Find the inverse of f(x) = x + 7.",
+    "answer": "Let y = x + 7.\nSolve for x:\nx = y - 7.\nReplace y with x:\nf⁻¹(x) = x - 7."
+  },
+  {
+    "topic": "inverse functions",
+    "question": "Find the inverse of f(x) = 2x + 3.",
+    "answer": "Let y = 2x + 3.\ny - 3 = 2x\nx = (y - 3)/2\nSo f⁻¹(x) = (x - 3)/2."
+  },
+  {
+    "topic": "inverse functions",
+    "question": "Verify that f(x)=3x and f⁻¹(x)=x/3 are inverses.",
+    "answer": "Compute f(f⁻¹(x)):\nf(x/3) = 3(x/3) = x.\nThus, they are inverses."
+  },
+  {
+    "topic": "inverse functions",
+    "question": "Explain why a function must be one-to-one to have an inverse.",
+    "answer": "If a function is not one-to-one, different inputs can give the same output, making it impossible to reverse uniquely. Thus, it must pass the horizontal line test."
+  },
+  {
+    "topic": "exponential functions and equations",
+    "question": "Solve: 3^x = 81.",
+    "answer": "Rewrite 81 as 3^4.\nSo 3^x = 3^4 → x = 4."
+  },
+  {
+    "topic": "exponential functions and equations",
+    "question": "Solve: 2^(x-2) = 8.",
+    "answer": "Rewrite 8 = 2^3.\nSo x - 2 = 3 → x = 5."
+  },
+  {
+    "topic": "exponential functions and equations",
+    "question": "Solve: 5^x = 125.",
+    "answer": "125 = 5^3.\nSo x = 3."
+  },
+  {
+    "topic": "exponential functions and equations",
+    "question": "Explain exponential growth vs decay.",
+    "answer": "Growth occurs when base > 1 (values increase). Decay occurs when 0 < base < 1 (values decrease over time)."
+  },
+  {
+    "topic": "logarithmic functions and equations",
+    "question": "Solve: log10(x) = 3.",
+    "answer": "Rewrite: x = 10^3 = 1000."
+  },
+  {
+    "topic": "logarithmic functions and equations",
+    "question": "Solve: log2(x) = 4.",
+    "answer": "Rewrite: x = 2^4 = 16."
+  },
+  {
+    "topic": "logarithmic functions and equations",
+    "question": "Solve: log(x - 2) = 1.",
+    "answer": "x - 2 = 10^1 = 10\nx = 12.\nCheck domain: x > 2, valid."
+  },
+  {
+    "topic": "logarithmic functions and equations",
+    "question": "Explain the relationship between logarithms and exponents.",
+    "answer": "Logarithms are the inverse of exponentiation. log_b(a)=c means b^c = a."
+  },
+  {
+    "topic": "simple and compound interest",
+    "question": "Find simple interest on ₱5,000 at 6% for 2 years.",
+    "answer": "I = Prt = 5000(0.06)(2) = ₱600."
+  },
+  {
+    "topic": "simple and compound interest",
+    "question": "Find total amount with simple interest: ₱2,000 at 5% for 3 years.",
+    "answer": "I = 2000(0.05)(3) = 300.\nA = 2000 + 300 = ₱2300."
+  },
+  {
+    "topic": "simple and compound interest",
+    "question": "Find compound amount for ₱1,000 at 10% for 2 years.",
+    "answer": "A = 1000(1.10)^2 = 1000(1.21) = ₱1210."
+  },
+  {
+    "topic": "simple and compound interest",
+    "question": "Explain difference between simple and compound interest.",
+    "answer": "Simple interest is calculated only on the principal, while compound interest is calculated on the principal plus accumulated interest."
+  },
+  {
+    "topic": "annuities",
+    "question": "Find future value of ₱500 yearly at 5% for 2 years.",
+    "answer": "FV = 500[(1.05^2 - 1)/0.05]\n= 500[(1.1025 - 1)/0.05]\n= 500(2.05) = ₱1025."
+  },
+  {
+    "topic": "annuities",
+    "question": "Find future value of ₱1000 yearly at 5% for 4 years.",
+    "answer": "FV = 1000[(1.05^4 - 1)/0.05]\n= 1000[(1.215506 - 1)/0.05]\n= 1000(4.31012) ≈ ₱4310.12."
+  },
+  {
+    "topic": "annuities",
+    "question": "Explain ordinary annuity vs annuity due.",
+    "answer": "Ordinary annuity: payments at end of each period. Annuity due: payments at beginning of each period."
+  },
+  {
+    "topic": "logic and propositions (truth tables, validity)",
+    "question": "Construct truth table for p ∨ q.",
+    "answer": "p | q | p∨q\nT | T | T\nT | F | T\nF | T | T\nF | F | F"
+  },
+  {
+    "topic": "logic and propositions (truth tables, validity)",
+    "question": "Construct truth table for p → q.",
+    "answer": "p | q | p→q\nT | T | T\nT | F | F\nF | T | T\nF | F | T"
+  },
+  {
+    "topic": "logic and propositions (truth tables, validity)",
+    "question": "What makes a statement a tautology?",
+    "answer": "A tautology is always true regardless of truth values of its components."
+  },
+  {
+    "topic": "logic and propositions (truth tables, validity)",
+    "question": "Determine if p ∧ ¬p is always false.",
+    "answer": "Yes. If p is true, ¬p is false → false. If p is false, ¬p is true → false. Always false (contradiction)."
+  },
+  {
+    "topic": "random variables and probability distributions",
+    "question": "A discrete random variable X has the following probability distribution: P(X=1)=0.2, P(X=2)=0.5, P(X=3)=0.3. Find the expected value E(X).",
+    "answer": "E(X) = Σ[xP(x)] = (1)(0.2) + (2)(0.5) + (3)(0.3) = 0.2 + 1.0 + 0.9 = 2.1."
+  },
+  {
+    "topic": "random variables and probability distributions",
+    "question": "Given X with values 0,1,2 and probabilities 0.3, 0.4, 0.3 respectively, verify that it is a valid probability distribution.",
+    "answer": "Sum of probabilities = 0.3 + 0.4 + 0.3 = 1. Since all probabilities are between 0 and 1 and sum to 1, it is valid."
+  },
+  {
+    "topic": "random variables and probability distributions",
+    "question": "Find the variance of X if X takes values 1,2,3 with probabilities 0.2, 0.5, 0.3.",
+    "answer": "First find mean: E(X)=2.1.\nE(X^2)=1^2(0.2)+2^2(0.5)+3^2(0.3)=0.2+2+2.7=4.9.\nVariance = E(X^2) - [E(X)]^2 = 4.9 - (2.1)^2 = 4.9 - 4.41 = 0.49."
+  },
+  {
+    "topic": "random variables and probability distributions",
+    "question": "Explain the difference between a discrete and continuous random variable.",
+    "answer": "A discrete random variable takes countable values (e.g., number of students), while a continuous random variable takes values over an interval (e.g., height, weight)."
+  },
+  {
+    "topic": "the normal distribution and z-scores",
+    "question": "A score of 85 has mean 75 and standard deviation 5. Find the z-score.",
+    "answer": "z = (x - μ)/σ = (85 - 75)/5 = 10/5 = 2."
+  },
+  {
+    "topic": "the normal distribution and z-scores",
+    "question": "Find the z-score of x = 60 given mean = 70 and standard deviation = 5.",
+    "answer": "z = (60 - 70)/5 = -10/5 = -2."
+  },
+  {
+    "topic": "the normal distribution and z-scores",
+    "question": "What does a negative z-score indicate?",
+    "answer": "A negative z-score indicates that the value is below the mean."
+  },
+  {
+    "topic": "the normal distribution and z-scores",
+    "question": "If z = 0, what does it mean about the data value?",
+    "answer": "It means the value is exactly equal to the mean."
+  },
+  {
+    "topic": "sampling and sampling distributions",
+    "question": "Define a sample and a population.",
+    "answer": "Population is the entire group being studied, while a sample is a subset of the population."
+  },
+  {
+    "topic": "sampling and sampling distributions",
+    "question": "A population has mean μ = 50. What is the expected mean of the sampling distribution of the sample mean?",
+    "answer": "The expected value of the sample mean is equal to the population mean, so it is 50."
+  },
+  {
+    "topic": "sampling and sampling distributions",
+    "question": "Explain why larger sample sizes give more reliable estimates.",
+    "answer": "Larger samples reduce variability and are more representative of the population, making estimates more accurate."
+  },
+  {
+    "topic": "sampling and sampling distributions",
+    "question": "What is sampling bias?",
+    "answer": "Sampling bias occurs when some members of the population are more likely to be selected than others, leading to unrepresentative results."
+  },
+  {
+    "topic": "estimation and confidence intervals",
+    "question": "Find the margin of error if z = 1.96, σ = 10, and n = 25.",
+    "answer": "Margin of error = z(σ/√n) = 1.96(10/5) = 1.96(2) = 3.92."
+  },
+  {
+    "topic": "estimation and confidence intervals",
+    "question": "Construct a 95% confidence interval if mean = 50 and margin of error = 5.",
+    "answer": "CI = mean ± margin = 50 ± 5 → (45, 55)."
+  },
+  {
+    "topic": "estimation and confidence intervals",
+    "question": "What does a 95% confidence interval mean?",
+    "answer": "It means that 95% of similarly constructed intervals will contain the true population parameter."
+  },
+  {
+    "topic": "estimation and confidence intervals",
+    "question": "Find the confidence interval for mean = 80, z = 2, σ = 6, n = 36.",
+    "answer": "Margin = 2(6/6)=2(1)=2.\nCI = 80 ± 2 → (78, 82)."
+  },
+  {
+    "topic": "hypothesis testing",
+    "question": "State the null and alternative hypothesis for testing if mean = 100.",
+    "answer": "H0: μ = 100.\nH1: μ ≠ 100."
+  },
+  {
+    "topic": "hypothesis testing",
+    "question": "What is a Type I error?",
+    "answer": "Rejecting a true null hypothesis."
+  },
+  {
+    "topic": "hypothesis testing",
+    "question": "What is a Type II error?",
+    "answer": "Failing to reject a false null hypothesis."
+  },
+  {
+    "topic": "hypothesis testing",
+    "question": "If p-value = 0.03 and α = 0.05, what is the decision?",
+    "answer": "Since p-value < α, reject the null hypothesis."
+  },
+  {
+    "topic": "correlation and linear regression",
+    "question": "What does a correlation coefficient r = 0.9 indicate?",
+    "answer": "A strong positive linear relationship between variables."
+  },
+  {
+    "topic": "correlation and linear regression",
+    "question": "What does r = -0.8 indicate?",
+    "answer": "A strong negative linear relationship."
+  },
+  {
+    "topic": "correlation and linear regression",
+    "question": "If r = 0, what does it mean?",
+    "answer": "No linear relationship between variables."
+  },
+  {
+    "topic": "correlation and linear regression",
+    "question": "Given regression equation y = 2x + 5, find y when x = 3.",
+    "answer": "y = 2(3) + 5 = 6 + 5 = 11."
+  },
+  {
+    "topic": "correlation and linear regression",
+    "question": "Find slope from points (1,2) and (3,6).",
+    "answer": "Slope m = (6 - 2)/(3 - 1) = 4/2 = 2."
+  },
+  {
+    "topic": "correlation and linear regression",
+    "question": "Explain difference between correlation and causation.",
+    "answer": "Correlation shows association, while causation means one variable directly affects another."
+  },
+  {
+    "topic": "random variables and probability distributions",
+    "question": "Find E(X) if X takes 2,4,6 with probabilities 0.2,0.5,0.3.",
+    "answer": "E(X)=2(0.2)+4(0.5)+6(0.3)=0.4+2+1.8=4.2."
+  },
+  {
+    "topic": "the normal distribution and z-scores",
+    "question": "Find x if z=1, mean=50, sd=10.",
+    "answer": "x = μ + zσ = 50 + (1)(10) = 60."
+  },
+  {
+    "topic": "sampling and sampling distributions",
+    "question": "What is the standard error formula?",
+    "answer": "Standard error = σ/√n."
+  },
+  {
+    "topic": "estimation and confidence intervals",
+    "question": "What happens to margin of error if sample size increases?",
+    "answer": "It decreases because denominator √n increases."
+  },
+  {
+    "topic": "hypothesis testing",
+    "question": "Define significance level α.",
+    "answer": "It is the probability of making a Type I error."
+  },
+  {
+    "topic": "correlation and linear regression",
+    "question": "What is the y-intercept in y=3x+2?",
+    "answer": "It is 2, the value of y when x=0."
+  },
+  {
+    "topic": "conic sections (circle, parabola, ellipse, hyperbola)",
+    "question": "Find the center and radius of the circle given by the equation x^2 + y^2 - 4x + 6y - 12 = 0.",
+    "answer": "Complete the square:\n(x^2 - 4x) + (y^2 + 6y) = 12\n(x^2 - 4x + 4) + (y^2 + 6y + 9) = 12 + 4 + 9\n(x - 2)^2 + (y + 3)^2 = 25\nCenter = (2, -3), Radius = 5."
+  },
+  {
+    "topic": "conic sections (circle, parabola, ellipse, hyperbola)",
+    "question": "Find the vertex of the parabola y = x^2 - 6x + 5.",
+    "answer": "Complete the square:\ny = (x^2 - 6x + 9) - 9 + 5 = (x - 3)^2 - 4\nVertex = (3, -4)."
+  },
+  {
+    "topic": "conic sections (circle, parabola, ellipse, hyperbola)",
+    "question": "Identify the conic section: 4x^2 + 9y^2 = 36.",
+    "answer": "Divide by 36:\nx^2/9 + y^2/4 = 1\nThis is an ellipse."
+  },
+  {
+    "topic": "conic sections (circle, parabola, ellipse, hyperbola)",
+    "question": "Find the center of the hyperbola (x-1)^2/9 - (y+2)^2/16 = 1.",
+    "answer": "Standard form shows center is (1, -2)."
+  },
+  {
+    "topic": "conic sections (circle, parabola, ellipse, hyperbola)",
+    "question": "Explain the difference between ellipse and hyperbola.",
+    "answer": "Ellipse has sum of distances to foci constant; hyperbola has difference constant and opens in two directions."
+  },
+  {
+    "topic": "sequences and series (arithmetic, geometric, sigma notation)",
+    "question": "Find the 10th term of an arithmetic sequence with a1=2 and d=3.",
+    "answer": "an = a1 + (n-1)d = 2 + (10-1)(3) = 2 + 27 = 29."
+  },
+  {
+    "topic": "sequences and series (arithmetic, geometric, sigma notation)",
+    "question": "Find the sum of first 5 terms of sequence: 2,4,6,8,10.",
+    "answer": "Sum = 2+4+6+8+10 = 30."
+  },
+  {
+    "topic": "sequences and series (arithmetic, geometric, sigma notation)",
+    "question": "Find the 6th term of geometric sequence with a1=3, r=2.",
+    "answer": "an = a1 r^(n-1) = 3(2^5) = 3(32) = 96."
+  },
+  {
+    "topic": "sequences and series (arithmetic, geometric, sigma notation)",
+    "question": "Evaluate Σ from i=1 to 4 of i.",
+    "answer": "Σ i = 1+2+3+4 = 10."
+  },
+  {
+    "topic": "sequences and series (arithmetic, geometric, sigma notation)",
+    "question": "Explain difference between arithmetic and geometric sequences.",
+    "answer": "Arithmetic adds constant difference; geometric multiplies by constant ratio."
+  },
+  {
+    "topic": "trigonometric functions and the unit circle",
+    "question": "Find sin(90°).",
+    "answer": "sin(90°) = 1."
+  },
+  {
+    "topic": "trigonometric functions and the unit circle",
+    "question": "Find cos(0°).",
+    "answer": "cos(0°) = 1."
+  },
+  {
+    "topic": "trigonometric functions and the unit circle",
+    "question": "Find tan(45°).",
+    "answer": "tan(45°) = 1."
+  },
+  {
+    "topic": "trigonometric functions and the unit circle",
+    "question": "Find sin(30°).",
+    "answer": "sin(30°) = 1/2."
+  },
+  {
+    "topic": "trigonometric functions and the unit circle",
+    "question": "Explain what the unit circle represents.",
+    "answer": "It is a circle of radius 1 centered at origin used to define trig functions as coordinates."
+  },
+  {
+    "topic": "trigonometric identities and equations",
+    "question": "Verify identity: sin^2x + cos^2x = 1 for x=30°.",
+    "answer": "sin^2(30)=1/4, cos^2(30)=3/4 → sum=1."
+  },
+  {
+    "topic": "trigonometric identities and equations",
+    "question": "Solve: sin x = 1/2 for 0° ≤ x ≤ 360°.",
+    "answer": "x = 30°, 150°."
+  },
+  {
+    "topic": "trigonometric identities and equations",
+    "question": "Solve: cos x = 0.",
+    "answer": "x = 90°, 270°."
+  },
+  {
+    "topic": "trigonometric identities and equations",
+    "question": "Solve: tan x = 1.",
+    "answer": "x = 45°, 225°."
+  },
+  {
+    "topic": "trigonometric identities and equations",
+    "question": "Explain difference between identity and equation.",
+    "answer": "Identity is true for all values; equation is true only for specific values."
+  },
+  {
+    "topic": "conic sections (circle, parabola, ellipse, hyperbola)",
+    "question": "Find radius of circle x^2 + y^2 = 16.",
+    "answer": "r = √16 = 4."
+  },
+  {
+    "topic": "sequences and series (arithmetic, geometric, sigma notation)",
+    "question": "Find sum of first 4 terms of geometric sequence 2,6,18,54.",
+    "answer": "Sum = 2+6+18+54 = 80."
+  },
+  {
+    "topic": "trigonometric functions and the unit circle",
+    "question": "Find cos(60°).",
+    "answer": "cos(60°) = 1/2."
+  },
+  {
+    "topic": "trigonometric identities and equations",
+    "question": "Verify: 1 + tan^2x = sec^2x for x=45°.",
+    "answer": "tan^2(45)=1, so LHS=2. sec(45)=√2 → sec^2=2. Verified."
+  },
+  {
+    "topic": "conic sections (circle, parabola, ellipse, hyperbola)",
+    "question": "Find focus of parabola y^2 = 4x.",
+    "answer": "Standard form gives focus at (1,0)."
+  },
+  {
+    "topic": "sequences and series (arithmetic, geometric, sigma notation)",
+    "question": "Find a7 if a1=5, d=2.",
+    "answer": "a7=5+(6)(2)=17."
+  },
+  {
+    "topic": "trigonometric functions and the unit circle",
+    "question": "Find sin(180°).",
+    "answer": "sin(180°)=0."
+  },
+  {
+    "topic": "trigonometric identities and equations",
+    "question": "Solve: sin x = 0.",
+    "answer": "x = 0°, 180°, 360°."
+  },
+  {
+    "topic": "conic sections (circle, parabola, ellipse, hyperbola)",
+    "question": "Identify conic: x^2 - y^2 = 1.",
+    "answer": "This is a hyperbola."
+  },
+  {
+    "topic": "sequences and series (arithmetic, geometric, sigma notation)",
+    "question": "Evaluate Σ i=1 to 3 of i^2.",
+    "answer": "1^2+2^2+3^2=1+4+9=14."
+  },
+  {
+    "topic": "trigonometric functions and the unit circle",
+    "question": "Find tan(0°).",
+    "answer": "tan(0°)=0."
+  },
+  {
+    "topic": "trigonometric identities and equations",
+    "question": "Solve: cos x = 1.",
+    "answer": "x = 0°, 360°."
+  },
+  {
+    "topic": "limits and continuity",
+    "question": "Evaluate the limit: lim (x→2) (x^2 - 4)/(x - 2).",
+    "answer": "Factor numerator: (x^2 - 4) = (x - 2)(x + 2).\nCancel (x - 2): limit becomes lim (x→2)(x + 2).\nSubstitute x=2: 2 + 2 = 4."
+  },
+  {
+    "topic": "limits and continuity",
+    "question": "Find lim (x→3) (2x + 1).",
+    "answer": "Direct substitution: 2(3) + 1 = 6 + 1 = 7."
+  },
+  {
+    "topic": "limits and continuity",
+    "question": "Evaluate lim (x→0) (sin x)/x.",
+    "answer": "This is a standard limit: lim (x→0) (sin x)/x = 1."
+  },
+  {
+    "topic": "limits and continuity",
+    "question": "Explain what it means for a function to be continuous at x = a.",
+    "answer": "A function is continuous at x = a if lim(x→a)f(x) = f(a), meaning no breaks, holes, or jumps at that point."
+  },
+  {
+    "topic": "limits and continuity",
+    "question": "Determine if f(x) = (x^2 - 1)/(x - 1) is continuous at x = 1.",
+    "answer": "Simplify: f(x) = x + 1 for x ≠ 1.\nlim(x→1)f(x) = 2, but f(1) is undefined.\nSo it is not continuous at x=1 (removable discontinuity)."
+  },
+  {
+    "topic": "derivatives and differentiation rules",
+    "question": "Find the derivative of f(x) = x^3.",
+    "answer": "Using power rule: d/dx(x^n)=nx^(n-1).\nf'(x)=3x^2."
+  },
+  {
+    "topic": "derivatives and differentiation rules",
+    "question": "Differentiate f(x) = 5x^2 + 3x - 7.",
+    "answer": "f'(x)=10x + 3."
+  },
+  {
+    "topic": "derivatives and differentiation rules",
+    "question": "Find derivative of f(x)=2x^3 - x^2.",
+    "answer": "f'(x)=6x^2 - 2x."
+  },
+  {
+    "topic": "derivatives and differentiation rules",
+    "question": "Find the derivative of f(x)=x^2 sin x using product rule.",
+    "answer": "Product rule: (uv)' = u'v + uv'.\nLet u=x^2, v=sin x.\nu'=2x, v'=cos x.\nf'(x)=2x sin x + x^2 cos x."
+  },
+  {
+    "topic": "derivatives and differentiation rules",
+    "question": "Explain the power rule in differentiation.",
+    "answer": "The power rule states that d/dx(x^n) = n x^(n-1)."
+  },
+  {
+    "topic": "applications of derivatives (optimization, related rates)",
+    "question": "Find the critical points of f(x) = x^2 - 4x.",
+    "answer": "f'(x)=2x-4.\nSet to zero: 2x-4=0 → x=2.\nCritical point at x=2."
+  },
+  {
+    "topic": "applications of derivatives (optimization, related rates)",
+    "question": "Find the maximum or minimum of f(x)=x^2 - 4x +1.",
+    "answer": "f'(x)=2x-4=0 → x=2.\nf''(x)=2>0 so minimum.\nf(2)=4-8+1=-3.\nMinimum value = -3."
+  },
+  {
+    "topic": "applications of derivatives (optimization, related rates)",
+    "question": "A rectangle has perimeter 20. Find dimensions that maximize area.",
+    "answer": "Perimeter: 2L+2W=20 → L+W=10 → W=10-L.\nArea A=L(10-L)=10L-L^2.\nA'=10-2L=0 → L=5.\nW=5.\nMax area at 5×5 square."
+  },
+  {
+    "topic": "applications of derivatives (optimization, related rates)",
+    "question": "Explain what a critical point is.",
+    "answer": "A critical point is where derivative is zero or undefined, used to find maxima or minima."
+  },
+  {
+    "topic": "applications of derivatives (optimization, related rates)",
+    "question": "If y = x^2 and x increases at 2 units/sec, find dy/dt when x=3.",
+    "answer": "dy/dt = 2x(dx/dt).\n=2(3)(2)=12 units/sec."
+  },
+  {
+    "topic": "integration and area under a curve",
+    "question": "Find ∫ x dx.",
+    "answer": "∫ x dx = x^2/2 + C."
+  },
+  {
+    "topic": "integration and area under a curve",
+    "question": "Find ∫ (3x^2) dx.",
+    "answer": "∫ 3x^2 dx = 3(x^3/3) = x^3 + C."
+  },
+  {
+    "topic": "integration and area under a curve",
+    "question": "Find ∫ (2x + 1) dx.",
+    "answer": "= x^2 + x + C."
+  },
+  {
+    "topic": "integration and area under a curve",
+    "question": "Find the area under y = x from x=0 to x=2.",
+    "answer": "Area = ∫₀² x dx = [x^2/2]₀² = (4/2)-0 = 2."
+  },
+  {
+    "topic": "integration and area under a curve",
+    "question": "Explain what integration represents.",
+    "answer": "Integration represents accumulation, such as area under a curve."
+  },
+  {
+    "topic": "limits and continuity",
+    "question": "Evaluate lim (x→1)(x^2 -1)/(x-1).",
+    "answer": "(x^2-1)=(x-1)(x+1) → cancel → x+1=2."
+  },
+  {
+    "topic": "derivatives and differentiation rules",
+    "question": "Find derivative of f(x)=7.",
+    "answer": "Derivative of constant = 0."
+  },
+  {
+    "topic": "applications of derivatives (optimization, related rates)",
+    "question": "Find slope of tangent to y=x^2 at x=1.",
+    "answer": "f'(x)=2x → at x=1 → slope=2."
+  },
+  {
+    "topic": "integration and area under a curve",
+    "question": "Find ∫ 5 dx.",
+    "answer": "=5x + C."
+  },
+  {
+    "topic": "limits and continuity",
+    "question": "Evaluate lim (x→0)(x^2+3x).",
+    "answer": "Substitute: 0 + 0 = 0."
+  },
+  {
+    "topic": "derivatives and differentiation rules",
+    "question": "Differentiate f(x)=x^4.",
+    "answer": "f'(x)=4x^3."
+  },
+  {
+    "topic": "applications of derivatives (optimization, related rates)",
+    "question": "Find maximum of f(x)=-x^2+4x.",
+    "answer": "f'(x)=-2x+4=0 → x=2.\nf''=-2<0 max.\nf(2)=4."
+  },
+  {
+    "topic": "integration and area under a curve",
+    "question": "Find ∫ x^2 dx.",
+    "answer": "= x^3/3 + C."
+  },
+  {
+    "topic": "limits and continuity",
+    "question": "Explain removable discontinuity.",
+    "answer": "A hole in graph where limit exists but function not defined."
+  },
+  {
+    "topic": "derivatives and differentiation rules",
+    "question": "Find derivative of sin x.",
+    "answer": "d/dx(sin x)=cos x."
+  },
+  {
+    "topic": "applications of derivatives (optimization, related rates)",
+    "question": "Find when velocity is zero if v=3t-6.",
+    "answer": "Set v=0 → 3t-6=0 → t=2."
+  },
+  {
+    "topic": "integration and area under a curve",
+    "question": "Find area under y=2x from 0 to 3.",
+    "answer": "∫₀³2x dx=[x^2]₀³=9."
+  },
+  {
+    "topic": "limits and continuity",
+    "question": "Evaluate lim (x→∞)(1/x).",
+    "answer": "As x increases, 1/x→0."
+  },
+  {
+    "topic": "derivatives and differentiation rules",
+    "question": "Find derivative of cos x.",
+    "answer": "d/dx(cos x)=-sin x."
+  },
+  {
+    "topic": "applications of derivatives (optimization, related rates)",
+    "question": "Find critical point of f(x)=x^3.",
+    "answer": "f'(x)=3x^2=0 → x=0."
+  },
+  {
+    "topic": "integration and area under a curve",
+    "question": "Find ∫ (x+3) dx.",
+    "answer": "= x^2/2 + 3x + C."
+  }
+]

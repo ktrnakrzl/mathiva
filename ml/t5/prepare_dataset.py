@@ -1,30 +1,26 @@
-"""Phase 1 of the T5 fine-tune: build the RAG-augmented train/val/test dataset.
+"""Phase 1 of the T5 fine-tune: build the train/val/test dataset.
 
-The confidence-routing design (RAG + T5 + Phi-3) means T5 is trained to do
-exactly what it does at inference: read the *retrieved* context for a question
-and generate the answer. So each training example is
+Two modes (DATASET_MODE):
 
-    input  = "<instruction>\nContext: <top-k retrieved chunks>\nQuestion: <q>"
-    target = "<reference answer>"
+* "tutor" (default) -- a standalone Senior High School math tutor. Each example is
 
-built from the quality-judged pairs in
-ml/retrieval/genmath_qa_pairs.judged.json (the pairs judge_qa.py kept).
+      input  = "<instruction>\nQuestion: <q>"
+      target = "<answer>"
 
-Two deliberate choices worth defending at review:
+  built from topic-based question/answer pairs (no retrieved context, not tied to
+  any single corpus). Sources: ml/retrieval/topic_qa_pairs.json (the pairs
+  generated per topic across all four SHS subjects) plus the hand-authored
+  ml/retrieval/authored_qa_pairs.json. RAG still serves the live /ask path as a
+  separate retrieval layer; here T5 learns to answer curriculum questions
+  directly. Split is stratified by topic, so every topic appears in each split.
 
-1. Retrieved (not gold-only) context, gold guaranteed. We run the *same* SBERT
-   -> FAISS retrieval the live /ask path uses, so the training distribution
-   matches inference. When retrieval misses the pair's own source chunk, we
-   prepend it so the target answer is always supported. `gold_retrieved` is
-   recorded per example so retrieval quality is measurable.
+* "rag" -- the original corpus-grounded design. Each example is
+      input = "<instruction>\nContext: <top-k retrieved chunks>\nQuestion: <q>"
+  built from the judged pairs in genmath_qa_pairs.judged.json, with the same
+  SBERT->FAISS retrieval the /ask path uses, split grouped by source chunk.
 
-2. Grouped split by source chunk. The pairs come from relatively few source
-   chunks (several questions each). A naive per-question split would put a chunk's context
-   in train and another of its questions in test -- context leakage that
-   inflates scores. We split by source chunk instead, so no chunk is seen in
-   training and evaluated on.
-
-Run from anywhere:  python ml/t5/prepare_dataset.py
+Run:   python ml/t5/prepare_dataset.py                 # tutor mode (default)
+       DATASET_MODE=rag python ml/t5/prepare_dataset.py # corpus-grounded mode
 Outputs: ml/t5/data/{train,val,test}.jsonl  +  manifest.json
 """
 
@@ -38,14 +34,23 @@ HERE = os.path.dirname(os.path.abspath(__file__))          # ml/t5
 ML_DIR = os.path.dirname(HERE)                              # ml
 sys.path.insert(0, ML_DIR)                                  # so `retrieval` imports
 
+MODE = os.environ.get("DATASET_MODE", "tutor").strip().lower()
+
 SEED = 42
-TOP_K = 3            # matches flan-t5-base's 512-token input budget (3*~500 chars)
 VAL_FRAC = 0.10
 TEST_FRAC = 0.10
-INSTRUCTION = "Answer the Grade 11 General Mathematics question using the context."
 
+# --- tutor mode -------------------------------------------------------------
+TUTOR_INSTRUCTION = "Answer the Senior High School mathematics question."
+TOPIC_QA_PATH = os.path.join(ML_DIR, "retrieval", "topic_qa_pairs.json")
+AUTHORED_QA_PATH = os.path.join(ML_DIR, "retrieval", "authored_qa_pairs.json")
+
+# --- rag mode ---------------------------------------------------------------
+TOP_K = 3            # matches flan-t5-base's 512-token input budget (3*~500 chars)
+RAG_INSTRUCTION = "Answer the Grade 11 General Mathematics question using the context."
 QA_PATH = os.path.join(ML_DIR, "retrieval", "genmath_qa_pairs.judged.json")
 CHUNKS_PATH = os.path.join(ML_DIR, "retrieval", "output_chunks.json")
+
 OUT_DIR = os.path.join(HERE, "data")
 
 
@@ -53,6 +58,85 @@ def _load_json(path):
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
+
+def _load_json_lenient(path):
+    """Load a JSON list, or return [] if the file is absent -- so topic_qa_pairs
+    (which you build up incrementally) doesn't have to exist yet."""
+    if not os.path.exists(path):
+        return []
+    try:
+        data = _load_json(path)
+        return data if isinstance(data, list) else []
+    except (json.JSONDecodeError, OSError):
+        return []
+
+
+def _norm_q(q):
+    return " ".join(q.lower().split()).strip(" ?.!")
+
+
+# --- tutor mode -------------------------------------------------------------
+
+def build_tutor_examples():
+    """Topic-based question -> answer examples from the generated topic pairs and
+    the hand-authored pairs, de-duplicated by question."""
+    raw = _load_json_lenient(TOPIC_QA_PATH) + _load_json_lenient(AUTHORED_QA_PATH)
+    if not raw:
+        raise SystemExit(
+            "No tutor pairs found. Generate topic pairs into\n  "
+            f"{TOPIC_QA_PATH}\n(a JSON list of {{topic, question, answer}}), "
+            "or run with DATASET_MODE=rag."
+        )
+
+    seen, examples = set(), []
+    for p in raw:
+        question = (p.get("question") or "").strip()
+        answer = (p.get("answer") or "").strip()
+        if not question or not answer:
+            continue
+        key = _norm_q(question)
+        if key in seen:
+            continue
+        seen.add(key)
+        topic = (p.get("topic") or "general").strip().lower() or "general"
+        examples.append(
+            {
+                "input": f"{TUTOR_INSTRUCTION}\nQuestion: {question}",
+                "target": answer,
+                "question": question,
+                "topic": topic,
+            }
+        )
+    return examples
+
+
+def stratified_split(examples):
+    """Split each topic's pairs proportionally, so every topic appears in
+    train/val/test (the right split for a tutor: new questions on known topics)."""
+    by_topic = collections.defaultdict(list)
+    for ex in examples:
+        by_topic[ex["topic"]].append(ex)
+
+    rng = random.Random(SEED)
+    splits = {"train": [], "val": [], "test": []}
+    for rows in by_topic.values():
+        rows = rows[:]
+        rng.shuffle(rows)
+        n = len(rows)
+        # Only carve val/test out of topics with enough pairs to spare; tiny
+        # topics go entirely to train rather than starving it.
+        n_test = max(1, round(TEST_FRAC * n)) if n >= 5 else 0
+        n_val = max(1, round(VAL_FRAC * n)) if n >= 5 else 0
+        splits["test"].extend(rows[:n_test])
+        splits["val"].extend(rows[n_test : n_test + n_val])
+        splits["train"].extend(rows[n_test + n_val :])
+
+    for rows in splits.values():
+        rng.shuffle(rows)
+    return splits
+
+
+# --- rag mode ---------------------------------------------------------------
 
 def _build_retriever():
     """Reuse the exact retrieval mechanics of app/services/rag_service.py."""
@@ -74,7 +158,7 @@ def _build_retriever():
     return retrieve
 
 
-def build_examples():
+def build_rag_examples():
     qa_pairs = _load_json(QA_PATH)
     chunks = _load_json(CHUNKS_PATH)
     by_index = {c["chunk_index"]: c for c in chunks}
@@ -83,7 +167,7 @@ def build_examples():
     examples = []
     gold_hits = 0
     for pair in qa_pairs:
-        gold_idx = pair["chunk_id"]                 # maps to chunk_index
+        gold_idx = pair["chunk_id"]
         gold_chunk = by_index[gold_idx]
 
         retrieved = retrieve(pair["question"], TOP_K)
@@ -94,20 +178,18 @@ def build_examples():
         if gold_retrieved:
             context_chunks = retrieved
         else:
-            # Guarantee the answer is supported: prepend gold, keep TOP_K chunks.
             context_chunks = [gold_chunk] + retrieved[: TOP_K - 1]
 
         context = "\n\n".join(c["content"].strip() for c in context_chunks)
         examples.append(
             {
-                "input": f"{INSTRUCTION}\nContext: {context}\nQuestion: {pair['question']}",
+                "input": f"{RAG_INSTRUCTION}\nContext: {context}\nQuestion: {pair['question']}",
                 "target": pair["answer"].strip(),
                 "question": pair["question"],
-                "source_chunk_index": gold_idx,
+                "topic": gold_idx,                 # group key for the split
                 "gold_retrieved": gold_retrieved,
             }
         )
-
     return examples, gold_hits
 
 
@@ -115,7 +197,7 @@ def grouped_split(examples):
     """Split by source chunk so no chunk's context leaks across splits."""
     groups = collections.defaultdict(list)
     for ex in examples:
-        groups[ex["source_chunk_index"]].append(ex)
+        groups[ex["topic"]].append(ex)
 
     group_ids = list(groups)
     random.Random(SEED).shuffle(group_ids)
@@ -136,19 +218,20 @@ def grouped_split(examples):
     return splits
 
 
+# --- shared output ----------------------------------------------------------
+
 def _words(text):
     return len(text.split())
 
 
-def write_splits(splits, gold_hits, total):
+def write_splits(splits, manifest_extra):
     os.makedirs(OUT_DIR, exist_ok=True)
+    total = sum(len(rows) for rows in splits.values())
     manifest = {
+        "mode": MODE,
         "seed": SEED,
-        "top_k": TOP_K,
-        "instruction": INSTRUCTION,
         "total_examples": total,
-        "gold_retrieved_rate": round(gold_hits / total, 3),
-        "split_strategy": "grouped by source_chunk_index (no context leakage)",
+        **manifest_extra,
         "splits": {},
     }
     for name, rows in splits.items():
@@ -158,9 +241,9 @@ def write_splits(splits, gold_hits, total):
                 f.write(json.dumps(row, ensure_ascii=False) + "\n")
         manifest["splits"][name] = {
             "examples": len(rows),
-            "source_chunks": len({r["source_chunk_index"] for r in rows}),
-            "avg_input_words": round(sum(_words(r["input"]) for r in rows) / len(rows), 1),
-            "avg_target_words": round(sum(_words(r["target"]) for r in rows) / len(rows), 1),
+            "topics": len({r["topic"] for r in rows}),
+            "avg_input_words": round(sum(_words(r["input"]) for r in rows) / max(len(rows), 1), 1),
+            "avg_target_words": round(sum(_words(r["target"]) for r in rows) / max(len(rows), 1), 1),
         }
 
     with open(os.path.join(OUT_DIR, "manifest.json"), "w", encoding="utf-8") as f:
@@ -169,16 +252,31 @@ def write_splits(splits, gold_hits, total):
 
 
 def main():
-    examples, gold_hits = build_examples()
-    splits = grouped_split(examples)
-    manifest = write_splits(splits, gold_hits, len(examples))
+    if MODE == "rag":
+        examples, gold_hits = build_rag_examples()
+        splits = grouped_split(examples)
+        extra = {
+            "instruction": RAG_INSTRUCTION,
+            "top_k": TOP_K,
+            "gold_retrieved_rate": round(gold_hits / max(len(examples), 1), 3),
+            "split_strategy": "grouped by source chunk (no context leakage)",
+        }
+    else:
+        examples = build_tutor_examples()
+        splits = stratified_split(examples)
+        extra = {
+            "instruction": TUTOR_INSTRUCTION,
+            "split_strategy": "stratified by topic (every topic in each split)",
+        }
 
-    print(f"Built {manifest['total_examples']} examples "
-          f"(gold chunk retrieved for {manifest['gold_retrieved_rate']:.0%})")
-    print(f"Split by source chunk -> {OUT_DIR}")
+    manifest = write_splits(splits, extra)
+
+    print(f"[{MODE}] built {manifest['total_examples']} examples -> {OUT_DIR}")
+    if "gold_retrieved_rate" in manifest:
+        print(f"  gold chunk retrieved for {manifest['gold_retrieved_rate']:.0%}")
     for name, info in manifest["splits"].items():
-        print(f"  {name:5}: {info['examples']:3} ex  "
-              f"from {info['source_chunks']:3} chunks  "
+        print(f"  {name:5}: {info['examples']:4} ex  "
+              f"from {info['topics']:3} topics  "
               f"| in ~{info['avg_input_words']}w  out ~{info['avg_target_words']}w")
 
 
