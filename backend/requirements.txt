@@ -5,7 +5,10 @@
 #
 # NOTE: torch is NOT here on purpose -- the Dockerfile installs the CPU-only
 # wheel from PyTorch's own index first (the default PyPI wheel bundles ~2 GB of
-# CUDA). sentence-transformers / transformers below reuse that torch.
+# CUDA). sentence-transformers / transformers below reuse that torch. torchvision
+# (pulled in by pix2tex) IS pinned below so the resolver can't pick a newer one
+# that would drag the CUDA torch back in -- it installs from the CPU index via
+# the --extra-index-url the Dockerfile (and CI) pass.
 
 # --- Web / API ---
 fastapi==0.136.3
@@ -37,4 +40,5 @@ sentence-transformers==5.5.1
 transformers==5.9.0
 faiss-cpu==1.14.2
 pix2tex==0.1.4
+torchvision==0.27.1
 Pillow==12.2.0

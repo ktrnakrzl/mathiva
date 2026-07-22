@@ -22,14 +22,21 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
-# Install CPU-only PyTorch FIRST. The default PyPI wheel bundles CUDA (~2 GB+),
-# which a Gemini/CPU deployment never uses; the CPU wheel keeps the image small.
+# Install CPU-only PyTorch + torchvision FIRST, from PyTorch's CPU index. The
+# default PyPI wheels bundle CUDA (~2 GB+), which a Gemini/CPU deployment never
+# uses. torchvision is pulled in by pix2tex; installing the matched CPU pair here
+# (and pinning torchvision in requirements) stops the requirements install below
+# from resolving the latest torchvision and dragging the CUDA torch back in.
 # sentence-transformers / transformers then reuse this already-installed torch.
-RUN pip install torch==2.12.1 --index-url https://download.pytorch.org/whl/cpu
+RUN pip install torch==2.12.1 torchvision==0.27.1 \
+    --index-url https://download.pytorch.org/whl/cpu
 
-# Python dependencies (cache this layer unless requirements change).
+# Python dependencies (cache this layer unless requirements change). The extra
+# index keeps any transitive torch/torchvision resolution on the CPU wheels
+# rather than falling back to the CUDA PyPI default.
 COPY backend/requirements.txt ./requirements.txt
-RUN pip install -r requirements.txt
+RUN pip install -r requirements.txt \
+    --extra-index-url https://download.pytorch.org/whl/cpu
 
 # Application code. app/main.py adds ../../ml to sys.path, so the retrieval (RAG)
 # and solver packages -- including the prebuilt FAISS index + chunks that live in
