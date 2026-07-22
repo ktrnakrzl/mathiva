@@ -31,6 +31,9 @@ jobs:
           # --extra-index-url keeps the requirements resolve on CPU wheels too.
           pip install torch==2.12.1 torchvision==0.27.1 --index-url https://download.pytorch.org/whl/cpu
           pip install -r backend/requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu
+          # Test-only deps (pytest, httpx) live in a separate file so they stay
+          # out of the runtime image; install them for the test run.
+          pip install -r backend/requirements-dev.txt
 
       - name: Run pytest
         working-directory: backend
@@ -52,11 +55,11 @@ jobs:
 
       - name: Analyze
         working-directory: frontend
-        # --no-fatal-warnings: the codebase carries known SDK deprecation warnings
-        # (e.g. Color.withOpacity). This gate exists to catch real *errors*
-        # (undefined names, type mismatches) in the untested Dart layer, not to
-        # block on the pre-existing deprecations.
-        run: flutter analyze --no-fatal-warnings
+        # The codebase carries ~79 known SDK deprecation *infos* (e.g.
+        # Color.withOpacity). --no-fatal-infos/--no-fatal-warnings make this gate
+        # fail only on real *errors* (undefined names, type mismatches) in the
+        # untested Dart layer, not on that pre-existing deprecation debt.
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
 
   docker:
     name: Build & publish backend image

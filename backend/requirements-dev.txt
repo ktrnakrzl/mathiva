@@ -1,0 +1,7 @@
+# Test-only dependencies. Kept out of requirements.txt (and the Docker image) so
+# the runtime image stays lean -- CI installs these on top of requirements.txt to
+# run the pytest suite. Pinned to the versions the suite is developed against.
+#   pytest  -- the test runner
+#   httpx   -- required by FastAPI/Starlette's TestClient (the API tests)
+pytest==9.1.1
+httpx==0.28.1
