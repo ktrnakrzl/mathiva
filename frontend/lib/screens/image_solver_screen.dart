@@ -11,6 +11,7 @@ import '../presentation/widgets/fade_slide_in.dart';
 import '../presentation/widgets/glass_card.dart';
 import '../presentation/widgets/tap_scale.dart';
 import '../services/app_preferences.dart';
+import '../services/scan_history_service.dart';
 import '../services/solver_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/route_names.dart';
@@ -173,6 +174,9 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
     setState(() => _isSolving = true);
     try {
       final problem = await SolverService.solveImage(image);
+      // Record the solved scan so the home screen's "Recent" list shows real
+      // activity (persisted on-device -- see ScanHistoryService).
+      await ScanHistoryService.record(problem);
       if (!mounted) return;
       context.push(RouteNames.solution, extra: problem);
     } catch (e) {

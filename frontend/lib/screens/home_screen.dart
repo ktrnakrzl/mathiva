@@ -5,6 +5,7 @@ import '../services/app_preferences.dart';
 import '../services/local_content_service.dart';
 import '../services/progress_service.dart';
 import '../services/progress_store.dart';
+import '../services/scan_history_service.dart';
 import '../utils/progress_calc.dart';
 import '../utils/route_names.dart';
 import '../widgets/mathiva_bottom_nav.dart';
@@ -154,28 +155,29 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
 
-              const _RecentDivider(),
-              // NOTE: these two "Recent" rows are still illustrative
-              // placeholders — scan/solver history has no persistence layer yet
-              // (a separate feature from quiz/practice progress). Left static
-              // until solver history exists.
-              _RecentScanRow(
-                title: '2x² + 5x + 3 = 0',
-                subtitle: 'Quadratic equation · solved today',
-                onTap: () => context.push(RouteNames.solution),
-              ),
-              _RecentScanRow(
-                title: 'f(x) = 2x + 1',
-                subtitle: 'Functions · reviewed yesterday',
-                onTap: () => context.push(
-                  RouteNames.concept,
-                  extra: {
-                    'subjectId': firstSubject.id,
-                    'topicId': firstTopic.id,
-                    'lessonId': firstLesson.id,
-                    'conceptId': firstLesson.concepts.first.id,
-                  },
-                ),
+              // "Recent" = the student's real, on-device solved-scan history
+              // (ScanHistoryService). Hidden entirely until they've solved at
+              // least one scan, so a new user never sees fabricated activity.
+              ValueListenableBuilder<List<ScanHistoryEntry>>(
+                valueListenable: ScanHistoryService.recent,
+                builder: (context, entries, _) {
+                  if (entries.isEmpty) return const SizedBox.shrink();
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const _RecentDivider(),
+                      for (final entry in entries)
+                        _RecentScanRow(
+                          title: _stripMathDelimiters(entry.question),
+                          subtitle: 'Solved ${_relativeTime(entry.solvedAt)}',
+                          onTap: () => context.push(
+                            RouteNames.solution,
+                            extra: entry.toProblem(),
+                          ),
+                        ),
+                    ],
+                  );
+                },
               ),
             ],
           ),
@@ -649,6 +651,38 @@ class _ActionTile extends StatelessWidget {
       ),
     );
   }
+}
+
+// The backend returns the detected equation wrapped for math rendering, e.g.
+// "\(2x + 3 = 13\)". The Recent row shows it as a compact plain-text label, so
+// strip the \( \) / \[ \] delimiters.
+String _stripMathDelimiters(String s) {
+  var t = s.trim();
+  for (final pair in const [
+    ['\\(', '\\)'],
+    ['\\[', '\\]'],
+    [r'$$', r'$$'],
+    [r'$', r'$'],
+  ]) {
+    if (t.startsWith(pair[0]) && t.endsWith(pair[1]) &&
+        t.length > pair[0].length + pair[1].length) {
+      t = t.substring(pair[0].length, t.length - pair[1].length).trim();
+      break;
+    }
+  }
+  return t.isEmpty ? s.trim() : t;
+}
+
+// Human-friendly "when" for a recent scan, e.g. "just now", "5m ago",
+// "2h ago", "yesterday", "3d ago", or a date for anything older.
+String _relativeTime(DateTime when) {
+  final d = DateTime.now().difference(when);
+  if (d.inMinutes < 1) return 'just now';
+  if (d.inMinutes < 60) return '${d.inMinutes}m ago';
+  if (d.inHours < 24) return '${d.inHours}h ago';
+  if (d.inDays == 1) return 'yesterday';
+  if (d.inDays < 7) return '${d.inDays}d ago';
+  return '${when.year}-${when.month.toString().padLeft(2, '0')}-${when.day.toString().padLeft(2, '0')}';
 }
 
 // ─── Recent divider ─────────────────────────────────────────────────────────
