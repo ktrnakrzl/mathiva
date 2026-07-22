@@ -18,9 +18,27 @@ modes the fine-tuned T5 showed in evaluation (repetition loops like "x 0 x 0..."
 The response carries `model_used` so the UI/analysis can see which tier answered.
 """
 
+import collections
+
 from app.config import settings
 from app.services.ai_service import AIServiceError, generate_answer
 from app.services import gemini_service, t5_service
+
+# Bounded in-memory cache of successful answers, keyed by normalized question.
+# Repeated/identical questions (common in a class) are served from here instead
+# of re-calling the models -- the main lever for staying under Gemini's free-tier
+# limit. LRU-evicted at _CACHE_MAX; failures are never cached. Per-process (each
+# worker has its own), which is fine for a small deployment.
+_ANSWER_CACHE: "collections.OrderedDict[str, dict]" = collections.OrderedDict()
+_CACHE_MAX = 256
+
+
+def _cache_key(question: str) -> str:
+    return " ".join(question.lower().split()).strip(" ?.!")
+
+
+def clear_answer_cache() -> None:
+    _ANSWER_CACHE.clear()
 
 
 class TutorBusyError(AIServiceError):
@@ -103,6 +121,12 @@ def _sources(context_data):
 
 def answer_question(question: str) -> dict:
     """Run the full cascade and return {question, answer, model_used, sources}."""
+    use_cache = settings.answer_cache_enabled
+    key = _cache_key(question)
+    if use_cache and key in _ANSWER_CACHE:
+        _ANSWER_CACHE.move_to_end(key)           # mark most-recently-used
+        return dict(_ANSWER_CACHE[key])          # copy so callers can't mutate the cache
+
     context_data = _retrieve(question)
     context = "\n\n".join(context_data["chunks"])
     prompt = build_tutor_prompt(context, question)
@@ -161,9 +185,15 @@ def answer_question(question: str) -> dict:
             "The tutor is unavailable right now. Please try again."
         )
 
-    return {
+    result = {
         "question": question,
         "answer": answer,
         "model_used": model_used,
         "sources": _sources(context_data),
     }
+    if use_cache:                                # only successful answers reach here
+        _ANSWER_CACHE[key] = dict(result)
+        _ANSWER_CACHE.move_to_end(key)
+        while len(_ANSWER_CACHE) > _CACHE_MAX:
+            _ANSWER_CACHE.popitem(last=False)    # evict least-recently-used
+    return result

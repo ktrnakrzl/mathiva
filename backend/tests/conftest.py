@@ -15,6 +15,9 @@ import sys
 # limits. With the limiter disabled slowapi's decorator also short-circuits
 # before touching app.state.limiter, so the routers work on the bare app below.
 os.environ.setdefault("RATE_LIMIT_ENABLED", "false")
+# Off by default in tests too: the /ask cache is keyed by question, and tests
+# reuse "q" across cases -- a cached answer would leak between them.
+os.environ.setdefault("ANSWER_CACHE_ENABLED", "false")
 
 # The `solver` package lives under ml/, which the running app puts on sys.path
 # in app.main. Replicate that here (before any test imports app.services.*) so

@@ -140,6 +140,26 @@ def test_gemini_rate_limit_raises_tutor_busy(wired, monkeypatch):
     assert exc.value.retry_after == 42
 
 
+def test_repeated_question_is_served_from_cache(wired, monkeypatch):
+    """With caching on, an identical (normalized) question is answered from the
+    cache -- the model backends run once, not twice."""
+    monkeypatch.setattr(answer_service.settings, "answer_cache_enabled", True)
+    answer_service.clear_answer_cache()
+    calls = {"n": 0}
+
+    def counting_phi(prompt):
+        calls["n"] += 1
+        return "the cached answer"
+
+    monkeypatch.setattr(answer_service, "generate_answer", counting_phi)
+
+    r1 = answer_service.answer_question("What is 2+2?")
+    r2 = answer_service.answer_question("  what   IS  2+2? ")   # normalizes to same key
+    assert r1["answer"] == r2["answer"] == "the cached answer"
+    assert calls["n"] == 1                                       # second call hit the cache
+    answer_service.clear_answer_cache()
+
+
 def test_response_carries_sources(wired):
     wired["set_phi"]("Answer with sources.")
     res = answer_service.answer_question("q")

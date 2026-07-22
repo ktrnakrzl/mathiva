@@ -69,6 +69,12 @@ class Settings(BaseSettings):
     # to your app's origin(s), e.g. CORS_ORIGINS="https://app.example.com".
     cors_origins: str = Field(default="*", validation_alias="CORS_ORIGINS")
 
+    # Cache /ask answers per (normalized) question so repeated questions don't
+    # re-hit the model backends -- the main lever for staying under Gemini's
+    # free-tier limit. On by default; the test suite sets it off (conftest.py) so
+    # a cached answer can't leak between tests.
+    answer_cache_enabled: bool = Field(default=True, validation_alias="ANSWER_CACHE_ENABLED")
+
     # Skip the fine-tuned T5 tier in the /ask cascade. Set true in the hosted
     # (Gemini-backed, no-Ollama) deployment: with no Phi-3 there, T5 would be the
     # primary local generator, but at its current tiny-dataset quality it emits
