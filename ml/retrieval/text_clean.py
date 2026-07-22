@@ -143,6 +143,23 @@ _FRONT_MATTER_MARKERS = (
     "reviewers:",
     "illustrator",
     "layout artist",
+    # Publisher / copyright / contact front matter (e.g. the FILCOLS page): these
+    # pass the word-count check but are not math and generate junk pairs.
+    "filcols",
+    "bureau of learning resources",
+    "undersecretary",
+    "office address",
+    "e-mail address",
+    "isbn",
+    "printed in the philippines",
+    "published by",
+)
+# Contact-info patterns (email, phone) that mark a publisher/credits page.
+_CONTACT_RE = re.compile(
+    r"[\w.+-]+@[\w-]+\.\w+"                         # an email address
+    r"|\b(?:tel(?:ephone)?|fax|landline|mobile)\b"  # a phone-number label
+    r"|\(\d{2,4}\)\s*\d{3}[- ]?\d{4}",              # a (0XX) XXX-XXXX number
+    re.IGNORECASE,
 )
 _MIN_WORDS = 12
 
@@ -151,13 +168,15 @@ def is_low_content(text):
     """True if `text` (already cleaned) is too thin or is front matter to skip.
 
     We generate QA only from chunks with real instructional content; copyright
-    pages, the TOC, and the credits pages produce nonsense pairs.
+    pages, the TOC, contact/credits pages, and the like produce nonsense pairs.
     """
     words = text.split()
     if len(words) < _MIN_WORDS:
         return True
     low = text.lower()
     if any(marker in low for marker in _FRONT_MATTER_MARKERS):
+        return True
+    if _CONTACT_RE.search(text):
         return True
     # A short chunk that's mostly competency codes (e.g. "M11GM-Ia-1") is a
     # curriculum-guide listing, not a lesson.
