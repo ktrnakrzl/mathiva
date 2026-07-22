@@ -101,6 +101,9 @@ flutter build web --dart-define=API_BASE_URL=https://your-deployed-backend
 - [ ] **Rotate the Supabase database password** if it was ever shared, and update
       `DATABASE_URL`.
 - [ ] Strong `JWT_SECRET` (≥ 32 bytes) — the startup guard enforces this.
-- [ ] Restrict CORS in `app/main.py` from `*` to your app's origin.
+- [ ] **Restrict CORS** — set `CORS_ORIGINS` to your app's origin(s), e.g.
+      `CORS_ORIGINS="https://app.example.com"` (comma-separate multiple). Only
+      needed for a *web* frontend; native mobile clients don't enforce CORS.
+      Default `*` is otherwise safe here (Bearer-token auth, no cookies).
 - [x] Rate limiting on `/auth/*` and the Gemini-backed routes — **enabled** (see
       "Rate limiting behind a proxy" above; make sure `--proxy-headers` is set).

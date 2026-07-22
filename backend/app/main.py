@@ -23,10 +23,14 @@ from app.rate_limit import limiter
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# Add CORS Middleware SECOND
+# Add CORS Middleware SECOND. Origins come from settings (CORS_ORIGINS); default
+# "*" is fine for local dev and native mobile (which doesn't enforce CORS), and a
+# web deployment locks it to its origin(s). settings is already imported above via
+# app.rate_limit, so reading it here loads nothing new.
+from app.config import settings as _settings
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_settings.cors_origin_list,
     # Auth is Bearer-token in the Authorization header, not cookies, so we don't
     # need credentialed CORS -- and a wildcard origin with allow_credentials=True
     # is rejected by browsers anyway. Keeping this False makes "*" valid.

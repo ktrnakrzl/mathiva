@@ -63,6 +63,12 @@ class Settings(BaseSettings):
     # tests aren't throttled (see backend/tests/conftest.py and app/rate_limit.py).
     rate_limit_enabled: bool = Field(default=True, validation_alias="RATE_LIMIT_ENABLED")
 
+    # Allowed CORS origins for browser clients, comma-separated. Default "*" is
+    # safe for this app because auth is a Bearer token (not cookies) and native
+    # mobile clients don't enforce CORS at all. For a *web* deployment, lock this
+    # to your app's origin(s), e.g. CORS_ORIGINS="https://app.example.com".
+    cors_origins: str = Field(default="*", validation_alias="CORS_ORIGINS")
+
     # Skip the fine-tuned T5 tier in the /ask cascade. Set true in the hosted
     # (Gemini-backed, no-Ollama) deployment: with no Phi-3 there, T5 would be the
     # primary local generator, but at its current tiny-dataset quality it emits
@@ -70,6 +76,14 @@ class Settings(BaseSettings):
     # block Gemini. Leave false for local dev / the defense demo, where T5 is the
     # thesis contribution being showcased. Flip back to false once T5 is improved.
     disable_t5: bool = Field(default=False, validation_alias="DISABLE_T5")
+
+    @property
+    def cors_origin_list(self) -> list[str]:
+        """Parse CORS_ORIGINS into a list. "*" (or empty) allows any origin."""
+        raw = self.cors_origins.strip()
+        if not raw or raw == "*":
+            return ["*"]
+        return [origin.strip() for origin in raw.split(",") if origin.strip()]
 
     @property
     def is_production(self) -> bool:

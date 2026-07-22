@@ -20,6 +20,16 @@ def _settings(monkeypatch, **env):
     return Settings()
 
 
+def test_cors_default_allows_any_origin(monkeypatch):
+    assert _settings(monkeypatch).cors_origin_list == ["*"]
+
+
+def test_cors_origins_parses_comma_separated_list(monkeypatch):
+    s = _settings(monkeypatch,
+                  CORS_ORIGINS="https://app.example.com, http://localhost:3000")
+    assert s.cors_origin_list == ["https://app.example.com", "http://localhost:3000"]
+
+
 def test_dev_validation_is_a_noop(monkeypatch):
     s = _settings(monkeypatch, ENVIRONMENT="development",
                   JWT_SECRET="dev-secret-change-in-production",
