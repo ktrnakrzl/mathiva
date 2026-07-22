@@ -24,6 +24,27 @@ class GeminiServiceError(RuntimeError):
     from Gemini' and keeps whatever the local models produced."""
 
 
+class GeminiRateLimitError(GeminiServiceError):
+    """Raised specifically on a 429 / quota-exceeded from Gemini -- a *temporary*
+    condition, distinct from a hard failure. Carries the server's suggested retry
+    delay (seconds) so the caller can hand the user a Retry-After."""
+
+    def __init__(self, message: str, retry_after: int = 30):
+        super().__init__(message)
+        self.retry_after = retry_after
+
+
+def _retry_after_seconds(payload: dict) -> int:
+    """Gemini's suggested wait from a 429 body (RetryInfo detail), else 30s."""
+    try:
+        for detail in payload.get("error", {}).get("details", []):
+            if "RetryInfo" in detail.get("@type", "") and detail.get("retryDelay"):
+                return max(1, int(float(str(detail["retryDelay"]).rstrip("s"))))
+    except Exception:
+        pass
+    return 30
+
+
 def gemini_available() -> bool:
     """True only when a free API key is configured (backend/.env). Lets the
     cascade skip the Gemini tier cleanly on a key-less dev machine."""
@@ -59,7 +80,15 @@ def gemini_generate(prompt: str) -> str:
 
     # Gemini reports auth/quota errors in an `error` object.
     if isinstance(payload.get("error"), dict):
-        raise GeminiServiceError(payload["error"].get("message", "Gemini error"))
+        err = payload["error"]
+        # A 429 / RESOURCE_EXHAUSTED is a temporary rate limit, not a hard error;
+        # surface it distinctly so the caller can tell the user to retry shortly.
+        if response.status_code == 429 or err.get("status") == "RESOURCE_EXHAUSTED":
+            raise GeminiRateLimitError(
+                err.get("message", "Gemini rate limit reached"),
+                _retry_after_seconds(payload),
+            )
+        raise GeminiServiceError(err.get("message", "Gemini error"))
 
     try:
         text = payload["candidates"][0]["content"]["parts"][0]["text"]

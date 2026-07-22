@@ -6,7 +6,7 @@ from app.rate_limit import limiter
 from app.services.auth_service import get_current_user
 from app.services.rag_service import retrieve_context
 from app.services.ai_service import AIServiceError, stream_answer
-from app.services.answer_service import answer_question, build_tutor_prompt
+from app.services.answer_service import answer_question, build_tutor_prompt, TutorBusyError
 
 router = APIRouter(
     prefix="/api",
@@ -37,6 +37,10 @@ def ask(
     # UI can show which tier answered.
     try:
         return answer_question(question)
+    except TutorBusyError as e:
+        # Temporary rate limit -- tell the client to retry shortly.
+        raise HTTPException(status_code=503, detail=str(e),
+                            headers={"Retry-After": str(e.retry_after)})
     except AIServiceError as e:
         # Every model tier was unavailable / produced junk.
         raise HTTPException(status_code=503, detail=str(e))
@@ -72,6 +76,9 @@ def ask_stream(
         # No local Ollama -> answer via the cascade (Gemini) instead of 503ing.
         try:
             result = answer_question(question)
+        except TutorBusyError as e:
+            raise HTTPException(status_code=503, detail=str(e),
+                                headers={"Retry-After": str(e.retry_after)})
         except AIServiceError as e:
             # Every tier is down (no Ollama, no T5, no Gemini) -> genuine 503.
             raise HTTPException(status_code=503, detail=str(e))

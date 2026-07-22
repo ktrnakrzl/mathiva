@@ -23,6 +23,17 @@ from app.services.ai_service import AIServiceError, generate_answer
 from app.services import gemini_service, t5_service
 
 
+class TutorBusyError(AIServiceError):
+    """The cascade couldn't answer because the LLM backend is rate-limited (a
+    temporary condition). Subclasses AIServiceError so existing handlers still
+    treat it as 'no answer', but carries retry_after so the endpoint can return a
+    friendly 'try again in a moment' with a Retry-After header."""
+
+    def __init__(self, retry_after: int = 30):
+        super().__init__("The tutor is busy right now. Please try again in a moment.")
+        self.retry_after = retry_after
+
+
 def _retrieve(question: str):
     """Indirection over rag_service.retrieve_context. rag_service loads the SBERT
     model + FAISS index at import time, so we import it lazily here -- this keeps
@@ -130,16 +141,22 @@ def answer_question(question: str) -> dict:
         model_used = "phi3" if phi_answer is not None else "t5"
 
     # --- bounded escalation: Gemini only if the local answer is still weak ----
+    rate_limited_after = None
     if is_bad_answer(answer) and gemini_service.gemini_available():
         try:
             gemini_answer = gemini_service.gemini_generate(prompt)
             if not is_bad_answer(gemini_answer):
                 answer, model_used = gemini_answer, "gemini"
+        except gemini_service.GeminiRateLimitError as e:
+            rate_limited_after = e.retry_after   # temporary -- tell the user to retry
         except gemini_service.GeminiServiceError:
             pass  # keep the best local answer we have
 
     if answer is None or is_bad_answer(answer):
-        # Every tier failed or only produced junk.
+        # Every tier failed or only produced junk. Distinguish a temporary rate
+        # limit (retry shortly) from a hard outage (generic unavailable).
+        if rate_limited_after is not None:
+            raise TutorBusyError(rate_limited_after)
         raise AIServiceError(
             "The tutor is unavailable right now. Please try again."
         )

@@ -124,6 +124,22 @@ def test_raises_when_every_tier_fails(wired):
         answer_service.answer_question("q")
 
 
+def test_gemini_rate_limit_raises_tutor_busy(wired, monkeypatch):
+    """When the local tiers are unavailable and Gemini is rate-limited, the cascade
+    raises TutorBusyError (temporary) with the retry delay -- not a hard outage."""
+    wired["set_phi"](None)                       # Ollama down (hosted no-Phi-3)
+    wired["t5_available"] = False                # no T5
+
+    def rate_limited(prompt):
+        raise answer_service.gemini_service.GeminiRateLimitError("quota", retry_after=42)
+
+    monkeypatch.setattr(answer_service.gemini_service, "gemini_generate", rate_limited)
+
+    with pytest.raises(answer_service.TutorBusyError) as exc:
+        answer_service.answer_question("q")
+    assert exc.value.retry_after == 42
+
+
 def test_response_carries_sources(wired):
     wired["set_phi"]("Answer with sources.")
     res = answer_service.answer_question("q")
