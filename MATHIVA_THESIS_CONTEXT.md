@@ -182,7 +182,8 @@ The backend is layered internally: **API routers** (thin request/response) →
 **Testing / quality**
 | Tool | Purpose |
 |---|---|
-| **pytest** | Automated backend test suite (150+ tests covering auth, solver, quiz, cascade, personalization) |
+| **pytest** | Automated backend test suite — **154 tests, all passing** (auth, solver, OCR, quiz, answer cascade, adaptive personalization, config); ~1,390 lines of test code against ~2,700 lines of application code |
+| **flutter_test** | Present but **not used**: the mobile app has no automated tests; the Flutter UI is verified manually |
 
 ### 4.3 Authentication & data
 - **JWT-based auth** (HS256). Passwords hashed with **bcrypt**. Registration,
@@ -213,8 +214,12 @@ For a conceptual question:
 1. **Retrieve** the most relevant course-material chunks (SBERT embedding of the
    question → FAISS cosine search).
 2. **Generate** an answer from a shared "tutor prompt" (instruction + retrieved
-   context + question). Multiple generators participate in a **cascade**:
-   **fine-tuned T5 → Phi-3 (local) → Gemini (bounded escalation)**.
+   context + question). Multiple generators participate in a **cascade**. T5 and
+   Phi-3 are both invoked locally, then ranked by preference:
+   **Phi-3 (preferred) → fine-tuned T5 (backup) → Gemini (bounded escalation)**.
+   Phi-3 is ranked first *empirically*, because it currently outperforms the T5
+   fine-tune (§5.3); the ordering is a measured decision, not an architectural
+   assumption, and would be revisited if a larger fine-tune wins.
 3. A cheap, objective **quality guard** (`is_bad_answer`) rejects empty or
    degenerate (repetition-loop) output; escalation to the free Gemini tier
    happens *only* when the local answer is still bad, so quota isn't wasted.
@@ -229,10 +234,22 @@ For a conceptual question:
   inference task. A large generic symbolic-math set was used for optional warm-up
   (Stage A), then the curriculum pairs (Stage B).
 - The pairs come from a *quality-judged* generation pipeline (auto-generate → LLM
-  judge → keep survivors). **The judged set is small (~62 examples).**
+  judge → keep survivors). **The judged set is small (62 examples).**
+- **Why it is small — be precise about this.** The size is *not* a property of the
+  corpus. The generation pass was run over only **40 of the 1,108 corpus chunks
+  (3.6%)**, yielding 74 raw pairs of which the judge kept 62 (an 84% keep rate).
+  At the observed rate of ~1.85 pairs/chunk, a full-corpus pass projects to
+  roughly **1,700 usable pairs (~27×)** using the *existing* pipeline with no
+  methodological change. A further ~51 hand-authored pairs exist but are not yet
+  folded into the training set. The correct framing for the thesis is therefore
+  *"results reported at an early dataset checkpoint,"* not *"the domain affords
+  only 62 examples."*
 - **Honest result:** at this dataset size the fine-tuned T5 **underperforms** the
-  general-purpose Phi-3 (it produces degenerate output on some questions), so the
-  live cascade currently *prefers* Phi-3/Gemini and keeps T5 as a backup. This is
+  general-purpose Phi-3 — on several held-out questions it collapses into
+  repetition loops (e.g. emitting `x 0 x 0 x 0 …` for a logarithmic-graph
+  question) rather than merely answering imprecisely. The live cascade therefore
+  *prefers* Phi-3/Gemini and keeps T5 as a backup, which means **the fine-tuned
+  model does not currently contribute to answers the student sees.** This is
   itself a reportable finding: *a small in-domain fine-tune on limited data does
   not yet beat a generalist; growing the dataset is the identified path forward.*
 
@@ -276,11 +293,23 @@ For a conceptual question:
 
 - **Retrieval corpus:** built from General-Mathematics course material; ~1,100
   unique text chunks. Other subjects are not yet in the corpus.
-- **Fine-tune dataset:** ~62 quality-judged (context→answer) pairs (small);
-  a large generic symbolic-math set exists for warm-up.
-- **Evaluation done:** T5 vs. Phi-3 compared on a small held-out set with
-  ROUGE-L / BLEU / BERTScore; qualitative degeneracy observed for T5. **Result:
-  Phi-3 currently stronger.**
+- **Fine-tune dataset:** 62 quality-judged (context→answer) pairs, split
+  **50 train / 7 validation / 5 test**, grouped by source chunk so no chunk's
+  context leaks across splits. A large generic symbolic-math set (~96k
+  train / 2k val / 2k test) exists for Stage-A warm-up.
+- **Evaluation done:** T5 vs. Phi-3 on the held-out set with ROUGE-L / BLEU /
+  BERTScore (T5: ROUGE-L 0.154, BLEU 0.316, BERTScore-F1 0.698); qualitative
+  degeneracy observed for T5. **Result: Phi-3 currently stronger.**
+- **Treat these metrics as indicative, not conclusive.** The test split is
+  **5 examples** — far too few for the differences to be statistically
+  meaningful. The split also inherits two defects from the generation pass:
+  some items are **not mathematics** (one asks what happens to the temperature
+  of ice as it is heated — generated from non-math passages in the source PDF),
+  and some are **circular**, restating the question as the answer (*"What is the
+  equation of the graph y = log(x−1)+2?"* → *"The equation is y = log(x−1)+2."*).
+  Front-matter boilerplate (e.g. publisher contact details) also survives the
+  judge. A defensible comparison requires re-running evaluation on a larger,
+  filtered, math-only test set after the full-corpus generation pass.
 - **Not yet measured (state as limitation / future work):** OCR accuracy on real
   student photos; large-scale retrieval accuracy (an internal check found the
   gold chunk retrieved in the top results roughly half the time); live end-to-end
@@ -291,10 +320,21 @@ For a conceptual question:
 ## 7. Limitations / honest current state (for Scope & Limitations + Future Work)
 
 - **Fine-tuned model is weak at current data size** — trained and integrated, but
-  outperformed by the generalist on the tiny dataset; the honest framing is a
-  demonstrated pipeline plus a negative-but-informative result, with dataset
-  growth as future work.
-- **Retrieval corpus is General-Mathematics only.**
+  outperformed by the generalist, so it is ranked below Phi-3 in the cascade and
+  does not currently affect student-visible answers. The honest framing is a
+  demonstrated pipeline plus a negative-but-informative result. Crucially, the
+  limiting factor is an **incomplete dataset-generation pass (40 of 1,108
+  chunks)**, not a limit of the method — completing it is a known, mechanical
+  next step rather than open-ended research.
+- **The evaluation is under-powered** — a 5-example test split containing some
+  non-mathematical and circular items cannot support a strong claim in either
+  direction. Re-evaluation on a larger filtered set is required before the
+  T5-vs-Phi-3 comparison should be reported as a finding.
+- **Retrieval corpus is General-Mathematics only**, and is not yet filtered for
+  front-matter/boilerplate, which propagates noise into generated QA pairs.
+- **No automated testing of the mobile app and no continuous integration** — the
+  backend suite is comprehensive but is run manually; the ~12,500-line Flutter
+  codebase is validated only by manual use.
 - **Quiz content coverage** is limited to the 11 templated concepts (the app's
   current curriculum concepts all map to these).
 - **OCR accuracy is unmeasured** and depends on photo quality; the camera/OCR
