@@ -30,33 +30,37 @@ def solve_problem(equation: str):
 
 
 def solve_image(image_bytes: bytes):
-    """OCR a photo and solve it, local-first with a cloud fallback.
+    """OCR a photo and solve it, cloud-first with a local fallback.
 
-    Reads the image with the local pix2tex model first (free, offline). Whether
-    that read was good enough is decided by the solver itself: if solve_latex
-    can turn it into a real answer, we're done and no API is called. Only when
-    the local read fails -- pix2tex garbled it, or it wasn't solvable -- do we
-    fall back to Gemini (which reads handwriting/photos), but just as with the
-    T5 cascade, we accept Gemini only if *its* output actually solves.
+    Gemini reads the image first: it handles photographed and handwritten math,
+    which is the real use case. The local pix2tex model only reads *clean printed*
+    math and garbles photos, so running it first just added latency before the
+    inevitable Gemini retry. pix2tex now runs only as an offline fallback -- when
+    no Gemini key is configured, or Gemini couldn't produce a solvable read -- so
+    development still works without a key or network. As with the /ask cascade, an
+    engine's output is accepted only if the solver can actually solve it.
     """
     latex = None
     result = {"success": False, "error": _UNREADABLE_MESSAGE}
 
-    # Local engine first. A crash here (bad image, model error) is treated the
-    # same as an unreadable scan so the Gemini fallback still gets a turn.
-    try:
-        latex = ocr_service.pix2tex_to_latex(image_bytes)
-        result = solve_problem_from_latex(latex)
-    except Exception:
-        pass
-
-    if not result.get("success") and ocr_service.gemini_available():
+    # Cloud engine first -- it reads real photos and handwriting.
+    if ocr_service.gemini_available():
         try:
-            gemini_latex = ocr_service.gemini_to_latex(image_bytes)
-            latex = gemini_latex
-            result = solve_problem_from_latex(gemini_latex)
+            latex = ocr_service.gemini_to_latex(image_bytes)
+            result = solve_problem_from_latex(latex)
         except ocr_service.OCRServiceError:
-            pass  # keep the local failure result
+            pass  # fall through to the local engine
+
+    # Local pix2tex as an offline fallback: no key, or Gemini didn't solve. A
+    # crash here (bad image, model error) is treated the same as an unreadable
+    # scan so the caller still gets an honest failure.
+    if not result.get("success"):
+        try:
+            pix_latex = ocr_service.pix2tex_to_latex(image_bytes)
+            latex = pix_latex
+            result = solve_problem_from_latex(pix_latex)
+        except Exception:
+            pass  # keep the cloud/failure result
 
     if latex is not None:
         result["latex"] = latex
