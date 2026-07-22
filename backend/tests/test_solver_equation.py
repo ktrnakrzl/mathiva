@@ -37,3 +37,19 @@ def test_explicit_python_syntax_still_works():
 
 def test_expression_without_equals_solves_against_zero():
     assert set(_solve("x^2 - 4")["solutions"]) == {"-2", "2"}
+
+
+def test_typed_system_of_equations():
+    r = _solve("x + y = 5, x - y = 1")
+    assert r["variable"] is None
+    assert r["solutions"] == ["x = 3", "y = 2"]
+
+
+def test_typed_inequality():
+    r = _solve("2x + 3 >= 7")
+    assert r["variable"] == "x"
+    assert "x" in r["answer"]
+
+
+def test_typed_arithmetic_is_evaluated():
+    assert _solve("89 + 82")["solutions"] == ["171"]

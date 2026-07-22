@@ -118,3 +118,54 @@ def test_no_real_solution_is_reported_as_such():
     assert result["success"] is False
     # Read fine, just no real answer -- distinct from an unreadable scan.
     assert "no real" in result["error"].lower()
+
+
+# --- inequalities -----------------------------------------------------------
+
+# A real LaTeX line break is two backslash characters; built via chr(92) so the
+# test source itself is unambiguous about how many backslashes it contains.
+_BR = chr(92) * 2
+
+
+def test_strict_inequality_solves():
+    result = solve_latex("2x + 3 > 7")
+    assert result["success"] is True
+    assert result["variable"] == "x"
+    assert "x" in result["answer"] and ("<" in result["answer"])
+
+
+def test_bounded_inequality_gives_a_range():
+    # x^2 - 4 <= 0  ->  -2 <= x <= 2 (chained, trivial +/-oo bounds dropped).
+    result = solve_latex("x^2 - 4 " + chr(92) + "leq 0")
+    assert result["success"] is True
+    assert result["answer"] == r"\(-2 \le x \le 2\)"
+
+
+# --- systems of equations ---------------------------------------------------
+
+def test_system_of_equations_solves():
+    result = solve_latex(f"x + y = 5 {_BR} x - y = 1")
+    assert result["success"] is True
+    assert result["variable"] is None
+    assert result["solutions"] == ["x = 3", "y = 2"]
+
+
+def test_system_in_cases_environment_solves():
+    latex = f"{chr(92)}begin{{cases}} 2a + b = 7 {_BR} a - b = 2 {chr(92)}end{{cases}}"
+    result = solve_latex(latex)
+    assert result["success"] is True
+    assert result["solutions"] == ["a = 3", "b = 1"]
+
+
+def test_underdetermined_system_is_rejected():
+    # Infinitely many solutions (second equation is a multiple of the first):
+    # no unique real answer, so fail safe rather than invent one.
+    result = solve_latex(f"x + y = 5 {_BR} 2x + 2y = 10")
+    assert result["success"] is False
+
+
+def test_garbled_multipart_scan_is_rejected():
+    # Two "parts" of OCR noise must not be mistaken for a solvable system.
+    latex = f"{chr(92)}mathbf{{Q}}^{{{chr(92)}times}} {_BR} {chr(92)}operatorname{{zz}}"
+    result = solve_latex(latex)
+    assert result["success"] is False
