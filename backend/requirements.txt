@@ -1,19 +1,40 @@
-fastapi
-uvicorn[standard]
-python-multipart
-python-dotenv
-psycopg2-binary
-pgvector
-sqlalchemy
-alembic
-pydantic-settings
-requests
-sympy
-antlr4-python3-runtime==4.11
-sentence-transformers
-faiss-cpu
-pix2tex
-Pillow
-bcrypt
-PyJWT
-email-validator
+# Backend runtime dependencies, pinned to the versions this app was built and
+# tested against so the Docker image is reproducible (a floating major of
+# transformers / fastapi / sentence-transformers could otherwise break a rebuild).
+# To upgrade: bump a pin deliberately, run the test suite, then commit.
+#
+# NOTE: torch is NOT here on purpose -- the Dockerfile installs the CPU-only
+# wheel from PyTorch's own index first (the default PyPI wheel bundles ~2 GB of
+# CUDA). sentence-transformers / transformers below reuse that torch.
+
+# --- Web / API ---
+fastapi==0.136.3
+uvicorn[standard]==0.48.0
+python-multipart==0.0.32
+python-dotenv==1.2.2
+
+# --- Database ---
+sqlalchemy==2.0.51
+alembic==1.18.5
+psycopg2-binary==2.9.12
+pgvector==0.4.2
+
+# --- Config / auth ---
+pydantic-settings==2.14.2
+bcrypt==5.0.0
+PyJWT==2.13.0
+email-validator==2.3.0
+
+# --- Rate limiting (per-IP throttling on auth + Gemini-backed routes) ---
+slowapi==0.1.10
+limits==5.8.0
+
+# --- HTTP / math / RAG / OCR ---
+requests==2.34.2
+sympy==1.14.0
+antlr4-python3-runtime==4.11.0
+sentence-transformers==5.5.1
+transformers==5.9.0
+faiss-cpu==1.14.2
+pix2tex==0.1.4
+Pillow==12.2.0

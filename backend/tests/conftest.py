@@ -9,6 +9,13 @@ every test isolated -- each test gets a fresh, empty database.
 import os
 import sys
 
+# Turn off per-IP rate limiting for the whole suite BEFORE any app.* import: the
+# limiter reads this at construction (app/rate_limit.py -> app.config.settings),
+# and the tests hammer /auth/register + /auth/login far past the production
+# limits. With the limiter disabled slowapi's decorator also short-circuits
+# before touching app.state.limiter, so the routers work on the bare app below.
+os.environ.setdefault("RATE_LIMIT_ENABLED", "false")
+
 # The `solver` package lives under ml/, which the running app puts on sys.path
 # in app.main. Replicate that here (before any test imports app.services.*) so
 # services like solver_service can `import solver.math_solver` regardless of

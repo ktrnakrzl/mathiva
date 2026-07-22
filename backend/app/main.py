@@ -12,6 +12,17 @@ load_dotenv(os.path.join(os.path.dirname(__file__), "../.env"))
 # Create app FIRST
 app = FastAPI(title="Mathiva API")
 
+# Register the shared per-IP rate limiter (slowapi) so the @limiter.limit
+# decorators on the auth + Gemini-backed routes can find it on app.state, and a
+# tripped limit returns a clean 429 instead of a 500. No-op when the limiter is
+# disabled (tests / RATE_LIMIT_ENABLED=false). See app/rate_limit.py.
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+
+from app.rate_limit import limiter
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 # Add CORS Middleware SECOND
 app.add_middleware(
     CORSMiddleware,

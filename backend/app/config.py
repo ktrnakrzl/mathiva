@@ -57,6 +57,12 @@ class Settings(BaseSettings):
     # reproducible behavior.
     gemini_model: str = Field(default="gemini-flash-latest", validation_alias="GEMINI_MODEL")
 
+    # Per-IP request throttling (slowapi) on the auth + Gemini-backed endpoints.
+    # On by default everywhere, including local dev, so the limits are exercised
+    # before production. The test suite sets RATE_LIMIT_ENABLED=false so the API
+    # tests aren't throttled (see backend/tests/conftest.py and app/rate_limit.py).
+    rate_limit_enabled: bool = Field(default=True, validation_alias="RATE_LIMIT_ENABLED")
+
     # Skip the fine-tuned T5 tier in the /ask cascade. Set true in the hosted
     # (Gemini-backed, no-Ollama) deployment: with no Phi-3 there, T5 would be the
     # primary local generator, but at its current tiny-dataset quality it emits

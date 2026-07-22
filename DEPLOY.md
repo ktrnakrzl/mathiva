@@ -68,6 +68,26 @@ The image runs anywhere that accepts a container. Typical options:
 The startup guard (`settings.validate_runtime()`) refuses to boot in production if
 the JWT secret is weak/default or `DATABASE_URL` is still SQLite — a safety net.
 
+### Rate limiting behind a proxy (important)
+The auth and Gemini-backed endpoints are throttled **per client IP** (slowapi):
+`/auth/register` 5/min, `/auth/login` 10/min, `/api/ask`, `/api/ask/stream`, and
+`/api/solve-image` 20/min each. A tripped limit returns HTTP 429.
+
+Almost every host above puts a reverse proxy in front of the container, so the
+IP the app sees is the *proxy's* — which would make all users share one bucket.
+Start uvicorn so it trusts the forwarded client IP. Override the image CMD (or
+set it on the platform) to add:
+
+```
+--proxy-headers --forwarded-allow-ips="*"
+```
+
+Use `*` only when the container is reachable *exclusively* through your proxy
+(the usual PaaS/VPS-behind-Nginx case); otherwise a client could spoof
+`X-Forwarded-For` to dodge the limit. Prefer pinning `--forwarded-allow-ips` to
+the proxy's IP where you know it. To disable throttling entirely (not
+recommended in production) set `RATE_LIMIT_ENABLED=false`.
+
 ## 4. Point the app at the deployed backend
 The Flutter app reads its backend URL from a compile-time define, so no code edit
 is needed:
@@ -82,4 +102,5 @@ flutter build web --dart-define=API_BASE_URL=https://your-deployed-backend
       `DATABASE_URL`.
 - [ ] Strong `JWT_SECRET` (≥ 32 bytes) — the startup guard enforces this.
 - [ ] Restrict CORS in `app/main.py` from `*` to your app's origin.
-- [ ] Consider rate limiting on `/auth/login` and `/api/ask`.
+- [x] Rate limiting on `/auth/*` and the Gemini-backed routes — **enabled** (see
+      "Rate limiting behind a proxy" above; make sure `--proxy-headers` is set).

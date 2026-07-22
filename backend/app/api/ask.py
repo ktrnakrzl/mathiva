@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 
 from app.database.models import User
+from app.rate_limit import limiter
 from app.services.auth_service import get_current_user
 from app.services.rag_service import retrieve_context
 from app.services.ai_service import AIServiceError, stream_answer
@@ -22,8 +23,12 @@ def _retrieve_and_build_prompt(question: str):
     return build_tutor_prompt(context, question), context_data
 
 
+# `request: Request` is required by slowapi's limiter. The limit protects the
+# free-tier Gemini quota this cascade can reach; per client IP.
 @router.post("/ask")
+@limiter.limit("20/minute")
 def ask(
+    request: Request,
     question: str = Query(...),
     current_user: User = Depends(get_current_user),
 ):
@@ -40,7 +45,9 @@ def ask(
 
 
 @router.post("/ask/stream")
+@limiter.limit("20/minute")
 def ask_stream(
+    request: Request,
     question: str = Query(...),
     current_user: User = Depends(get_current_user),
 ):

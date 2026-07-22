@@ -25,7 +25,7 @@ WORKDIR /app
 # Install CPU-only PyTorch FIRST. The default PyPI wheel bundles CUDA (~2 GB+),
 # which a Gemini/CPU deployment never uses; the CPU wheel keeps the image small.
 # sentence-transformers / transformers then reuse this already-installed torch.
-RUN pip install torch --index-url https://download.pytorch.org/whl/cpu
+RUN pip install torch==2.12.1 --index-url https://download.pytorch.org/whl/cpu
 
 # Python dependencies (cache this layer unless requirements change).
 COPY backend/requirements.txt ./requirements.txt

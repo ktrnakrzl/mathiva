@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, EmailStr, field_validator
 from sqlalchemy.orm import Session
 
 from app.database.db import get_db
 from app.database.models import User
+from app.rate_limit import limiter
 from app.services.auth_service import (
     create_access_token,
     get_current_user,
@@ -52,19 +53,22 @@ class LoginResponse(BaseModel):
     expires_in: int = 86400
 
 
+# `request: Request` is required by slowapi's limiter and is why the JSON body
+# is bound to `payload` here (not the usual `request`). Limits are per client IP.
 @router.post("/register", response_model=RegisterResponse)
-def register(request: RegisterRequest, db: Session = Depends(get_db)):
-    if db.query(User).filter(User.email == request.email).first() is not None:
+@limiter.limit("5/minute")
+def register(request: Request, payload: RegisterRequest, db: Session = Depends(get_db)):
+    if db.query(User).filter(User.email == payload.email).first() is not None:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="An account with this email already exists",
         )
 
     user = User(
-        email=request.email,
-        password_hash=hash_password(request.password),
-        full_name=request.full_name,
-        section=request.section,
+        email=payload.email,
+        password_hash=hash_password(payload.password),
+        full_name=payload.full_name,
+        section=payload.section,
     )
     db.add(user)
     db.commit()
@@ -78,10 +82,11 @@ def register(request: RegisterRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/login", response_model=LoginResponse)
-def login(request: LoginRequest, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == request.email).first()
+@limiter.limit("10/minute")
+def login(request: Request, payload: LoginRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == payload.email).first()
 
-    if user is None or not verify_password(request.password, user.password_hash):
+    if user is None or not verify_password(payload.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
