@@ -189,12 +189,6 @@ class _StepCard extends StatelessWidget {
                     text: text,
                     textStyle: TextStyle(color: colors.ink, height: 1.5),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Why: this step moves closer to the answer while keeping the equation balanced.',
-                    style: TextStyle(
-                        color: colors.muted, fontSize: 12.5, height: 1.35),
-                  ),
                 ],
               ),
             ),

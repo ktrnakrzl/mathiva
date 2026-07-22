@@ -87,9 +87,30 @@ def test_unparseable_ocr_noise_is_rejected():
     assert result["success"] is False
 
 
-def test_no_variable_is_rejected():
+def test_numeric_equation_without_unknown_is_rejected():
+    # A relational with no variable ("2 + 3 = 5") isn't something to solve or a
+    # number to report -- it simplifies to a boolean -- so it still fails safe.
+    # (A bare arithmetic *expression* like "89 + 82" is evaluated instead; see
+    # test_arithmetic_expression_is_evaluated.)
     result = solve_latex("2 + 3 = 5")
     assert result["success"] is False
+
+
+def test_arithmetic_expression_is_evaluated():
+    # A scanned/typed expression with no unknown is plain arithmetic: evaluate
+    # it to a number rather than rejecting it as "not an equation".
+    result = solve_latex("89 + 82")
+    assert result["success"] is True
+    assert result["variable"] is None
+    assert result["solutions"] == ["171"]
+    assert "171" in result["answer"]
+
+
+def test_fraction_arithmetic_is_evaluated_exactly():
+    # Exact rational arithmetic, rendered as a real fraction (not a decimal).
+    result = solve_latex(r"\frac{1}{2} + \frac{1}{3}")
+    assert result["success"] is True
+    assert result["solutions"] == ["5/6"]
 
 
 def test_no_real_solution_is_reported_as_such():

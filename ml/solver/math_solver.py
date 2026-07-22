@@ -54,6 +54,32 @@ def _build_answer(variable, solutions):
         return " or ".join(f"\\({latex(sol)}\\)" for sol in solutions)
     return " or ".join(f"\\({variable} = {latex(sol)}\\)" for sol in solutions)
 
+
+def _evaluate_arithmetic(display, expr):
+    """Evaluate a variable-free scan/expression -- plain arithmetic like
+    "89 + 82" or "1/2 + 1/3" -- to a single number.
+
+    The solver is built around solving *equations* for an unknown, so an
+    expression with no variable used to be rejected as "not a clear equation".
+    But a student photographs (or types) arithmetic too, so we compute it
+    instead. Guarded exactly like the equation path: only a concrete, finite,
+    real value is returned, so a garbled numeric scan still fails safe rather
+    than reporting a confident, wrong number."""
+    try:
+        value = simplify(expr)
+    except Exception:
+        return {"expression": display, "error": UNREADABLE_MESSAGE, "success": False}
+    if not _is_real_number(value):
+        return {"expression": display, "error": UNREADABLE_MESSAGE, "success": False}
+    return {
+        "expression": display,
+        "variable": None,
+        "solutions": [str(value)],
+        "answer": _build_answer(None, [value]),
+        "success": True,
+    }
+
+
 # Pure styling commands pix2tex wraps around perfectly readable variables --
 # it renders letters in bold, so "x" comes back as "\mathbf{x}". These carry no
 # mathematical meaning; left in, they parse into a stray "mathbf" symbol and get
@@ -121,10 +147,19 @@ def solve_latex(latex_str):
     except Exception:
         return {"expression": latex_str, "error": UNREADABLE_MESSAGE, "success": False}
 
-    # A real scanned equation solves for exactly one unknown. Zero free symbols
-    # means no variable was read; more than one almost always means OCR invented
-    # junk symbols (e.g. "\mathbf{x}" -> a stray "mathbf" symbol).
     variables = sorted(expr.free_symbols, key=str)
+
+    # No variable -> the scan is plain arithmetic (e.g. "89 + 82"), not an
+    # equation. Evaluate it rather than rejecting it, so the scanner handles the
+    # arithmetic a student photographs too. (An equation with no unknown, like a
+    # relational that simplified to True/False, isn't a real number and so still
+    # fails safe inside the evaluator.)
+    if len(variables) == 0:
+        return _evaluate_arithmetic(latex_str, expr)
+
+    # A real scanned equation solves for exactly one unknown. More than one
+    # almost always means OCR invented junk symbols (e.g. "\mathbf{x}" -> a
+    # stray "mathbf" symbol).
     if len(variables) != 1:
         return {"expression": latex_str, "error": UNREADABLE_MESSAGE, "success": False}
 
@@ -169,7 +204,13 @@ def solve_equation(equation_str, variable="x"):
             )
         else:
             expr = parse_expr(equation_str, transformations=_TRANSFORMS)
-        
+
+        # Variable-free input (e.g. "89 + 82") is arithmetic, not an equation:
+        # evaluate it to a number instead of solving for x -- which would find
+        # no solution and return an empty answer.
+        if not expr.free_symbols and "=" not in equation_str:
+            return _evaluate_arithmetic(equation_str, expr)
+
         # Solve
         solutions = solve(expr, x)
 
