@@ -22,3 +22,12 @@ services:
       # over env_file if both set the key.
       DISABLE_T5: "true"
     restart: unless-stopped
+    # Hit /health so an orchestrator (and `restart: unless-stopped`) can tell a
+    # hung-but-alive process from a healthy one. Uses python (always present in
+    # the image) rather than curl. start_period covers the model-load on boot.
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health', timeout=3).status == 200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
