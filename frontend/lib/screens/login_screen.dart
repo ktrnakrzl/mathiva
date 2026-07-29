@@ -1,11 +1,18 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
+import '../core/constants/api_constants.dart';
 import '../repositories/api/api_auth_repository.dart';
 import '../repositories/auth_repository.dart';
 import '../services/app_preferences.dart';
 import '../services/auth_storage.dart';
+import '../services/google_sign_in_web_button.dart'
+    if (dart.library.js_util) '../services/google_sign_in_web_button_web.dart';
 import '../utils/route_names.dart';
 import '../presentation/widgets/auth_widgets.dart';
 import '../presentation/widgets/fade_slide_in.dart';
@@ -21,15 +28,27 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  static Future<void>? _googleInitialization;
+
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final AuthRepository _authRepository = ApiAuthRepository();
 
   bool _isLoading = false;
+  bool _isGoogleLoading = false;
+  bool _googleReady = false;
   String? _error;
+  StreamSubscription<GoogleSignInAuthenticationEvent>? _googleSub;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_initGoogleSignIn());
+  }
 
   @override
   void dispose() {
+    _googleSub?.cancel();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -66,6 +85,120 @@ class _LoginScreenState extends State<LoginScreen> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  Future<void> _initGoogleSignIn() async {
+    if (kGoogleClientId.isEmpty) return;
+
+    final signIn = GoogleSignIn.instance;
+    try {
+      _googleInitialization ??= signIn.initialize(
+          clientId: kIsWeb ? kGoogleClientId : null,
+          serverClientId: kGoogleServerClientId.isNotEmpty
+              ? kGoogleServerClientId
+              : kGoogleClientId);
+      await _googleInitialization;
+      _googleSub = signIn.authenticationEvents
+          .listen(_handleGoogleAuthEvent, onError: _handleGoogleAuthError);
+      signIn.attemptLightweightAuthentication();
+      if (mounted) setState(() => _googleReady = true);
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _googleReady = false;
+          _error = 'Google sign-in is not available right now.';
+        });
+      }
+    }
+  }
+
+  Future<void> _handleGoogleAuthEvent(
+    GoogleSignInAuthenticationEvent event,
+  ) async {
+    switch (event) {
+      case GoogleSignInAuthenticationEventSignIn():
+        await _finishGoogleLogin(event.user);
+      case GoogleSignInAuthenticationEventSignOut():
+        break;
+    }
+  }
+
+  void _handleGoogleAuthError(Object error) {
+    if (!mounted) return;
+    setState(() {
+      _isGoogleLoading = false;
+      _error = error is GoogleSignInException
+          ? _googleMessageFor(error)
+          : 'Could not sign in with Google.';
+    });
+  }
+
+  Future<void> _handleGoogleSignInPressed() async {
+    if (!_googleReady || _isLoading || _isGoogleLoading) return;
+
+    setState(() {
+      _isGoogleLoading = true;
+      _error = null;
+    });
+
+    try {
+      final account = await GoogleSignIn.instance.authenticate();
+      await _finishGoogleLogin(account);
+    } on GoogleSignInException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isGoogleLoading = false;
+        _error = _googleMessageFor(e);
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isGoogleLoading = false;
+        _error = 'Could not sign in with Google.';
+      });
+    }
+  }
+
+  Future<void> _finishGoogleLogin(GoogleSignInAccount account) async {
+    final idToken = account.authentication.idToken;
+    if (idToken == null || idToken.isEmpty) {
+      if (!mounted) return;
+      setState(() {
+        _isGoogleLoading = false;
+        _error = 'Google did not return a usable sign-in token.';
+      });
+      return;
+    }
+
+    setState(() {
+      _isGoogleLoading = true;
+      _error = null;
+    });
+
+    try {
+      final token = await _authRepository.loginWithGoogleIdToken(idToken);
+      await AuthStorage.saveToken(token);
+      await _loadProfileName();
+      if (!mounted) return;
+      context.go(RouteNames.home);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _error =
+          e is AuthException ? e.message : 'Could not sign in with Google.');
+    } finally {
+      if (mounted) setState(() => _isGoogleLoading = false);
+    }
+  }
+
+  String _googleMessageFor(GoogleSignInException e) {
+    if (e.code == GoogleSignInExceptionCode.canceled ||
+        e.code == GoogleSignInExceptionCode.interrupted) {
+      return 'Google sign-in was cancelled.';
+    }
+    if (e.code == GoogleSignInExceptionCode.uiUnavailable) {
+      return 'Google sign-in is not available on this device.';
+    }
+    return 'Could not sign in with Google.';
   }
 
   /// Fetches the profile and pushes the student's name into [AppPreferences]
@@ -120,7 +253,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 26),
-
                   FadeSlideIn(
                     delay: const Duration(milliseconds: 120),
                     child: AuthField(
@@ -143,34 +275,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       onFieldSubmitted: (_) => _handleLogin(),
                     ),
                   ),
-
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: () {},
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        foregroundColor: colors.muted,
-                      ),
-                      child: const Text(
-                        'Forgot password?',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-
                   if (_error != null) ...[
                     const SizedBox(height: 4),
                     AuthErrorBanner(message: _error!),
                     const SizedBox(height: 16),
                   ] else
                     const SizedBox(height: 10),
-
                   AuthPrimaryButton(
                     label: 'Log In',
                     isLoading: _isLoading,
@@ -179,9 +289,12 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 20),
                   const _DividerOr(),
                   const SizedBox(height: 20),
-                  _GoogleButton(onPressed: () => context.go(RouteNames.home)),
+                  _GoogleSignInSection(
+                    enabled: _googleReady && !_isLoading && !_isGoogleLoading,
+                    isLoading: _isGoogleLoading,
+                    onPressed: _handleGoogleSignInPressed,
+                  ),
                   const SizedBox(height: 24),
-
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -223,9 +336,50 @@ class _LoginScreenState extends State<LoginScreen> {
 
 // ─── Google Button ────────────────────────────────────────────────────────────
 
-class _GoogleButton extends StatelessWidget {
+class _GoogleSignInSection extends StatelessWidget {
+  final bool enabled;
+  final bool isLoading;
   final VoidCallback onPressed;
-  const _GoogleButton({required this.onPressed});
+  const _GoogleSignInSection({
+    required this.enabled,
+    required this.isLoading,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (kGoogleClientId.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    if (kIsWeb) {
+      return AbsorbPointer(
+        absorbing: !enabled,
+        child: Opacity(
+          opacity: enabled ? 1 : 0.55,
+          child: SizedBox(
+            width: double.infinity,
+            height: 44,
+            child: Center(child: googleSignInWebButton()),
+          ),
+        ),
+      );
+    }
+
+    return _GoogleButton(
+      onPressed: enabled ? onPressed : null,
+      isLoading: isLoading,
+    );
+  }
+}
+
+class _GoogleButton extends StatelessWidget {
+  final VoidCallback? onPressed;
+  final bool isLoading;
+  const _GoogleButton({
+    required this.onPressed,
+    required this.isLoading,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -234,7 +388,7 @@ class _GoogleButton extends StatelessWidget {
       width: double.infinity,
       height: 50,
       child: OutlinedButton.icon(
-        onPressed: onPressed,
+        onPressed: isLoading ? null : onPressed,
         style: OutlinedButton.styleFrom(
           backgroundColor: colors.surface,
           foregroundColor: colors.ink,
@@ -250,9 +404,9 @@ class _GoogleButton extends StatelessWidget {
           width: 18,
           fit: BoxFit.contain,
         ),
-        label: const Text(
-          'Continue with Google',
-          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+        label: Text(
+          isLoading ? 'Signing in...' : 'Continue with Google',
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
         ),
       ),
     );
@@ -269,8 +423,7 @@ class _DividerOr extends StatelessWidget {
     final colors = AppTheme.colorsOf(context);
     return Row(
       children: [
-        Expanded(
-            child: Divider(color: colors.border, height: 1, thickness: 1)),
+        Expanded(child: Divider(color: colors.border, height: 1, thickness: 1)),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Text(
@@ -282,8 +435,7 @@ class _DividerOr extends StatelessWidget {
             ),
           ),
         ),
-        Expanded(
-            child: Divider(color: colors.border, height: 1, thickness: 1)),
+        Expanded(child: Divider(color: colors.border, height: 1, thickness: 1)),
       ],
     );
   }

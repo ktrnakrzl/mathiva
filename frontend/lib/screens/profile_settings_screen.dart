@@ -1,9 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../presentation/widgets/animated_background.dart';
 import 'package:go_router/go_router.dart';
 
 import '../presentation/widgets/glass_card.dart';
 import '../services/app_preferences.dart';
+import '../services/auth_storage.dart';
 import '../services/notification_service.dart';
 import '../services/progress_service.dart';
 import '../services/progress_store.dart';
@@ -24,6 +26,13 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
   void initState() {
     super.initState();
     ProgressStore.refresh();
+  }
+
+  Future<void> _handleLogout() async {
+    await AuthStorage.clearToken();
+    AppPreferences.studentName.value = 'Learner';
+    if (!mounted) return;
+    context.go(RouteNames.login);
   }
 
   @override
@@ -104,28 +113,37 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                   const SizedBox(height: 10),
 
                   // Dark Mode lives in the top-bar toggle now, not here.
-                  ValueListenableBuilder<bool>(
-                    valueListenable: AppPreferences.notificationsEnabled,
-                    builder: (context, enabled, _) => _SwitchTile(
-                      icon: Icons.notifications_outlined,
-                      title: 'Notifications',
-                      subtitle: 'Quiz reminders and progress updates',
-                      value: enabled,
-                      onChanged: (v) => _onNotificationsChanged(context, v),
+                  if (kIsWeb)
+                    _Tile(
+                      icon: Icons.notifications_off_outlined,
+                      title: 'Daily Reminders',
+                      subtitle: 'Available on Android and iOS builds',
                       primary: primary,
+                    )
+                  else ...[
+                    ValueListenableBuilder<bool>(
+                      valueListenable: AppPreferences.notificationsEnabled,
+                      builder: (context, enabled, _) => _SwitchTile(
+                        icon: Icons.notifications_outlined,
+                        title: 'Notifications',
+                        subtitle: 'Quiz reminders and progress updates',
+                        value: enabled,
+                        onChanged: (v) => _onNotificationsChanged(context, v),
+                        primary: primary,
+                      ),
                     ),
-                  ),
-                  ValueListenableBuilder<bool>(
-                    valueListenable: AppPreferences.studyRemindersEnabled,
-                    builder: (context, enabled, _) => _SwitchTile(
-                      icon: Icons.alarm_outlined,
-                      title: 'Study Reminders',
-                      subtitle: 'Daily reminder to keep your streak alive',
-                      value: enabled,
-                      onChanged: (v) => _onStudyRemindersChanged(context, v),
-                      primary: primary,
+                    ValueListenableBuilder<bool>(
+                      valueListenable: AppPreferences.studyRemindersEnabled,
+                      builder: (context, enabled, _) => _SwitchTile(
+                        icon: Icons.alarm_outlined,
+                        title: 'Study Reminders',
+                        subtitle: 'Daily reminder to keep your streak alive',
+                        value: enabled,
+                        onChanged: (v) => _onStudyRemindersChanged(context, v),
+                        primary: primary,
+                      ),
                     ),
-                  ),
+                  ],
                   ValueListenableBuilder<bool>(
                     valueListenable: AppPreferences.hapticFeedback,
                     builder: (context, enabled, _) => _SwitchTile(
@@ -163,7 +181,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                   ),
 
                   const SizedBox(height: 24),
-                  _LogOutButton(onPressed: () => context.go(RouteNames.login)),
+                  _LogOutButton(onPressed: _handleLogout),
                 ],
               ),
             ),
@@ -292,7 +310,8 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
               const SizedBox(height: 4),
               Center(
                   child: Text('Version 1.0.0',
-                      style: TextStyle(color: colors.subtleMuted, fontSize: 13))),
+                      style:
+                          TextStyle(color: colors.subtleMuted, fontSize: 13))),
               const SizedBox(height: 24),
               _AboutSection(
                 title: 'What is Mathivia?',
@@ -351,7 +370,8 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                         textAlign: TextAlign.center),
                     const SizedBox(height: 6),
                     Text('© 2026 Mathivia. All rights reserved.',
-                        style: TextStyle(color: colors.subtleMuted, fontSize: 12),
+                        style:
+                            TextStyle(color: colors.subtleMuted, fontSize: 12),
                         textAlign: TextAlign.center),
                   ],
                 ),
@@ -413,8 +433,8 @@ class _AboutSection extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(body,
-              style: TextStyle(
-                  color: colors.muted, fontSize: 13.5, height: 1.55)),
+              style:
+                  TextStyle(color: colors.muted, fontSize: 13.5, height: 1.55)),
         ],
       ),
     );
@@ -473,8 +493,8 @@ class _LearningAccountCard extends StatelessWidget {
               TextField(
                 controller: controller,
                 autofocus: true,
-                style: TextStyle(
-                    color: colors.ink, fontWeight: FontWeight.w600),
+                style:
+                    TextStyle(color: colors.ink, fontWeight: FontWeight.w600),
                 decoration: InputDecoration(
                   hintText: 'Your name',
                   filled: true,
@@ -499,8 +519,9 @@ class _LearningAccountCard extends StatelessWidget {
                 child: OutlinedButton(
                   onPressed: () {
                     final name = controller.text.trim();
-                    if (name.isNotEmpty)
+                    if (name.isNotEmpty) {
                       AppPreferences.studentName.value = name;
+                    }
                     sheetCtx.pop();
                   },
                   style: OutlinedButton.styleFrom(

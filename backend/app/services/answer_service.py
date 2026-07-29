@@ -1,4 +1,4 @@
-"""The /ask answer cascade: RAG + T5 + Phi-3 + Gemini, working as a combination.
+"""The /ask answer cascade: RAG + T5 + Phi-3 + Gemini + a fallback LLM.
 
 Design (agreed with the team):
 
@@ -22,7 +22,7 @@ import collections
 
 from app.config import settings
 from app.services.ai_service import AIServiceError, generate_answer
-from app.services import gemini_service, t5_service
+from app.services import fallback_llm_service, gemini_service, t5_service
 
 # Bounded in-memory cache of successful answers, keyed by normalized question.
 # Repeated/identical questions (common in a class) are served from here instead
@@ -175,6 +175,27 @@ def answer_question(question: str) -> dict:
             rate_limited_after = e.retry_after   # temporary -- tell the user to retry
         except gemini_service.GeminiServiceError:
             pass  # keep the best local answer we have
+
+    # --- second backstop: the fallback LLM, when Gemini couldn't rescue -------
+    # Typically fires while Gemini's daily free-tier quota is exhausted (it only
+    # resets once a day, so "retry shortly" would otherwise mislead the student).
+    if is_bad_answer(answer) and fallback_llm_service.fallback_available():
+        try:
+            fallback_answer = fallback_llm_service.fallback_generate(prompt)
+            if not is_bad_answer(fallback_answer):
+                # Record the actual model so eval tables stay honest about which
+                # provider answered (e.g. "llama-3.3-70b" on Cerebras).
+                answer, model_used = fallback_answer, settings.fallback_model
+                rate_limited_after = None        # rescued -- drop Gemini's 429
+        except fallback_llm_service.FallbackLLMRateLimitError as e:
+            # Both cloud tiers throttled: surface the shorter suggested wait.
+            rate_limited_after = (
+                e.retry_after
+                if rate_limited_after is None
+                else min(rate_limited_after, e.retry_after)
+            )
+        except fallback_llm_service.FallbackLLMError:
+            pass  # keep the best answer we have
 
     if answer is None or is_bad_answer(answer):
         # Every tier failed or only produced junk. Distinguish a temporary rate

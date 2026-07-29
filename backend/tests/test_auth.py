@@ -80,3 +80,94 @@ def test_password_hash_is_not_plaintext(client):
     assert hashed != "password123"
     assert verify_password("password123", hashed) is True
     assert verify_password("wrongpassword", hashed) is False
+
+
+def test_google_login_creates_user_and_returns_token(client, monkeypatch):
+    from app.api import auth as auth_api
+
+    monkeypatch.setattr(auth_api, "google_sign_in_configured", lambda: True)
+    monkeypatch.setattr(
+        auth_api,
+        "verify_google_id_token",
+        lambda token: {
+            "email": "google-user@example.com",
+            "email_verified": True,
+            "name": "Google User",
+        },
+    )
+
+    r = client.post("/auth/google", json={"id_token": "valid-google-token"})
+    assert r.status_code == 200
+    assert r.json()["access_token"]
+
+    token = r.json()["access_token"]
+    r = client.get("/auth/me", headers={"Authorization": f"Bearer {token}"})
+    assert r.status_code == 200
+    assert r.json()["email"] == "google-user@example.com"
+    assert r.json()["full_name"] == "Google User"
+
+
+def test_google_login_reuses_existing_email(client, monkeypatch):
+    from app.api import auth as auth_api
+
+    client.post("/auth/register", json=SAMPLE_USER)
+
+    monkeypatch.setattr(auth_api, "google_sign_in_configured", lambda: True)
+    monkeypatch.setattr(
+        auth_api,
+        "verify_google_id_token",
+        lambda token: {
+            "email": SAMPLE_USER["email"],
+            "email_verified": True,
+            "name": "Different Google Name",
+        },
+    )
+
+    r = client.post("/auth/google", json={"id_token": "valid-google-token"})
+    assert r.status_code == 200
+    token = r.json()["access_token"]
+
+    r = client.get("/auth/me", headers={"Authorization": f"Bearer {token}"})
+    assert r.status_code == 200
+    assert r.json()["email"] == SAMPLE_USER["email"]
+    assert r.json()["full_name"] == SAMPLE_USER["full_name"]
+
+
+def test_google_login_rejects_bad_token(client, monkeypatch):
+    from app.api import auth as auth_api
+
+    def fail(_token):
+        raise ValueError("bad token")
+
+    monkeypatch.setattr(auth_api, "google_sign_in_configured", lambda: True)
+    monkeypatch.setattr(auth_api, "verify_google_id_token", fail)
+
+    r = client.post("/auth/google", json={"id_token": "bad-google-token"})
+    assert r.status_code == 401
+
+
+def test_google_login_rejects_unverified_email(client, monkeypatch):
+    from app.api import auth as auth_api
+
+    monkeypatch.setattr(auth_api, "google_sign_in_configured", lambda: True)
+    monkeypatch.setattr(
+        auth_api,
+        "verify_google_id_token",
+        lambda token: {
+            "email": "google-user@example.com",
+            "email_verified": False,
+            "name": "Google User",
+        },
+    )
+
+    r = client.post("/auth/google", json={"id_token": "valid-google-token"})
+    assert r.status_code == 401
+
+
+def test_google_login_requires_configuration(client, monkeypatch):
+    from app.api import auth as auth_api
+
+    monkeypatch.setattr(auth_api, "google_sign_in_configured", lambda: False)
+
+    r = client.post("/auth/google", json={"id_token": "valid-google-token"})
+    assert r.status_code == 503

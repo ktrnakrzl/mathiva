@@ -237,7 +237,23 @@ def _normalize_ocr_latex(latex_str):
         for cmd in _FORMAT_CMDS:
             latex_str = re.sub(r"\\" + cmd + r"\s*\{([^{}]*)\}", r"\1", latex_str)
             latex_str = re.sub(r"\\" + cmd + r"(?![a-zA-Z])", "", latex_str)
-    return latex_str
+    return _expand_mixed_numbers(latex_str)
+
+
+def _expand_mixed_numbers(latex_str):
+    """Rewrite mixed numbers as explicit sums: '2\\frac{5}{16}' -> '(2+\\frac{5}{16})'.
+
+    parse_latex treats a digit adjacent to \\frac as multiplication (2*(5/16)),
+    but on a scanned school worksheet an integer immediately followed by a
+    *numeric* fraction is a mixed number (2 + 5/16). Only all-digit fractions
+    are rewritten -- '2\\frac{x}{3}' really is a coefficient times a fraction
+    and stays multiplication. The (?<![.\\d]) guard keeps a decimal like
+    '1.5\\frac{...}' (already unambiguous multiplication) untouched."""
+    return re.sub(
+        r"(?<![.\d])(\d+)\s*(\\frac\s*\{\s*\d+\s*\}\s*\{\s*\d+\s*\})",
+        r"(\1+\2)",
+        latex_str,
+    )
 
 
 def _has_unreadable_command(latex_str):

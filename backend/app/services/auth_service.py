@@ -29,6 +29,30 @@ def verify_password(password: str, password_hash: str) -> bool:
     return bcrypt.checkpw(password.encode("utf-8"), password_hash.encode("utf-8"))
 
 
+def google_sign_in_configured() -> bool:
+    return bool(settings.google_client_id)
+
+
+def verify_google_id_token(token: str) -> dict:
+    """Verify a Google Sign-In ID token and return its claims.
+
+    The audience check is what binds the token to Mathiva's OAuth client ID; a
+    valid Google token minted for some other app must not be accepted here.
+    """
+    if not settings.google_client_id:
+        raise ValueError("Google Sign-In is not configured")
+
+    from google.auth.transport import requests as google_requests
+    from google.oauth2 import id_token
+
+    request = google_requests.Request()
+    return id_token.verify_oauth2_token(
+        token,
+        request,
+        settings.google_client_id,
+    )
+
+
 def create_access_token(user_id: int) -> str:
     expires_at = datetime.now(timezone.utc) + ACCESS_TOKEN_EXPIRE
     payload = {"sub": str(user_id), "exp": expires_at}

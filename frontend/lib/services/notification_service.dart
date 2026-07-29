@@ -1,7 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
-import 'package:flutter_timezone/timezone_info.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest_all.dart' as tz_data;
 
@@ -28,7 +28,7 @@ class NotificationService {
 
     tz_data.initializeTimeZones();
     try {
-      final TimezoneInfo tzInfo = await FlutterTimezone.getLocalTimezone();
+      final tzInfo = await FlutterTimezone.getLocalTimezone();
       final String ianaName = tzInfo.identifier;
       tz.setLocalLocation(tz.getLocation(ianaName));
     } catch (_) {
@@ -89,6 +89,8 @@ class NotificationService {
 
   /// Schedules (or re-schedules) the daily streak reminder for [time].
   Future<void> scheduleDailyStreakReminder(TimeOfDay time) async {
+    if (kIsWeb) return;
+
     await init();
 
     const androidDetails = AndroidNotificationDetails(
@@ -115,6 +117,8 @@ class NotificationService {
 
   /// Cancels the daily streak reminder.
   Future<void> cancelDailyStreakReminder() async {
+    if (kIsWeb) return;
+
     await init();
     await _plugin.cancel(id: _streakReminderId);
   }

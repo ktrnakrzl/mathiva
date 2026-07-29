@@ -338,6 +338,42 @@
       "languageVersion": "3.9"
     },
     {
+      "name": "google_identity_services_web",
+      "rootUri": "file:///C:/Users/kathr/AppData/Local/Pub/Cache/hosted/pub.dev/google_identity_services_web-0.3.3+1",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
+    },
+    {
+      "name": "google_sign_in",
+      "rootUri": "file:///C:/Users/kathr/AppData/Local/Pub/Cache/hosted/pub.dev/google_sign_in-7.2.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.7"
+    },
+    {
+      "name": "google_sign_in_android",
+      "rootUri": "file:///C:/Users/kathr/AppData/Local/Pub/Cache/hosted/pub.dev/google_sign_in_android-7.2.15",
+      "packageUri": "lib/",
+      "languageVersion": "3.12"
+    },
+    {
+      "name": "google_sign_in_ios",
+      "rootUri": "file:///C:/Users/kathr/AppData/Local/Pub/Cache/hosted/pub.dev/google_sign_in_ios-6.3.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.10"
+    },
+    {
+      "name": "google_sign_in_platform_interface",
+      "rootUri": "file:///C:/Users/kathr/AppData/Local/Pub/Cache/hosted/pub.dev/google_sign_in_platform_interface-3.1.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.7"
+    },
+    {
+      "name": "google_sign_in_web",
+      "rootUri": "file:///C:/Users/kathr/AppData/Local/Pub/Cache/hosted/pub.dev/google_sign_in_web-1.1.3",
+      "packageUri": "lib/",
+      "languageVersion": "3.9"
+    },
+    {
       "name": "graphs",
       "rootUri": "file:///C:/Users/kathr/AppData/Local/Pub/Cache/hosted/pub.dev/graphs-2.3.2",
       "packageUri": "lib/",
@@ -366,6 +402,24 @@
       "rootUri": "file:///C:/Users/kathr/AppData/Local/Pub/Cache/hosted/pub.dev/http_parser-4.1.2",
       "packageUri": "lib/",
       "languageVersion": "3.4"
+    },
+    {
+      "name": "image_cropper",
+      "rootUri": "file:///C:/Users/kathr/AppData/Local/Pub/Cache/hosted/pub.dev/image_cropper-12.2.1",
+      "packageUri": "lib/",
+      "languageVersion": "3.3"
+    },
+    {
+      "name": "image_cropper_for_web",
+      "rootUri": "file:///C:/Users/kathr/AppData/Local/Pub/Cache/hosted/pub.dev/image_cropper_for_web-7.0.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.3"
+    },
+    {
+      "name": "image_cropper_platform_interface",
+      "rootUri": "file:///C:/Users/kathr/AppData/Local/Pub/Cache/hosted/pub.dev/image_cropper_platform_interface-8.0.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.3"
     },
     {
       "name": "image_picker",
@@ -849,8 +903,8 @@
     }
   ],
   "generator": "pub",
-  "generatorVersion": "3.12.1",
+  "generatorVersion": "3.12.2",
   "flutterRoot": "file:///A:/Downloads/flutter",
-  "flutterVersion": "3.44.1",
+  "flutterVersion": "3.44.7",
   "pubCache": "file:///C:/Users/kathr/AppData/Local/Pub/Cache"
 }

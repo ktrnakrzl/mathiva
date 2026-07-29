@@ -59,6 +59,18 @@ class ApiAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<String> loginWithGoogleIdToken(String idToken) async {
+    try {
+      final response = await _dio.post('/auth/google', data: {
+        'id_token': idToken,
+      });
+      return response.data['access_token'] as String;
+    } on DioException catch (e) {
+      throw AuthException(_messageFor(e, 'Could not sign in with Google.'));
+    }
+  }
+
+  @override
   Future<UserProfile> getProfile() async {
     try {
       final response = await _dio.get('/auth/me');

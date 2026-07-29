@@ -29,6 +29,7 @@ DATABASE_URL=postgresql://postgres:<password>@<host>:5432/postgres
 JWT_SECRET=<python -c "import secrets; print(secrets.token_hex(32))">
 GEMINI_API_KEY=<your key>
 DISABLE_T5=true
+GOOGLE_CLIENT_ID=your-google-oauth-web-client-id.apps.googleusercontent.com
 ```
 
 Special characters in the DB password must be percent-encoded (e.g. `@` → `%40`).
@@ -75,25 +76,22 @@ The auth and Gemini-backed endpoints are throttled **per client IP** (slowapi):
 
 Almost every host above puts a reverse proxy in front of the container, so the
 IP the app sees is the *proxy's* — which would make all users share one bucket.
-Start uvicorn so it trusts the forwarded client IP. Override the image CMD (or
-set it on the platform) to add:
+The image starts uvicorn with `--proxy-headers` and
+`--forwarded-allow-ips="${FORWARDED_ALLOW_IPS:-*}"` so PaaS deployments work
+without a custom start command.
 
-```
---proxy-headers --forwarded-allow-ips="*"
-```
-
-Use `*` only when the container is reachable *exclusively* through your proxy
-(the usual PaaS/VPS-behind-Nginx case); otherwise a client could spoof
-`X-Forwarded-For` to dodge the limit. Prefer pinning `--forwarded-allow-ips` to
-the proxy's IP where you know it. To disable throttling entirely (not
-recommended in production) set `RATE_LIMIT_ENABLED=false`.
+Use the default `*` only when the container is reachable *exclusively* through
+your proxy (the usual PaaS/VPS-behind-Nginx case); otherwise a client could spoof
+`X-Forwarded-For` to dodge the limit. Prefer setting `FORWARDED_ALLOW_IPS` to the
+proxy's IP where you know it. To disable throttling entirely (not recommended in
+production) set `RATE_LIMIT_ENABLED=false`.
 
 ## 4. Point the app at the deployed backend
 The Flutter app reads its backend URL from a compile-time define, so no code edit
 is needed:
 
 ```bash
-flutter build web --dart-define=API_BASE_URL=https://your-deployed-backend
+flutter build web --dart-define=API_BASE_URL=https://your-deployed-backend --dart-define=GOOGLE_CLIENT_ID=your-google-oauth-web-client-id.apps.googleusercontent.com --web-define=GOOGLE_CLIENT_ID=your-google-oauth-web-client-id.apps.googleusercontent.com
 # or for a device build, pass the same --dart-define
 ```
 
@@ -106,4 +104,5 @@ flutter build web --dart-define=API_BASE_URL=https://your-deployed-backend
       needed for a *web* frontend; native mobile clients don't enforce CORS.
       Default `*` is otherwise safe here (Bearer-token auth, no cookies).
 - [x] Rate limiting on `/auth/*` and the Gemini-backed routes — **enabled** (see
-      "Rate limiting behind a proxy" above; make sure `--proxy-headers` is set).
+      "Rate limiting behind a proxy" above; set `FORWARDED_ALLOW_IPS` if your
+      host requires a pinned proxy IP).

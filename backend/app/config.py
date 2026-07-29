@@ -57,6 +57,23 @@ class Settings(BaseSettings):
     # reproducible behavior.
     gemini_model: str = Field(default="gemini-flash-latest", validation_alias="GEMINI_MODEL")
 
+    # Google Sign-In OAuth web client ID. The frontend obtains a Google ID
+    # token and /auth/google verifies that its audience matches this client ID
+    # before issuing Mathiva's own JWT.
+    google_client_id: str | None = Field(default=None, validation_alias="GOOGLE_CLIENT_ID")
+
+    # Second cloud fallback for the /ask cascade -- the backstop's backstop,
+    # used only when Gemini is rate-limited or failing. Optional: absent key
+    # just disables the tier. The endpoint is OpenAI-compatible, so
+    # FALLBACK_BASE_URL can point at any compatible provider without code
+    # changes. Default: Cerebras' free tier (1M tokens/day, no card) serving
+    # Llama 3.3 70B.
+    fallback_api_key: str | None = Field(default=None, validation_alias="FALLBACK_API_KEY")
+    fallback_model: str = Field(default="gpt-oss-120b", validation_alias="FALLBACK_MODEL")
+    fallback_base_url: str = Field(
+        default="https://api.cerebras.ai/v1", validation_alias="FALLBACK_BASE_URL"
+    )
+
     # Per-IP request throttling (slowapi) on the auth + Gemini-backed endpoints.
     # On by default everywhere, including local dev, so the limits are exercised
     # before production. The test suite sets RATE_LIMIT_ENABLED=false so the API

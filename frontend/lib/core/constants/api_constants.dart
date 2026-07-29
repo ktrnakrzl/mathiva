@@ -12,3 +12,18 @@ const String kBaseUrl = String.fromEnvironment(
 // instead of the real backend (see main.dart) — useful for developing or
 // demoing the UI when the FastAPI/Ollama backend isn't running locally.
 const bool kUseMockBackend = false;
+
+// Google OAuth client IDs. For web and backend verification this should be the
+// Web application client ID from Google Cloud Console.
+const String kGoogleClientId = String.fromEnvironment(
+  'GOOGLE_CLIENT_ID',
+  defaultValue: '',
+);
+
+// Optional override for native builds. If empty, the app reuses
+// kGoogleClientId as the server client ID so the backend can verify the ID
+// token audience against the same OAuth client.
+const String kGoogleServerClientId = String.fromEnvironment(
+  'GOOGLE_SERVER_CLIENT_ID',
+  defaultValue: '',
+);

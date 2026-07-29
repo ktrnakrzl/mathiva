@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, EmailStr, field_validator
 from sqlalchemy.orm import Session
+import secrets
 
 from app.database.db import get_db
 from app.database.models import User
@@ -8,7 +9,9 @@ from app.rate_limit import limiter
 from app.services.auth_service import (
     create_access_token,
     get_current_user,
+    google_sign_in_configured,
     hash_password,
+    verify_google_id_token,
     verify_password,
 )
 
@@ -53,6 +56,10 @@ class LoginResponse(BaseModel):
     expires_in: int = 86400
 
 
+class GoogleLoginRequest(BaseModel):
+    id_token: str
+
+
 # `request: Request` is required by slowapi's limiter and is why the JSON body
 # is bound to `payload` here (not the usual `request`). Limits are per client IP.
 @router.post("/register", response_model=RegisterResponse)
@@ -91,6 +98,53 @@ def login(request: Request, payload: LoginRequest, db: Session = Depends(get_db)
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
         )
+
+    return LoginResponse(access_token=create_access_token(user.id))
+
+
+@router.post("/google", response_model=LoginResponse)
+@limiter.limit("10/minute")
+def google_login(
+    request: Request, payload: GoogleLoginRequest, db: Session = Depends(get_db)
+):
+    if not google_sign_in_configured():
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Google Sign-In is not configured",
+        )
+
+    try:
+        claims = verify_google_id_token(payload.id_token)
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate Google sign-in",
+        )
+
+    if claims.get("email_verified") is not True:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Google account email is not verified",
+        )
+
+    email = str(claims.get("email") or "").strip().lower()
+    if not email:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Google account did not provide an email",
+        )
+
+    user = db.query(User).filter(User.email == email).first()
+    if user is None:
+        full_name = str(claims.get("name") or email.split("@")[0]).strip()
+        user = User(
+            email=email,
+            password_hash=hash_password(secrets.token_urlsafe(32)),
+            full_name=full_name or email,
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
 
     return LoginResponse(access_token=create_access_token(user.id))
 

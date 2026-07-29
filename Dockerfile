@@ -56,4 +56,4 @@ EXPOSE 8000
 # Apply DB migrations (set RUN_MIGRATIONS=0 to skip), then start the server.
 # All secrets/config (DATABASE_URL, JWT_SECRET, GEMINI_API_KEY, ENVIRONMENT,
 # DISABLE_T5) are supplied via the environment at runtime -- never baked in.
-CMD ["sh", "-c", "if [ \"${RUN_MIGRATIONS:-1}\" = \"1\" ]; then alembic upgrade head; fi && exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["sh", "-c", "if [ \"${RUN_MIGRATIONS:-1}\" = \"1\" ]; then alembic upgrade head; fi && exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --proxy-headers --forwarded-allow-ips \"${FORWARDED_ALLOW_IPS:-*}\""]

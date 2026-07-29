@@ -30,6 +30,11 @@ abstract class AuthRepository {
     required String password,
   });
 
+  /// Logs in with a Google Sign-In ID token and returns Mathiva's JWT access
+  /// token. Throws [AuthException] if Google verification or backend login
+  /// fails.
+  Future<String> loginWithGoogleIdToken(String idToken);
+
   /// Fetches the current token owner's profile from `/auth/me`. Requires a
   /// saved token (attached by the AuthInterceptor). Throws [AuthException]
   /// if the request fails.
