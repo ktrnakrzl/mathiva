@@ -35,6 +35,16 @@ abstract class AuthRepository {
   /// fails.
   Future<String> loginWithGoogleIdToken(String idToken);
 
+  /// Requests a password reset link for [email]. The backend returns a generic
+  /// success message whether or not the email exists.
+  Future<String> requestPasswordReset(String email);
+
+  /// Uses a reset link token to set a new password.
+  Future<String> resetPassword({
+    required String token,
+    required String newPassword,
+  });
+
   /// Fetches the current token owner's profile from `/auth/me`. Requires a
   /// saved token (attached by the AuthInterceptor). Throws [AuthException]
   /// if the request fails.

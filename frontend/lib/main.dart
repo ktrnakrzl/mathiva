@@ -6,6 +6,7 @@ import 'core/constants/api_constants.dart';
 import 'repositories/mock/mock_progress_repository.dart';
 import 'repositories/mock/mock_solver_repository.dart';
 import 'repositories/mock/mock_tutor_repository.dart';
+import 'services/auth_storage.dart';
 import 'services/chat_service.dart';
 import 'services/progress_service.dart';
 import 'services/scan_history_service.dart';
@@ -17,6 +18,7 @@ void main() async {
   // reactively in app.dart based on AppPreferences.darkMode instead of here,
   // since it needs to flip whenever the user toggles dark mode.
   await NotificationService.instance.init();
+  await AuthStorage.init();
   // Load the on-device recent-scan history so the home screen's "Recent" list
   // is populated from real past solves at startup.
   await ScanHistoryService.load();

@@ -29,6 +29,23 @@ class User(Base):
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
 
+class PasswordResetToken(Base):
+    """One short-lived password reset token.
+
+    Only a SHA-256 hash of the raw token is stored. The raw token exists only in
+    the email link, so a database leak would not expose usable reset links.
+    """
+
+    __tablename__ = "password_reset_tokens"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    token_hash = Column(String(64), unique=True, nullable=False, index=True)
+    expires_at = Column(DateTime, nullable=False, index=True)
+    used_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=_utcnow, index=True)
+
+
 class QuizAttempt(Base):
     """One submitted practice problem. The active practice flow is always
     exactly one question per submission (no multi-question quiz session

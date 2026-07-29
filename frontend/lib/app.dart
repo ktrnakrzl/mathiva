@@ -7,6 +7,7 @@ import 'models/mathiva_models.dart';
 import 'screens/chat_screen.dart';
 import 'screens/concept_progress_screen.dart';
 import 'screens/concept_reading_screen.dart';
+import 'screens/forgot_password_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/image_solver_screen.dart';
 import 'screens/learn_screen.dart';
@@ -19,12 +20,14 @@ import 'screens/practice_screen.dart';
 import 'screens/profile_settings_screen.dart';
 import 'screens/progress_overview_screen.dart';
 import 'screens/register_screen.dart';
+import 'screens/reset_password_screen.dart';
 import 'screens/result_screen.dart';
 import 'screens/search_screen.dart';
 import 'screens/solution_screen.dart';
 import 'screens/subject_progress_screen.dart';
 import 'screens/topic_analytics_screen.dart';
 import 'services/app_preferences.dart';
+import 'services/auth_storage.dart';
 import 'theme/app_theme.dart';
 import 'theme/semantic_colors.dart';
 import 'utils/route_names.dart';
@@ -34,6 +37,26 @@ class MathivaApp extends StatelessWidget {
 
   static final GoRouter _router = GoRouter(
     initialLocation: RouteNames.onboarding,
+    refreshListenable: AuthStorage.isAuthenticated,
+    redirect: (_, state) {
+      final signedIn = AuthStorage.isAuthenticated.value;
+      final path = state.uri.path;
+      final publicRoutes = {
+        RouteNames.onboarding,
+        RouteNames.login,
+        RouteNames.register,
+        RouteNames.forgotPassword,
+        RouteNames.resetPassword,
+      };
+
+      if (!signedIn && !publicRoutes.contains(path)) {
+        return RouteNames.login;
+      }
+      if (signedIn && publicRoutes.contains(path)) {
+        return RouteNames.home;
+      }
+      return null;
+    },
     routes: [
       GoRoute(
           path: RouteNames.onboarding,
@@ -42,14 +65,21 @@ class MathivaApp extends StatelessWidget {
       GoRoute(
           path: RouteNames.register,
           builder: (_, __) => const RegisterScreen()),
+      GoRoute(
+          path: RouteNames.forgotPassword,
+          builder: (_, __) => const ForgotPasswordScreen()),
+      GoRoute(
+          path: RouteNames.resetPassword,
+          builder: (_, state) => ResetPasswordScreen(
+                token: state.uri.queryParameters['token'] ?? '',
+              )),
       GoRoute(path: RouteNames.home, builder: (_, __) => const HomeScreen()),
       GoRoute(
           path: RouteNames.search, builder: (_, __) => const SearchScreen()),
       GoRoute(
           path: RouteNames.subjects,
           builder: (_, __) => const MathSubjectsScreen()),
-      GoRoute(
-          path: RouteNames.learn, builder: (_, __) => const LearnScreen()),
+      GoRoute(path: RouteNames.learn, builder: (_, __) => const LearnScreen()),
       GoRoute(
           path: RouteNames.imageSolver,
           builder: (_, __) => const ImageSolverScreen()),
@@ -195,7 +225,8 @@ class MathivaApp extends StatelessWidget {
               return MaterialApp.router(
                 debugShowCheckedModeBanner: false,
                 title: 'Mathiva',
-                theme: isDark ? AppTheme.dark(palette) : AppTheme.light(palette),
+                theme:
+                    isDark ? AppTheme.dark(palette) : AppTheme.light(palette),
                 routerConfig: _router,
               );
             },

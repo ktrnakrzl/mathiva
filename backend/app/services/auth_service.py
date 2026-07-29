@@ -1,4 +1,9 @@
 from datetime import datetime, timedelta, timezone
+from email.message import EmailMessage
+import hashlib
+import smtplib
+import secrets
+from urllib.parse import urlencode
 
 import bcrypt
 import jwt
@@ -16,6 +21,7 @@ from app.database.models import User
 JWT_SECRET = settings.jwt_secret
 JWT_ALGORITHM = settings.jwt_algorithm
 ACCESS_TOKEN_EXPIRE = timedelta(minutes=settings.access_token_expire_minutes)
+PASSWORD_RESET_EXPIRE = timedelta(minutes=30)
 
 # tokenUrl points Swagger's "Authorize" button at the real login endpoint.
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login", auto_error=False)
@@ -27,6 +33,56 @@ def hash_password(password: str) -> str:
 
 def verify_password(password: str, password_hash: str) -> bool:
     return bcrypt.checkpw(password.encode("utf-8"), password_hash.encode("utf-8"))
+
+
+def create_password_reset_token() -> str:
+    return secrets.token_urlsafe(32)
+
+
+def password_reset_token_hash(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+def password_reset_expires_at() -> datetime:
+    return datetime.now(timezone.utc).replace(tzinfo=None) + PASSWORD_RESET_EXPIRE
+
+
+def build_password_reset_url(token: str) -> str:
+    base = settings.frontend_url.rstrip("/")
+    return f"{base}/reset-password?{urlencode({'token': token})}"
+
+
+def reset_email_configured() -> bool:
+    return bool(settings.smtp_host and settings.smtp_from_email)
+
+
+def send_password_reset_email(email: str, reset_url: str) -> None:
+    """Send a password reset email via SMTP.
+
+    SMTP is intentionally provider-neutral; Render env vars can point this at
+    Gmail, Brevo, Mailgun, Resend SMTP, etc.
+    """
+    if not reset_email_configured():
+        print("Password reset email skipped: SMTP is not configured.")
+        return
+
+    msg = EmailMessage()
+    msg["Subject"] = "Reset your Mathiva password"
+    msg["From"] = f"{settings.smtp_from_name} <{settings.smtp_from_email}>"
+    msg["To"] = email
+    msg.set_content(
+        "Use this link to reset your Mathiva password. "
+        "It expires in 30 minutes.\n\n"
+        f"{reset_url}\n\n"
+        "If you did not request this, you can ignore this email."
+    )
+
+    with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=20) as server:
+        if settings.smtp_use_tls:
+            server.starttls()
+        if settings.smtp_username and settings.smtp_password:
+            server.login(settings.smtp_username, settings.smtp_password)
+        server.send_message(msg)
 
 
 def google_sign_in_configured() -> bool:

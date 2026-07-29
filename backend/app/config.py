@@ -62,6 +62,20 @@ class Settings(BaseSettings):
     # before issuing Mathiva's own JWT.
     google_client_id: str | None = Field(default=None, validation_alias="GOOGLE_CLIENT_ID")
 
+    # Public frontend origin used to build password-reset links in emails.
+    frontend_url: str = Field(default="http://localhost:3000", validation_alias="FRONTEND_URL")
+
+    # SMTP settings for transactional emails such as password reset. If these
+    # are absent, reset emails are skipped but the public API response stays
+    # generic so account existence is never leaked.
+    smtp_host: str | None = Field(default=None, validation_alias="SMTP_HOST")
+    smtp_port: int = Field(default=587, validation_alias="SMTP_PORT")
+    smtp_username: str | None = Field(default=None, validation_alias="SMTP_USERNAME")
+    smtp_password: str | None = Field(default=None, validation_alias="SMTP_PASSWORD")
+    smtp_from_email: str | None = Field(default=None, validation_alias="SMTP_FROM_EMAIL")
+    smtp_from_name: str = Field(default="Mathiva", validation_alias="SMTP_FROM_NAME")
+    smtp_use_tls: bool = Field(default=True, validation_alias="SMTP_USE_TLS")
+
     # Second cloud fallback for the /ask cascade -- the backstop's backstop,
     # used only when Gemini is rate-limited or failing. Optional: absent key
     # just disables the tier. The endpoint is OpenAI-compatible, so

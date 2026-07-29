@@ -30,6 +30,14 @@ JWT_SECRET=<python -c "import secrets; print(secrets.token_hex(32))">
 GEMINI_API_KEY=<your key>
 DISABLE_T5=true
 GOOGLE_CLIENT_ID=your-google-oauth-web-client-id.apps.googleusercontent.com
+FRONTEND_URL=https://your-frontend-domain
+SMTP_HOST=<your SMTP host>
+SMTP_PORT=587
+SMTP_USERNAME=<your SMTP username>
+SMTP_PASSWORD=<your SMTP password>
+SMTP_FROM_EMAIL=<verified sender email>
+SMTP_FROM_NAME=Mathiva
+SMTP_USE_TLS=true
 ```
 
 Special characters in the DB password must be percent-encoded (e.g. `@` → `%40`).

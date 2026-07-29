@@ -71,6 +71,34 @@ class ApiAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<String> requestPasswordReset(String email) async {
+    try {
+      final response = await _dio.post('/auth/password/forgot', data: {
+        'email': email,
+      });
+      return response.data['message'] as String;
+    } on DioException catch (e) {
+      throw AuthException(_messageFor(e, 'Could not send a reset link.'));
+    }
+  }
+
+  @override
+  Future<String> resetPassword({
+    required String token,
+    required String newPassword,
+  }) async {
+    try {
+      final response = await _dio.post('/auth/password/reset', data: {
+        'token': token,
+        'new_password': newPassword,
+      });
+      return response.data['message'] as String;
+    } on DioException catch (e) {
+      throw AuthException(_messageFor(e, 'Could not reset your password.'));
+    }
+  }
+
+  @override
   Future<UserProfile> getProfile() async {
     try {
       final response = await _dio.get('/auth/me');

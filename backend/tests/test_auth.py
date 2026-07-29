@@ -171,3 +171,92 @@ def test_google_login_requires_configuration(client, monkeypatch):
 
     r = client.post("/auth/google", json={"id_token": "valid-google-token"})
     assert r.status_code == 503
+
+
+def test_forgot_password_resets_password(client, monkeypatch):
+    from app.api import auth as auth_api
+
+    sent_links = []
+    monkeypatch.setattr(
+        auth_api,
+        "send_password_reset_email",
+        lambda email, url: sent_links.append(url),
+    )
+    monkeypatch.setattr(
+        auth_api,
+        "build_password_reset_url",
+        lambda token: f"https://app.example.com/reset-password?token={token}",
+    )
+
+    client.post("/auth/register", json=SAMPLE_USER)
+
+    r = client.post("/auth/password/forgot", json={"email": SAMPLE_USER["email"]})
+    assert r.status_code == 200
+    assert "If an account exists" in r.json()["message"]
+    assert len(sent_links) == 1
+
+    token = sent_links[0].split("token=", 1)[1]
+    r = client.post(
+        "/auth/password/reset",
+        json={"token": token, "new_password": "newpassword123"},
+    )
+    assert r.status_code == 200
+
+    assert client.post(
+        "/auth/login",
+        json={"email": SAMPLE_USER["email"], "password": SAMPLE_USER["password"]},
+    ).status_code == 401
+    assert client.post(
+        "/auth/login",
+        json={"email": SAMPLE_USER["email"], "password": "newpassword123"},
+    ).status_code == 200
+
+
+def test_forgot_password_unknown_email_is_generic(client, monkeypatch):
+    from app.api import auth as auth_api
+
+    sent_links = []
+    monkeypatch.setattr(
+        auth_api,
+        "send_password_reset_email",
+        lambda email, url: sent_links.append(url),
+    )
+
+    r = client.post("/auth/password/forgot", json={"email": "nobody@example.com"})
+    assert r.status_code == 200
+    assert "If an account exists" in r.json()["message"]
+    assert sent_links == []
+
+
+def test_reset_password_rejects_reused_token(client, monkeypatch):
+    from app.api import auth as auth_api
+
+    sent_links = []
+    monkeypatch.setattr(
+        auth_api,
+        "send_password_reset_email",
+        lambda email, url: sent_links.append(url),
+    )
+
+    client.post("/auth/register", json=SAMPLE_USER)
+    client.post("/auth/password/forgot", json={"email": SAMPLE_USER["email"]})
+    token = sent_links[0].split("token=", 1)[1]
+
+    r = client.post(
+        "/auth/password/reset",
+        json={"token": token, "new_password": "newpassword123"},
+    )
+    assert r.status_code == 200
+    r = client.post(
+        "/auth/password/reset",
+        json={"token": token, "new_password": "anotherpassword123"},
+    )
+    assert r.status_code == 400
+
+
+def test_reset_password_rejects_short_password(client):
+    r = client.post(
+        "/auth/password/reset",
+        json={"token": "anything", "new_password": "short"},
+    )
+    assert r.status_code == 422
