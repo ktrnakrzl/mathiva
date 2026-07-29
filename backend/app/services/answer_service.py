@@ -172,8 +172,10 @@ def answer_question(question: str) -> dict:
             if not is_bad_answer(gemini_answer):
                 answer, model_used = gemini_answer, "gemini"
         except gemini_service.GeminiRateLimitError as e:
+            print(f"Gemini rate limited: retry_after={e.retry_after}")
             rate_limited_after = e.retry_after   # temporary -- tell the user to retry
-        except gemini_service.GeminiServiceError:
+        except gemini_service.GeminiServiceError as e:
+            print(f"Gemini answer fallback failed: {e}")
             pass  # keep the best local answer we have
 
     # --- second backstop: the fallback LLM, when Gemini couldn't rescue -------
@@ -188,13 +190,15 @@ def answer_question(question: str) -> dict:
                 answer, model_used = fallback_answer, settings.fallback_model
                 rate_limited_after = None        # rescued -- drop Gemini's 429
         except fallback_llm_service.FallbackLLMRateLimitError as e:
+            print(f"Fallback LLM rate limited: retry_after={e.retry_after}")
             # Both cloud tiers throttled: surface the shorter suggested wait.
             rate_limited_after = (
                 e.retry_after
                 if rate_limited_after is None
                 else min(rate_limited_after, e.retry_after)
             )
-        except fallback_llm_service.FallbackLLMError:
+        except fallback_llm_service.FallbackLLMError as e:
+            print(f"Fallback LLM failed: {e}")
             pass  # keep the best answer we have
 
     if answer is None or is_bad_answer(answer):
