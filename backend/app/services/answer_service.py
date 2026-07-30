@@ -216,6 +216,7 @@ def answer_question(question: str) -> dict:
         "model_used": model_used,
         "sources": _sources(context_data),
     }
+    print(f"answer_question model_used={model_used}")
     if use_cache:                                # only successful answers reach here
         _ANSWER_CACHE[key] = dict(result)
         _ANSWER_CACHE.move_to_end(key)

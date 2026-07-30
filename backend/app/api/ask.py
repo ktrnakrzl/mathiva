@@ -84,6 +84,7 @@ def ask_stream(
             raise HTTPException(status_code=503, detail=str(e))
 
         def cascade_body():
+            print(f"ask_stream model_used={result.get('model_used', 'cascade')}")
             yield result["answer"]
 
         return StreamingResponse(cascade_body(), media_type="text/plain")
@@ -91,6 +92,7 @@ def ask_stream(
         first_chunk = None
 
     def body():
+        print("ask_stream model_used=ollama-stream")
         if first_chunk is not None:
             yield first_chunk
         yield from generator
