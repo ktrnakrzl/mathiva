@@ -29,6 +29,7 @@ DATABASE_URL=postgresql://postgres:<password>@<host>:5432/postgres
 JWT_SECRET=<python -c "import secrets; print(secrets.token_hex(32))">
 GEMINI_API_KEY=<your key>
 DISABLE_T5=true
+DISABLE_PIX2TEX=true
 GOOGLE_CLIENT_ID=your-google-oauth-web-client-id.apps.googleusercontent.com
 FRONTEND_URL=https://your-frontend-domain
 SMTP_HOST=<your SMTP host>

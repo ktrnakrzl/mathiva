@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:cross_file/cross_file.dart';
 
 import '../../data/local_mathiva_data.dart';
 import '../../models/mathiva_models.dart';
@@ -9,7 +9,7 @@ import '../solver_repository.dart';
 /// the Image Solver UI can be exercised without a running backend.
 class MockSolverRepository implements SolverRepository {
   @override
-  Future<PracticeProblem> solveImage(File image) async {
+  Future<PracticeProblem> solveImage(XFile image) async {
     await Future.delayed(const Duration(milliseconds: 600));
     return LocalMathivaData.quadraticProblem;
   }

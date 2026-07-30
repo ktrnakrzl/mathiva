@@ -114,6 +114,11 @@ class Settings(BaseSettings):
     # thesis contribution being showcased. Flip back to false once T5 is improved.
     disable_t5: bool = Field(default=False, validation_alias="DISABLE_T5")
 
+    # Skip local pix2tex OCR fallback. Hosted deployments should normally use
+    # Gemini OCR only: pix2tex downloads ~100 MB of weights on first use and is
+    # poor on real camera photos, which can make Render requests stall.
+    disable_pix2tex: bool = Field(default=False, validation_alias="DISABLE_PIX2TEX")
+
     @property
     def cors_origin_list(self) -> list[str]:
         """Parse CORS_ORIGINS into a list. "*" (or empty) allows any origin."""

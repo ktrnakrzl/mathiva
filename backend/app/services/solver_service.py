@@ -1,4 +1,5 @@
 from solver.math_solver import solve_equation, solve_latex
+from app.config import settings
 from app.services import ocr_service
 from app.services.tutor_service import explain_solution
 
@@ -47,19 +48,31 @@ def solve_image(image_bytes: bytes):
     if ocr_service.gemini_available():
         try:
             latex = ocr_service.gemini_to_latex(image_bytes)
+            print(f"Gemini OCR read LaTeX: {latex}")
             result = solve_problem_from_latex(latex)
-        except ocr_service.OCRServiceError:
+            if not result.get("success"):
+                print(f"Gemini OCR solve failed: {result.get('error')}")
+        except ocr_service.OCRServiceError as e:
+            print(f"Gemini OCR failed: {e}")
             pass  # fall through to the local engine
+    else:
+        print("Gemini OCR skipped: GEMINI_API_KEY is not configured.")
 
     # Local pix2tex as an offline fallback: no key, or Gemini didn't solve. A
     # crash here (bad image, model error) is treated the same as an unreadable
     # scan so the caller still gets an honest failure.
-    if not result.get("success"):
+    if not result.get("success") and settings.disable_pix2tex:
+        print("pix2tex OCR skipped: DISABLE_PIX2TEX=true")
+    elif not result.get("success"):
         try:
             pix_latex = ocr_service.pix2tex_to_latex(image_bytes)
+            print(f"pix2tex OCR read LaTeX: {pix_latex}")
             latex = pix_latex
             result = solve_problem_from_latex(pix_latex)
-        except Exception:
+            if not result.get("success"):
+                print(f"pix2tex OCR solve failed: {result.get('error')}")
+        except Exception as e:
+            print(f"pix2tex OCR failed: {e}")
             pass  # keep the cloud/failure result
 
     if latex is not None:

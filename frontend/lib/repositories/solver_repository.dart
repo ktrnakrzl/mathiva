@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:cross_file/cross_file.dart';
 
 import '../models/mathiva_models.dart';
 
@@ -16,5 +16,5 @@ class SolverServiceException implements Exception {
 /// step-by-step [PracticeProblem]. `ApiSolverRepository` hits the real
 /// OCR+SymPy backend; `MockSolverRepository` returns canned data.
 abstract class SolverRepository {
-  Future<PracticeProblem> solveImage(File image);
+  Future<PracticeProblem> solveImage(XFile image);
 }

@@ -1,6 +1,7 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_cropper/image_cropper.dart';
@@ -40,7 +41,8 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
 
   // The actual picked image (camera or gallery). Null until the user
   // successfully picks one — the scan stage is shown until then.
-  File? _pickedImage;
+  XFile? _pickedImage;
+  Uint8List? _pickedImageBytes;
 
   // True while the picked image is being uploaded and solved.
   bool _isSolving = false;
@@ -59,7 +61,7 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
     // after the first frame so `context`/`mounted` are safe to use inside
     // `_pickImage`.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _onOpenCamera();
+      if (mounted && !kIsWeb) _onOpenCamera();
     });
   }
 
@@ -93,9 +95,13 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
       }
 
       setState(() {
-        _pickedImage = File(file.path);
+        _pickedImage = file;
+        _pickedImageBytes = null;
         _step = _SolverStep.preview;
       });
+      final bytes = await file.readAsBytes();
+      if (!mounted || _pickedImage?.path != file.path) return;
+      setState(() => _pickedImageBytes = bytes);
     } catch (e) {
       if (!mounted) return;
       _showPickError(
@@ -121,6 +127,7 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
     setState(() {
       _step = _SolverStep.scan;
       _pickedImage = null;
+      _pickedImageBytes = null;
     });
   }
 
@@ -157,10 +164,21 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
               CropAspectRatioPreset.ratio16x9,
             ],
           ),
+          WebUiSettings(
+            context: context,
+            presentStyle: WebPresentStyle.dialog,
+          ),
         ],
       );
       if (!mounted || cropped == null) return;
-      setState(() => _pickedImage = File(cropped.path));
+      final croppedFile =
+          XFile(cropped.path, name: cropped.path.split('/').last);
+      final bytes = await croppedFile.readAsBytes();
+      if (!mounted) return;
+      setState(() {
+        _pickedImage = croppedFile;
+        _pickedImageBytes = bytes;
+      });
     } catch (e) {
       if (!mounted) return;
       _showPickError('Could not open the crop tool. Please try again.');
@@ -181,7 +199,11 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
       context.push(RouteNames.solution, extra: problem);
     } catch (e) {
       if (!mounted) return;
-      _showPickError('Could not solve this problem. Please try again.');
+      _showPickError(
+        e is SolverServiceException
+            ? e.message
+            : 'Could not solve this problem. Please try again.',
+      );
     } finally {
       if (mounted) setState(() => _isSolving = false);
     }
@@ -311,6 +333,7 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
           key: const ValueKey('preview'),
           primary: primary,
           image: _pickedImage,
+          imageBytes: _pickedImageBytes,
           isSolving: _isSolving,
           onRetake: _onRetake,
           onEditCrop: _onCrop,
@@ -525,7 +548,8 @@ class _ScanStage extends StatelessWidget {
 
 class _PreviewStage extends StatelessWidget {
   final Color primary;
-  final File? image;
+  final XFile? image;
+  final Uint8List? imageBytes;
   final bool isSolving;
   final VoidCallback onRetake;
   final VoidCallback onEditCrop;
@@ -535,6 +559,7 @@ class _PreviewStage extends StatelessWidget {
     super.key,
     required this.primary,
     required this.image,
+    required this.imageBytes,
     required this.isSolving,
     required this.onRetake,
     required this.onEditCrop,
@@ -559,7 +584,10 @@ class _PreviewStage extends StatelessWidget {
                 child: FadeSlideIn(
                   child: GlassCard(
                     padding: EdgeInsets.zero,
-                    child: _PickedImageView(image: image),
+                    child: _PickedImageView(
+                      image: image,
+                      imageBytes: imageBytes,
+                    ),
                   ),
                 ),
               ),
@@ -635,9 +663,13 @@ class _PreviewStage extends StatelessWidget {
 /// the scan stage is shown until a pick succeeds, but keeps the UI from
 /// breaking instead of crashing on a null file.
 class _PickedImageView extends StatelessWidget {
-  final File? image;
+  final XFile? image;
+  final Uint8List? imageBytes;
 
-  const _PickedImageView({required this.image});
+  const _PickedImageView({
+    required this.image,
+    required this.imageBytes,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -655,8 +687,17 @@ class _PickedImageView extends StatelessWidget {
       );
     }
 
-    return Image.file(
-      image!,
+    final bytes = imageBytes;
+    if (bytes == null) {
+      return Center(
+        child: CircularProgressIndicator(
+          color: AppPreferences.palette.value.primary,
+        ),
+      );
+    }
+
+    return Image.memory(
+      bytes,
       fit: BoxFit.contain,
       width: double.infinity,
       height: double.infinity,

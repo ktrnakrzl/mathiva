@@ -1,5 +1,4 @@
-import 'dart:io';
-
+import 'package:cross_file/cross_file.dart';
 import 'package:dio/dio.dart';
 
 import '../../core/constants/api_constants.dart';
@@ -22,9 +21,12 @@ class ApiSolverRepository implements SolverRepository {
   )..interceptors.add(AuthInterceptor());
 
   @override
-  Future<PracticeProblem> solveImage(File image) async {
+  Future<PracticeProblem> solveImage(XFile image) async {
     final formData = FormData.fromMap({
-      'image': await MultipartFile.fromFile(image.path),
+      'image': MultipartFile.fromBytes(
+        await image.readAsBytes(),
+        filename: image.name.isNotEmpty ? image.name : 'mathiva-scan.jpg',
+      ),
     });
 
     final response = await _dio.post('/api/solve-image', data: formData);

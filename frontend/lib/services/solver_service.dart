@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:cross_file/cross_file.dart';
 
 import '../models/mathiva_models.dart';
 import '../repositories/api/api_solver_repository.dart';
@@ -15,6 +15,6 @@ class SolverService {
 
   /// Uploads a photo of a math problem and returns the OCR'd equation
   /// solved step-by-step.
-  static Future<PracticeProblem> solveImage(File image) =>
+  static Future<PracticeProblem> solveImage(XFile image) =>
       repository.solveImage(image);
 }

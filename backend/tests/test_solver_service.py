@@ -102,3 +102,16 @@ def test_both_engines_fail_returns_unreadable(monkeypatch):
 
     assert result["success"] is False
     assert calls == ["gemini", "pix2tex"]  # both tried, both failed
+
+
+def test_disable_pix2tex_returns_gemini_failure_without_local_fallback(monkeypatch):
+    calls = []
+    _stub_engines(monkeypatch, pix2tex_out="2x+5=13", gemini_out="garbled", gemini_on=True, calls=calls)
+    _stub_solver(monkeypatch, solvable_latex="2x+5=13")
+    monkeypatch.setattr(solver_service.settings, "disable_pix2tex", True)
+
+    result = solver_service.solve_image(b"img")
+
+    assert result["success"] is False
+    assert result["latex"] == "garbled"
+    assert calls == ["gemini"]
