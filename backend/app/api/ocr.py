@@ -22,7 +22,7 @@ async def solve_image_endpoint(
 ):
     try:
         image_bytes = await image.read()
-        # Hybrid OCR: local pix2tex first, Gemini fallback only if that fails.
+        # Hybrid OCR: Gemini first for real photos, optional pix2tex fallback.
         return solve_image(image_bytes)
 
     except Exception as e:

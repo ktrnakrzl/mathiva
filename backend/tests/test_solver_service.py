@@ -23,6 +23,11 @@ def _stub_engines(monkeypatch, pix2tex_out, gemini_out, gemini_on, calls):
     monkeypatch.setattr(ocr_service, "pix2tex_to_latex", pix)
     monkeypatch.setattr(ocr_service, "gemini_to_latex", gem)
     monkeypatch.setattr(ocr_service, "gemini_available", lambda: gemini_on)
+    monkeypatch.setattr(
+        ocr_service,
+        "gemini_solve_image",
+        lambda _: (_ for _ in ()).throw(ocr_service.OCRServiceError("direct solve failed")),
+    )
 
 
 def _stub_solver(monkeypatch, solvable_latex):
@@ -115,3 +120,28 @@ def test_disable_pix2tex_returns_gemini_failure_without_local_fallback(monkeypat
     assert result["success"] is False
     assert result["latex"] == "garbled"
     assert calls == ["gemini"]
+
+
+def test_gemini_direct_solve_rescues_unparseable_transcription(monkeypatch):
+    calls = []
+    _stub_engines(monkeypatch, pix2tex_out="X", gemini_out="word problem", gemini_on=True, calls=calls)
+    _stub_solver(monkeypatch, solvable_latex="never")
+
+    def direct(_):
+        calls.append("gemini-direct")
+        return {
+            "success": True,
+            "problem": "2x+5=13",
+            "latex": "2x+5=13",
+            "answer": r"\(x = 4\)",
+            "solutions": ["x = 4"],
+            "explanation": "Subtract 5.\nDivide by 2.",
+        }
+
+    monkeypatch.setattr(ocr_service, "gemini_solve_image", direct)
+
+    result = solver_service.solve_image(b"img")
+
+    assert result["success"] is True
+    assert result["latex"] == "2x+5=13"
+    assert calls == ["gemini", "gemini-direct"]

@@ -10,7 +10,7 @@ import pytest
 import requests
 
 from app.services import ocr_service
-from app.services.ocr_service import OCRServiceError, gemini_to_latex
+from app.services.ocr_service import OCRServiceError, gemini_solve_image, gemini_to_latex
 
 
 class _FakeResponse:
@@ -62,3 +62,29 @@ def test_connection_error_becomes_ocr_error(monkeypatch):
     _patch_post(monkeypatch, exc=requests.ConnectionError("refused"))
     with pytest.raises(OCRServiceError):
         gemini_to_latex(b"imgbytes")
+
+
+def test_gemini_solve_image_returns_problem_answer_and_steps(monkeypatch):
+    payload = {
+        "problem_latex": "2x + 5 = 13",
+        "answer_latex": "x = 4",
+        "steps": ["Subtract 5 from both sides.", "Divide by 2."],
+    }
+    _patch_post(monkeypatch, _FakeResponse(_gemini_reply(f"```json\n{payload}\n```".replace("'", '"'))))
+
+    result = gemini_solve_image(b"imgbytes")
+
+    assert result["success"] is True
+    assert result["latex"] == "2x + 5 = 13"
+    assert result["answer"] == r"\(x = 4\)"
+    assert "Subtract 5" in result["explanation"]
+
+
+def test_gemini_solve_image_rejects_empty_problem(monkeypatch):
+    _patch_post(
+        monkeypatch,
+        _FakeResponse(_gemini_reply('{"problem_latex":"","answer_latex":"","steps":[]}')),
+    )
+
+    with pytest.raises(OCRServiceError):
+        gemini_solve_image(b"imgbytes")

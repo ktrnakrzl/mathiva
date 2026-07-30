@@ -52,6 +52,12 @@ def solve_image(image_bytes: bytes):
             result = solve_problem_from_latex(latex)
             if not result.get("success"):
                 print(f"Gemini OCR solve failed: {result.get('error')}")
+                try:
+                    result = ocr_service.gemini_solve_image(image_bytes)
+                    latex = result.get("latex") or latex
+                    print("Gemini direct image solve succeeded.")
+                except ocr_service.OCRServiceError as e:
+                    print(f"Gemini direct image solve failed: {e}")
         except ocr_service.OCRServiceError as e:
             print(f"Gemini OCR failed: {e}")
             pass  # fall through to the local engine
