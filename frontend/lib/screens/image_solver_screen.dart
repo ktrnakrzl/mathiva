@@ -46,6 +46,7 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
 
   // True while the picked image is being uploaded and solved.
   bool _isSolving = false;
+  bool _isPicking = false;
 
   @override
   void initState() {
@@ -76,6 +77,8 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
   Future<void> _onOpenGallery() => _pickImage(ImageSource.gallery);
 
   Future<void> _pickImage(ImageSource source) async {
+    if (_isPicking) return;
+    setState(() => _isPicking = true);
     try {
       final XFile? file = await _picker.pickImage(
         source: source,
@@ -109,6 +112,8 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
             ? 'Could not open the camera. Please check camera permissions and try again.'
             : 'Could not open the gallery. Please try again.',
       );
+    } finally {
+      if (mounted) setState(() => _isPicking = false);
     }
   }
 
@@ -325,6 +330,7 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
           key: const ValueKey('scan'),
           controller: _controller,
           primary: primary,
+          isPicking: _isPicking,
           onOpenCamera: _onOpenCamera,
           onOpenGallery: _onOpenGallery,
         );
@@ -348,6 +354,7 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
 class _ScanStage extends StatelessWidget {
   final AnimationController controller;
   final Color primary;
+  final bool isPicking;
   final VoidCallback onOpenCamera;
   final VoidCallback onOpenGallery;
 
@@ -355,6 +362,7 @@ class _ScanStage extends StatelessWidget {
     super.key,
     required this.controller,
     required this.primary,
+    required this.isPicking,
     required this.onOpenCamera,
     required this.onOpenGallery,
   });
@@ -401,7 +409,7 @@ class _ScanStage extends StatelessWidget {
                     child: FadeSlideIn(
                       child: GestureDetector(
                         behavior: HitTestBehavior.opaque,
-                        onTap: onOpenCamera,
+                        onTap: isPicking ? null : onOpenCamera,
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(20),
                           child: Container(
@@ -446,13 +454,32 @@ class _ScanStage extends StatelessWidget {
                                 ..._cornerGuides(primary),
                                 Positioned(
                                   bottom: 18,
-                                  child: Text(
-                                    'Tap to open the camera',
-                                    style: TextStyle(
-                                      color: Colors.white.withOpacity(0.7),
-                                      fontSize: 12.5,
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      if (isPicking) ...[
+                                        SizedBox(
+                                          width: 14,
+                                          height: 14,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color:
+                                                Colors.white.withOpacity(0.75),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                      ],
+                                      Text(
+                                        isPicking
+                                            ? 'Opening camera...'
+                                            : 'Tap to open the camera',
+                                        style: TextStyle(
+                                          color: Colors.white.withOpacity(0.7),
+                                          fontSize: 12.5,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
@@ -476,7 +503,8 @@ class _ScanStage extends StatelessWidget {
                       icon: Icons.image_outlined,
                       primary: primary,
                       filled: false,
-                      onPressed: onOpenGallery,
+                      isLoading: isPicking,
+                      onPressed: isPicking ? null : onOpenGallery,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -568,6 +596,7 @@ class _PreviewStage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final imageReady = imageBytes != null;
     return AnimatedBackground(
       vivid: true,
       child: SafeArea(
@@ -587,17 +616,45 @@ class _PreviewStage extends StatelessWidget {
                     child: _PickedImageView(
                       image: image,
                       imageBytes: imageBytes,
+                      isSolving: isSolving,
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 10),
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 40),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      imageReady
+                          ? Icons.check_circle_rounded
+                          : Icons.hourglass_top_rounded,
+                      color: primary,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      imageReady
+                          ? 'Photo captured'
+                          : 'Preparing image preview...',
+                      style: TextStyle(
+                        color: AppTheme.colorsOf(context).muted,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
 
               // Edit crop — secondary, text-style action just above the CTAs.
               FadeSlideIn(
                 delay: const Duration(milliseconds: 60),
                 child: TapScale(
-                  onTap: onEditCrop,
+                  onTap: isSolving || !imageReady ? null : onEditCrop,
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 4),
                     child: Row(
@@ -641,7 +698,7 @@ class _PreviewStage extends StatelessWidget {
                         primary: primary,
                         filled: true,
                         isLoading: isSolving,
-                        onPressed: isSolving ? null : onContinue,
+                        onPressed: isSolving || !imageReady ? null : onContinue,
                       ),
                     ),
                   ],
@@ -665,10 +722,12 @@ class _PreviewStage extends StatelessWidget {
 class _PickedImageView extends StatelessWidget {
   final XFile? image;
   final Uint8List? imageBytes;
+  final bool isSolving;
 
   const _PickedImageView({
     required this.image,
     required this.imageBytes,
+    required this.isSolving,
   });
 
   @override
@@ -696,26 +755,57 @@ class _PickedImageView extends StatelessWidget {
       );
     }
 
-    return Image.memory(
-      bytes,
-      fit: BoxFit.contain,
-      width: double.infinity,
-      height: double.infinity,
-      errorBuilder: (context, error, stackTrace) {
-        return Container(
-          color: colors.surface,
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Text(
-                'Could not load this image.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: colors.muted, fontSize: 14),
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Image.memory(
+          bytes,
+          fit: BoxFit.contain,
+          width: double.infinity,
+          height: double.infinity,
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              color: colors.surface,
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    'Could not load this image.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: colors.muted, fontSize: 14),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+        if (isSolving)
+          Container(
+            color: Colors.black.withOpacity(0.46),
+            child: const Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(color: Colors.white),
+                  SizedBox(height: 14),
+                  Text(
+                    'Solving with Mathiva...',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'This can take a few seconds.',
+                    style: TextStyle(color: Colors.white70, fontSize: 12),
+                  ),
+                ],
               ),
             ),
           ),
-        );
-      },
+      ],
     );
   }
 }
