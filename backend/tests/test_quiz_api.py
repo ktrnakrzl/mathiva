@@ -41,6 +41,10 @@ CONCEPT = {
 
 def _mean_answer_from_question(question_text):
     values = [int(n) for n in re.findall(r"-?\d+", question_text)]
+    if "x" in question_text:
+        target_mean = values[-1]
+        known = values[:-1]
+        return str(target_mean * (len(known) + 1) - sum(known))
     return str(sum(values) // len(values))
 
 

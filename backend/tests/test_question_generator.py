@@ -67,7 +67,7 @@ def test_generate_question_without_rephrase_uses_template_text(monkeypatch):
     assert q.template_id == "mean"
     assert q.correct_answer in q.choices
     assert len(q.choices) == 4
-    assert q.question_text.startswith("Find the mean of")
+    assert "mean" in q.question_text.lower() or "average" in q.question_text.lower()
 
 
 def test_generate_question_unknown_concept_raises(monkeypatch):
