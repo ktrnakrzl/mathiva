@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../utils/route_names.dart';
 import '../presentation/widgets/auth_art.dart';
@@ -269,7 +268,7 @@ class _SlidePage extends StatelessWidget {
           // Serif display headline.
           Text(
             slide.title,
-            style: GoogleFonts.fraunces(
+            style: AppTheme.serif(
               color: colors.ink,
               fontSize: 30,
               height: 1.12,

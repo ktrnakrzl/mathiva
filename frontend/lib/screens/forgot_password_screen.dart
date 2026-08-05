@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../presentation/widgets/auth_widgets.dart';
 import '../repositories/api/api_auth_repository.dart';
@@ -93,7 +92,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 children: [
                   Text(
                     'Reset your password',
-                    style: GoogleFonts.fraunces(
+                    style: AppTheme.serif(
                       color: colors.ink,
                       fontSize: 28,
                       fontWeight: FontWeight.w600,

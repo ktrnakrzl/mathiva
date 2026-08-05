@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-
 import '../services/app_preferences.dart';
 import 'semantic_colors.dart';
 
@@ -44,10 +42,13 @@ class AppTheme {
     Color? color,
     double? height,
     double? letterSpacing,
+    FontStyle? fontStyle,
   }) =>
-      GoogleFonts.fraunces(
+      TextStyle(
+        fontFamily: 'Poppins',
         fontSize: fontSize,
         fontWeight: fontWeight,
+        fontStyle: fontStyle,
         color: color,
         height: height,
         letterSpacing: letterSpacing,
@@ -61,12 +62,11 @@ class AppTheme {
 
   static ThemeData _build(Brightness brightness, SemanticColors colors) {
     final accent = colors.accent;
-    final interFamily = GoogleFonts.inter().fontFamily;
 
     return ThemeData(
       useMaterial3: true,
       brightness: brightness,
-      fontFamily: interFamily,
+      fontFamily: 'Inter',
       scaffoldBackgroundColor: colors.pageBg,
       colorScheme: ColorScheme.fromSeed(
         seedColor: accent,
@@ -84,8 +84,7 @@ class AppTheme {
             states.contains(MaterialState.selected) ? Colors.white : null),
         trackColor: MaterialStateProperty.resolveWith((states) =>
             states.contains(MaterialState.selected) ? accent : colors.track),
-        trackOutlineColor:
-            MaterialStateProperty.all(Colors.transparent),
+        trackOutlineColor: MaterialStateProperty.all(Colors.transparent),
       ),
       checkboxTheme: CheckboxThemeData(
         fillColor: MaterialStateProperty.resolveWith((states) =>
@@ -130,8 +129,8 @@ class AppTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: accent,
-        contentTextStyle: TextStyle(
-            color: colors.onAccent, fontWeight: FontWeight.w600),
+        contentTextStyle:
+            TextStyle(color: colors.onAccent, fontWeight: FontWeight.w600),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../repositories/api/api_auth_repository.dart';
 import '../repositories/auth_repository.dart';
@@ -138,7 +137,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     FadeSlideIn(
                       child: Text(
                         'Create your account',
-                        style: GoogleFonts.fraunces(
+                        style: AppTheme.serif(
                           color: colors.ink,
                           fontSize: 28,
                           height: 1.1,
@@ -219,10 +218,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       textInputAction: TextInputAction.done,
                       onChanged: (v) => setState(() => _confirm = v),
                       onFieldSubmitted: (_) => _handleRegister(),
-                      validator: (v) =>
-                          v != _passwordController.text
-                              ? 'Passwords do not match'
-                              : null,
+                      validator: (v) => v != _passwordController.text
+                          ? 'Passwords do not match'
+                          : null,
                     ),
                     const SizedBox(height: 14),
 

@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../theme/app_theme.dart';
 
@@ -60,7 +59,7 @@ class FigCaption extends StatelessWidget {
     final colors = AppTheme.colorsOf(context);
     return Text(
       text,
-      style: GoogleFonts.fraunces(
+      style: AppTheme.serif(
         color: colors.subtleMuted,
         fontSize: 12,
         fontStyle: FontStyle.italic,
@@ -179,8 +178,7 @@ class TriangleDiagram extends StatelessWidget {
           y: 0.02,
           child: _EqLabel('a² + b² = c²', color: colors.muted, size: 15),
         ),
-        _DiagramLabel(
-            x: 0.1, y: 0.45, child: _EqLabel('a', color: colors.ink)),
+        _DiagramLabel(x: 0.1, y: 0.45, child: _EqLabel('a', color: colors.ink)),
         _DiagramLabel(
             x: 0.46, y: 0.82, child: _EqLabel('b', color: colors.ink)),
         _DiagramLabel(
@@ -237,8 +235,7 @@ class _TrianglePainter extends CustomPainter {
       ..strokeWidth = 1.6
       ..style = PaintingStyle.stroke;
     const m = 14.0;
-    canvas.drawRect(
-        Rect.fromLTWH(right.dx, right.dy - m, m, m), mark);
+    canvas.drawRect(Rect.fromLTWH(right.dx, right.dy - m, m, m), mark);
 
     // Angle arc at the far (bottom-right) vertex.
     canvas.drawArc(
@@ -256,10 +253,12 @@ class _TrianglePainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
     // vertical leg tick
     final vMid = Offset(right.dx, (right.dy + top.dy) / 2);
-    canvas.drawLine(vMid + const Offset(-4, 0), vMid + const Offset(4, 0), tick);
+    canvas.drawLine(
+        vMid + const Offset(-4, 0), vMid + const Offset(4, 0), tick);
     // horizontal leg tick
     final hMid = Offset((right.dx + bottom.dx) / 2, right.dy);
-    canvas.drawLine(hMid + const Offset(0, -4), hMid + const Offset(0, 4), tick);
+    canvas.drawLine(
+        hMid + const Offset(0, -4), hMid + const Offset(0, 4), tick);
   }
 
   @override
@@ -420,7 +419,7 @@ class _EqLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: GoogleFonts.fraunces(
+      style: AppTheme.serif(
         color: color,
         fontSize: size,
         fontStyle: FontStyle.italic,
@@ -449,7 +448,8 @@ void _star(Canvas c, Offset center, double r, Color color) {
   for (int i = 0; i < points * 2; i++) {
     final radius = i.isEven ? r : r * 0.44;
     final angle = -math.pi / 2 + i * math.pi / points;
-    final o = center + Offset(radius * math.cos(angle), radius * math.sin(angle));
+    final o =
+        center + Offset(radius * math.cos(angle), radius * math.sin(angle));
     if (i == 0) {
       path.moveTo(o.dx, o.dy);
     } else {

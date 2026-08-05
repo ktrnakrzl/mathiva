@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../theme/app_theme.dart';
 import 'auth_art.dart';
@@ -30,7 +29,8 @@ class AuthBrandBand extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          CustomPaint(painter: GraphPaperPainter(line: graphPaperColor(context))),
+          CustomPaint(
+              painter: GraphPaperPainter(line: graphPaperColor(context))),
           CustomPaint(painter: BrandBandCurvePainter(accent: colors.accent)),
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 0, 24, 18),
@@ -48,7 +48,7 @@ class AuthBrandBand extends StatelessWidget {
                     const SizedBox(width: 10),
                     Text(
                       'Mathiva',
-                      style: GoogleFonts.fraunces(
+                      style: AppTheme.serif(
                         color: colors.ink,
                         fontSize: 24,
                         fontWeight: FontWeight.w600,
