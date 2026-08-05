@@ -1,0 +1,12 @@
+[build]
+  command = "bash scripts/render_build_frontend.sh"
+  publish = "frontend/build/web"
+
+[build.environment]
+  API_BASE_URL = "https://mathiva-api.onrender.com"
+  FLUTTER_VERSION = "stable"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
