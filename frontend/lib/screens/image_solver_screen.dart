@@ -1,15 +1,15 @@
-import 'dart:typed_data';
-import 'dart:ui';
+import 'dart:async';
+import 'dart:math' as math;
 
+import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_cropper/image_cropper.dart';
+import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
 
 import '../presentation/widgets/animated_background.dart';
 import '../presentation/widgets/fade_slide_in.dart';
-import '../presentation/widgets/glass_card.dart';
 import '../presentation/widgets/tap_scale.dart';
 import '../services/app_preferences.dart';
 import '../services/scan_history_service.dart';
@@ -19,10 +19,6 @@ import '../utils/route_names.dart';
 import '../widgets/mathiva_bottom_nav.dart';
 import '../widgets/mathiva_top_bar.dart';
 
-/// The two steps of the scan → solve workflow. Cropping is delegated to the
-/// native image_cropper tool (launched from the preview), so it isn't a step
-/// here. Navigation/routing elsewhere is untouched — only what happens *within*
-/// the Image Solver screen is affected.
 enum _SolverStep { scan, preview }
 
 class ImageSolverScreen extends StatefulWidget {
@@ -33,91 +29,238 @@ class ImageSolverScreen extends StatefulWidget {
 }
 
 class _ImageSolverScreenState extends State<ImageSolverScreen>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
+    with WidgetsBindingObserver {
   final ImagePicker _picker = ImagePicker();
 
+  CameraController? _camera;
+  Future<void>? _cameraInit;
+  List<CameraDescription> _cameras = const [];
+
   _SolverStep _step = _SolverStep.scan;
+  Rect _crop = const Rect.fromLTWH(0.08, 0.34, 0.84, 0.24);
+  Uint8List? _previewBytes;
+  XFile? _imageToSolve;
 
-  // The actual picked image (camera or gallery). Null until the user
-  // successfully picks one — the scan stage is shown until then.
-  XFile? _pickedImage;
-  Uint8List? _pickedImageBytes;
-
-  // True while the picked image is being uploaded and solved.
+  bool _isCapturing = false;
   bool _isSolving = false;
   bool _isPicking = false;
+  bool _flashOn = false;
+  String? _cameraError;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1500),
-    )..repeat(reverse: true);
-
-    // Open the camera immediately on entering this screen, rather than
-    // waiting for the user to tap "Open Camera" — per manual test feedback,
-    // the scan-first flow should put the camera up front. Scheduled for
-    // after the first frame so `context`/`mounted` are safe to use inside
-    // `_pickImage`.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && !kIsWeb) _onOpenCamera();
-    });
+    WidgetsBinding.instance.addObserver(this);
+    unawaited(_initializeCamera());
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    WidgetsBinding.instance.removeObserver(this);
+    unawaited(_camera?.dispose());
     super.dispose();
   }
 
-  Future<void> _onOpenCamera() => _pickImage(ImageSource.camera);
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final camera = _camera;
+    if (camera == null || !camera.value.isInitialized) return;
 
-  Future<void> _onOpenGallery() => _pickImage(ImageSource.gallery);
+    if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused) {
+      unawaited(camera.dispose());
+      _camera = null;
+    } else if (state == AppLifecycleState.resumed &&
+        _step == _SolverStep.scan) {
+      unawaited(_initializeCamera());
+    }
+  }
 
-  Future<void> _pickImage(ImageSource source) async {
-    if (_isPicking) return;
-    setState(() => _isPicking = true);
+  Future<void> _initializeCamera() async {
+    if (_isSolving) return;
+    setState(() => _cameraError = null);
     try {
-      final XFile? file = await _picker.pickImage(
-        source: source,
-        imageQuality: 90,
-      );
-
-      if (!mounted) return;
-
-      if (file == null) {
-        // User backed out of the camera/gallery without picking anything.
-        _showPickError(
-          source == ImageSource.camera
-              ? 'No photo was taken. Please try again.'
-              : 'No image was selected. Please try again.',
-        );
-        return;
+      _cameras = await availableCameras();
+      if (_cameras.isEmpty) {
+        throw CameraException('no_camera', 'No camera found on this device.');
       }
 
+      final camera = _cameras.firstWhere(
+        (c) => c.lensDirection == CameraLensDirection.back,
+        orElse: () => _cameras.first,
+      );
+
+      final controller = CameraController(
+        camera,
+        ResolutionPreset.high,
+        enableAudio: false,
+        imageFormatGroup: ImageFormatGroup.jpeg,
+      );
+      _camera = controller;
+      _cameraInit = controller.initialize().then((_) async {
+        await controller.setFlashMode(FlashMode.off);
+        await controller.setFocusMode(FocusMode.auto);
+      });
+      await _cameraInit;
+      if (!mounted) return;
+      setState(() {});
+    } catch (_) {
+      if (!mounted) return;
       setState(() {
-        _pickedImage = file;
-        _pickedImageBytes = null;
+        _cameraError =
+            'Could not open the live camera. Check camera permission and try again.';
+      });
+    }
+  }
+
+  Future<void> _toggleFlash() async {
+    final camera = _camera;
+    if (camera == null || !camera.value.isInitialized) return;
+    try {
+      final next = !_flashOn;
+      await camera.setFlashMode(next ? FlashMode.torch : FlashMode.off);
+      if (!mounted) return;
+      setState(() => _flashOn = next);
+    } catch (_) {
+      _showMessage('Flash is not available on this device.');
+    }
+  }
+
+  Future<void> _capture() async {
+    final camera = _camera;
+    if (camera == null || _isCapturing || _isSolving) return;
+    setState(() => _isCapturing = true);
+    try {
+      await _cameraInit;
+      final photo = await camera.takePicture();
+      final bytes = await photo.readAsBytes();
+      final cropped = _cropBytes(bytes, _lastViewportSize, _crop);
+      if (!mounted) return;
+      setState(() {
+        _previewBytes = cropped;
+        _imageToSolve = XFile.fromData(
+          cropped,
+          name: 'mathiva-crop.jpg',
+          mimeType: 'image/jpeg',
+        );
         _step = _SolverStep.preview;
       });
-      final bytes = await file.readAsBytes();
-      if (!mounted || _pickedImage?.path != file.path) return;
-      setState(() => _pickedImageBytes = bytes);
-    } catch (e) {
+    } catch (_) {
       if (!mounted) return;
-      _showPickError(
-        source == ImageSource.camera
-            ? 'Could not open the camera. Please check camera permissions and try again.'
-            : 'Could not open the gallery. Please try again.',
+      _showMessage('Could not capture the problem. Please try again.');
+    } finally {
+      if (mounted) setState(() => _isCapturing = false);
+    }
+  }
+
+  Future<void> _pickFromGallery() async {
+    if (_isPicking || _isSolving) return;
+    setState(() => _isPicking = true);
+    try {
+      final file = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 92,
       );
+      if (!mounted || file == null) return;
+      final bytes = await file.readAsBytes();
+      final normalized = _normalizeImageBytes(bytes);
+      setState(() {
+        _previewBytes = normalized;
+        _imageToSolve = XFile.fromData(
+          normalized,
+          name: 'mathiva-gallery.jpg',
+          mimeType: 'image/jpeg',
+        );
+        _step = _SolverStep.preview;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      _showMessage('Could not open the gallery. Please try again.');
     } finally {
       if (mounted) setState(() => _isPicking = false);
     }
   }
 
-  void _showPickError(String message) {
+  Uint8List _normalizeImageBytes(Uint8List bytes) {
+    final decoded = img.decodeImage(bytes);
+    if (decoded == null) return bytes;
+    return Uint8List.fromList(
+        img.encodeJpg(img.bakeOrientation(decoded), quality: 92));
+  }
+
+  Size _lastViewportSize = Size.zero;
+
+  Uint8List _cropBytes(
+      Uint8List bytes, Size viewportSize, Rect normalizedCrop) {
+    final decoded = img.decodeImage(bytes);
+    if (decoded == null || viewportSize == Size.zero) return bytes;
+
+    final oriented = img.bakeOrientation(decoded);
+    final imageW = oriented.width.toDouble();
+    final imageH = oriented.height.toDouble();
+    final scale = math.max(
+      viewportSize.width / imageW,
+      viewportSize.height / imageH,
+    );
+    final drawnW = imageW * scale;
+    final drawnH = imageH * scale;
+    final offsetX = (viewportSize.width - drawnW) / 2;
+    final offsetY = (viewportSize.height - drawnH) / 2;
+
+    final cropPx = Rect.fromLTWH(
+      ((normalizedCrop.left * viewportSize.width) - offsetX) / scale,
+      ((normalizedCrop.top * viewportSize.height) - offsetY) / scale,
+      (normalizedCrop.width * viewportSize.width) / scale,
+      (normalizedCrop.height * viewportSize.height) / scale,
+    );
+
+    final x = cropPx.left.floor().clamp(0, oriented.width - 1);
+    final y = cropPx.top.floor().clamp(0, oriented.height - 1);
+    final right = cropPx.right.ceil().clamp(x + 1, oriented.width);
+    final bottom = cropPx.bottom.ceil().clamp(y + 1, oriented.height);
+
+    final cropped = img.copyCrop(
+      oriented,
+      x: x,
+      y: y,
+      width: right - x,
+      height: bottom - y,
+    );
+    return Uint8List.fromList(img.encodeJpg(cropped, quality: 94));
+  }
+
+  void _retake() {
+    setState(() {
+      _step = _SolverStep.scan;
+      _previewBytes = null;
+      _imageToSolve = null;
+    });
+    if (_camera == null) unawaited(_initializeCamera());
+  }
+
+  Future<void> _solve() async {
+    final image = _imageToSolve;
+    if (image == null || _isSolving) return;
+
+    setState(() => _isSolving = true);
+    try {
+      final problem = await SolverService.solveImage(image);
+      await ScanHistoryService.record(problem);
+      if (!mounted) return;
+      context.push(RouteNames.solution, extra: problem);
+    } catch (e) {
+      if (!mounted) return;
+      _showMessage(
+        e is SolverServiceException
+            ? e.message
+            : 'Could not solve this problem. Please try again.',
+      );
+    } finally {
+      if (mounted) setState(() => _isSolving = false);
+    }
+  }
+
+  void _showMessage(String message) {
     final colors = AppTheme.colorsOf(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -128,121 +271,30 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
     );
   }
 
-  void _onRetake() {
-    setState(() {
-      _step = _SolverStep.scan;
-      _pickedImage = null;
-      _pickedImageBytes = null;
-    });
-  }
-
-  /// Launch the native crop tool on the picked photo and, if the user confirms,
-  /// replace _pickedImage with the cropped file — so the *cropped* image is what
-  /// gets uploaded to /api/solve-image. Cropping tightly around the equation is
-  /// what actually lets pix2tex read it (a full photo with background rarely
-  /// reads), which is why this replaced the old preview-only crop overlay.
-  Future<void> _onCrop() async {
-    final image = _pickedImage;
-    if (image == null) return;
-    try {
-      final cropped = await ImageCropper().cropImage(
-        sourcePath: image.path,
-        uiSettings: [
-          AndroidUiSettings(
-            toolbarTitle: 'Crop to math problem',
-            toolbarColor: Colors.black,
-            toolbarWidgetColor: Colors.white,
-            lockAspectRatio: false,
-            aspectRatioPresets: [
-              CropAspectRatioPreset.original,
-              CropAspectRatioPreset.square,
-              CropAspectRatioPreset.ratio3x2,
-              CropAspectRatioPreset.ratio16x9,
-            ],
-          ),
-          IOSUiSettings(
-            title: 'Crop to math problem',
-            aspectRatioPresets: [
-              CropAspectRatioPreset.original,
-              CropAspectRatioPreset.square,
-              CropAspectRatioPreset.ratio3x2,
-              CropAspectRatioPreset.ratio16x9,
-            ],
-          ),
-          WebUiSettings(
-            context: context,
-            presentStyle: WebPresentStyle.dialog,
-          ),
-        ],
-      );
-      if (!mounted || cropped == null) return;
-      final croppedFile =
-          XFile(cropped.path, name: cropped.path.split('/').last);
-      final bytes = await croppedFile.readAsBytes();
-      if (!mounted) return;
-      setState(() {
-        _pickedImage = croppedFile;
-        _pickedImageBytes = bytes;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      _showPickError('Could not open the crop tool. Please try again.');
-    }
-  }
-
-  Future<void> _onContinueToSolve() async {
-    final image = _pickedImage;
-    if (image == null || _isSolving) return;
-
-    setState(() => _isSolving = true);
-    try {
-      final problem = await SolverService.solveImage(image);
-      // Record the solved scan so the home screen's "Recent" list shows real
-      // activity (persisted on-device -- see ScanHistoryService).
-      await ScanHistoryService.record(problem);
-      if (!mounted) return;
-      context.push(RouteNames.solution, extra: problem);
-    } catch (e) {
-      if (!mounted) return;
-      _showPickError(
-        e is SolverServiceException
-            ? e.message
-            : 'Could not solve this problem. Please try again.',
-      );
-    } finally {
-      if (mounted) setState(() => _isSolving = false);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final primary = AppPreferences.palette.value.primary;
     final colors = AppTheme.colorsOf(context);
-
-    // Scan is a main tab → the shared brand top bar. Preview is an in-flow
-    // detail step that needs a back affordance, so it keeps the dedicated
-    // glass bar matching the app chrome.
-    final PreferredSizeWidget appBar = _step == _SolverStep.scan
-        ? const MathivaTopBar() as PreferredSizeWidget
-        : PreferredSize(
-            preferredSize: const Size.fromHeight(58),
-            child: ClipRect(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-                child: _buildAppBar(primary, glass: true),
-              ),
-            ),
-          );
 
     return Scaffold(
       extendBody: _step == _SolverStep.scan,
       backgroundColor: colors.pageBg,
-      appBar: appBar,
+      appBar: _step == _SolverStep.scan
+          ? const MathivaTopBar()
+          : AppBar(
+              backgroundColor: colors.pageBg,
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              foregroundColor: colors.ink,
+              title: const Text('Preview'),
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back_rounded),
+                onPressed: _retake,
+              ),
+            ),
       body: AnimatedSwitcher(
         duration: const Duration(milliseconds: 220),
-        switchInCurve: Curves.easeOut,
-        switchOutCurve: Curves.easeIn,
-        child: _buildStep(primary),
+        child:
+            _step == _SolverStep.scan ? _buildLiveScanner() : _buildPreview(),
       ),
       bottomNavigationBar: _step == _SolverStep.scan
           ? const MathivaBottomNav(selected: MathivaTab.scan)
@@ -250,354 +302,148 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
     );
   }
 
-  AppBar _buildAppBar(Color primary, {required bool glass}) {
+  Widget _buildLiveScanner() {
+    final primary = AppPreferences.palette.value.primary;
     final colors = AppTheme.colorsOf(context);
 
-    return AppBar(
-      backgroundColor: glass ? colors.glassFillStart : Colors.black,
-      surfaceTintColor: Colors.transparent,
-      elevation: 0,
-      scrolledUnderElevation: 0,
-      shadowColor: Colors.transparent,
-      centerTitle: false,
-      toolbarHeight: 58,
-      titleSpacing: 4,
-      leading: IconButton(
-        icon: Icon(
-          Icons.arrow_back_rounded,
-          color: glass ? colors.ink : Colors.white,
-          size: 22,
-        ),
-        onPressed: () => _onBack(),
-      ),
-      title: Text(
-        _titleFor(_step),
-        style: TextStyle(
-          color: glass ? colors.titleColor : Colors.white,
-          fontSize: 19,
-          fontWeight: FontWeight.w600,
-          letterSpacing: -0.2,
-          height: 1,
-        ),
-      ),
-      actions: _step == _SolverStep.scan
-          ? [
-              IconButton(
-                tooltip: 'Ask Math Tutor',
-                onPressed: () => context.push(RouteNames.chat),
-                icon: Icon(
-                  Icons.chat_bubble_outline_rounded,
-                  color: primary,
-                  size: 22,
-                ),
-              ),
-              const SizedBox(width: 8),
-            ]
-          : null,
-      bottom: glass
-          ? PreferredSize(
-              preferredSize: const Size.fromHeight(1),
-              child: Container(height: 1, color: colors.glassBorder),
-            )
-          : null,
-    );
-  }
-
-  void _onBack() {
-    switch (_step) {
-      case _SolverStep.scan:
-        context.canPop() ? context.pop() : context.go('/home');
-        break;
-      case _SolverStep.preview:
-        _onRetake();
-        break;
-    }
-  }
-
-  String _titleFor(_SolverStep step) {
-    switch (step) {
-      case _SolverStep.scan:
-        return 'Scan';
-      case _SolverStep.preview:
-        return 'Preview';
-    }
-  }
-
-  Widget _buildStep(Color primary) {
-    switch (_step) {
-      case _SolverStep.scan:
-        return _ScanStage(
-          key: const ValueKey('scan'),
-          controller: _controller,
-          primary: primary,
-          isPicking: _isPicking,
-          onOpenCamera: _onOpenCamera,
-          onOpenGallery: _onOpenGallery,
-        );
-      case _SolverStep.preview:
-        return _PreviewStage(
-          key: const ValueKey('preview'),
-          primary: primary,
-          image: _pickedImage,
-          imageBytes: _pickedImageBytes,
-          isSolving: _isSolving,
-          onRetake: _onRetake,
-          onEditCrop: _onCrop,
-          onContinue: _onContinueToSolve,
-        );
-    }
-  }
-}
-
-// ── Scan stage (camera-first entry point) ─────────────────────────────────────
-
-class _ScanStage extends StatelessWidget {
-  final AnimationController controller;
-  final Color primary;
-  final bool isPicking;
-  final VoidCallback onOpenCamera;
-  final VoidCallback onOpenGallery;
-
-  const _ScanStage({
-    super.key,
-    required this.controller,
-    required this.primary,
-    required this.isPicking,
-    required this.onOpenCamera,
-    required this.onOpenGallery,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = AppTheme.colorsOf(context);
-    return AnimatedBackground(
+    return Container(
+      key: const ValueKey('live-scanner'),
+      color: Colors.black,
       child: SafeArea(
         top: false,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return Padding(
-              padding: const EdgeInsets.fromLTRB(18, 22, 18, 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Page title + subtitle (in-body, per the shell pattern).
-                  Text(
-                    'Scan a Problem',
-                    style: AppTheme.serif(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w600,
-                      color: colors.ink,
-                      height: 1.1,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Point your camera at a math problem to solve it',
-                    style: TextStyle(
-                      color: colors.muted,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 18),
+        child: Column(
+          children: [
+            Expanded(
+              child: FutureBuilder<void>(
+                future: _cameraInit,
+                builder: (context, snapshot) {
+                  final camera = _camera;
+                  if (_cameraError != null) {
+                    return _CameraFallback(
+                      message: _cameraError!,
+                      onRetry: _initializeCamera,
+                      onGallery: _pickFromGallery,
+                    );
+                  }
+                  if (camera == null ||
+                      snapshot.connectionState != ConnectionState.done ||
+                      !camera.value.isInitialized) {
+                    return Center(
+                      child: CircularProgressIndicator(color: primary),
+                    );
+                  }
 
-                  // ── Scanner viewport (solid dark camera frame) ──────────
-                  // A solid near-black viewport (like a live camera feed
-                  // placeholder) with accent corner brackets and a sweeping
-                  // scan line. Tapping it (re-)opens the camera.
-                  Expanded(
-                    child: FadeSlideIn(
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: isPicking ? null : onOpenCamera,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
-                          child: Container(
-                            width: double.infinity,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF0B0B0F),
-                            ),
-                            child: Stack(
-                              alignment: Alignment.center,
+                  return LayoutBuilder(
+                    builder: (context, constraints) {
+                      _lastViewportSize = Size(
+                        constraints.maxWidth,
+                        constraints.maxHeight,
+                      );
+                      return Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          _CoverCameraPreview(controller: camera),
+                          _CropShade(crop: _crop),
+                          _InteractiveCropBox(
+                            crop: _crop,
+                            color: primary,
+                            onChanged: (next) => setState(() => _crop = next),
+                          ),
+                          Positioned(
+                            left: 18,
+                            right: 18,
+                            top: MediaQuery.of(context).padding.top + 18,
+                            child: Row(
                               children: [
-                                Icon(
-                                  Icons.document_scanner_rounded,
-                                  color: Colors.white.withOpacity(0.10),
-                                  size: 72,
-                                ),
-                                AnimatedBuilder(
-                                  animation: controller,
-                                  builder: (context, child) {
-                                    final h = constraints.maxHeight - 232;
-                                    final travel = h > 60 ? h - 48 : 60.0;
-                                    return Positioned(
-                                      top: 24 + controller.value * travel,
-                                      left: 24,
-                                      right: 24,
-                                      child: Container(
-                                        height: 2,
-                                        decoration: BoxDecoration(
-                                          color: primary.withOpacity(0.85),
-                                          borderRadius:
-                                              BorderRadius.circular(99),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: primary.withOpacity(0.5),
-                                              blurRadius: 8,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                                ..._cornerGuides(primary),
-                                Positioned(
-                                  bottom: 18,
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      if (isPicking) ...[
-                                        SizedBox(
-                                          width: 14,
-                                          height: 14,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            color:
-                                                Colors.white.withOpacity(0.75),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 8),
-                                      ],
-                                      Text(
-                                        isPicking
-                                            ? 'Opening camera...'
-                                            : 'Tap to open the camera',
-                                        style: TextStyle(
-                                          color: Colors.white.withOpacity(0.7),
-                                          fontSize: 12.5,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ],
+                                Expanded(
+                                  child: Text(
+                                    'Adjust the box around the math problem',
+                                    style: TextStyle(
+                                      color:
+                                          Colors.white.withValues(alpha: 0.88),
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
+                                ),
+                                _CircleIconButton(
+                                  icon: _flashOn
+                                      ? Icons.flash_on_rounded
+                                      : Icons.flash_off_rounded,
+                                  onPressed: _toggleFlash,
                                 ),
                               ],
                             ),
                           ),
+                        ],
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+            Container(
+              color: colors.pageBg,
+              padding: const EdgeInsets.fromLTRB(18, 14, 18, 18),
+              child: Row(
+                children: [
+                  _BottomToolButton(
+                    icon: Icons.photo_library_outlined,
+                    label: 'Gallery',
+                    onTap: _isPicking ? null : _pickFromGallery,
+                  ),
+                  const Spacer(),
+                  TapScale(
+                    onTap: _isCapturing ? null : _capture,
+                    child: Container(
+                      width: 74,
+                      height: 74,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: primary, width: 4),
+                      ),
+                      padding: const EdgeInsets.all(7),
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _isCapturing ? colors.muted : Colors.white,
                         ),
+                        child: _isCapturing
+                            ? const Padding(
+                                padding: EdgeInsets.all(16),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : null,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
-
-                  // ── Actions ──────────────────────────────────────────────
-                  // No "Open Camera" button -- the camera opens automatically
-                  // on entry and the viewport above re-opens it on tap. Gallery
-                  // is the only explicit action: pick an existing photo instead
-                  // of taking one.
-                  FadeSlideIn(
-                    delay: const Duration(milliseconds: 100),
-                    child: _ScanActionButton(
-                      label: 'Choose from Gallery',
-                      icon: Icons.image_outlined,
-                      primary: primary,
-                      filled: false,
-                      isLoading: isPicking,
-                      onPressed: isPicking ? null : onOpenGallery,
+                  const Spacer(),
+                  _BottomToolButton(
+                    icon: Icons.center_focus_strong_rounded,
+                    label: 'Reset',
+                    onTap: () => setState(
+                      () => _crop = const Rect.fromLTWH(0.08, 0.34, 0.84, 0.24),
                     ),
                   ),
-                  const SizedBox(height: 16),
                 ],
               ),
-            );
-          },
+            ),
+          ],
         ),
       ),
     );
   }
 
-  /// Four corner L-shaped bracket guides for the scan viewport.
-  List<Widget> _cornerGuides(Color primary) {
-    const size = 22.0;
-    const thickness = 2.5;
-    final color = primary.withOpacity(0.9);
-    final paint = BoxDecoration(color: color);
+  Widget _buildPreview() {
+    final primary = AppPreferences.palette.value.primary;
+    final colors = AppTheme.colorsOf(context);
+    final bytes = _previewBytes;
 
-    Widget corner({required bool top, required bool left}) {
-      return Positioned(
-        top: top ? 16 : null,
-        bottom: top ? null : 16,
-        left: left ? 16 : null,
-        right: left ? null : 16,
-        child: SizedBox(
-          width: size,
-          height: size,
-          child: Stack(
-            children: [
-              Positioned(
-                top: top ? 0 : null,
-                bottom: top ? null : 0,
-                left: left ? 0 : null,
-                right: left ? null : 0,
-                child: Container(
-                  width: size,
-                  height: thickness,
-                  decoration: paint,
-                ),
-              ),
-              Positioned(
-                top: top ? 0 : null,
-                bottom: top ? null : 0,
-                left: left ? 0 : null,
-                right: left ? null : 0,
-                child: Container(
-                  width: thickness,
-                  height: size,
-                  decoration: paint,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    return [
-      corner(top: true, left: true),
-      corner(top: true, left: false),
-      corner(top: false, left: true),
-      corner(top: false, left: false),
-    ];
-  }
-}
-
-// ── Preview stage ──────────────────────────────────────────────────────────────
-
-class _PreviewStage extends StatelessWidget {
-  final Color primary;
-  final XFile? image;
-  final Uint8List? imageBytes;
-  final bool isSolving;
-  final VoidCallback onRetake;
-  final VoidCallback onEditCrop;
-  final VoidCallback onContinue;
-
-  const _PreviewStage({
-    super.key,
-    required this.primary,
-    required this.image,
-    required this.imageBytes,
-    required this.isSolving,
-    required this.onRetake,
-    required this.onEditCrop,
-    required this.onContinue,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final imageReady = imageBytes != null;
     return AnimatedBackground(
+      key: const ValueKey('preview'),
       vivid: true,
       child: SafeArea(
         top: false,
@@ -605,104 +451,51 @@ class _PreviewStage extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
           child: Column(
             children: [
-              // GlassCard rather than a flat white frame — the photo itself
-              // (BoxFit.contain) renders crisp on top since it's opaque, but
-              // any letterboxed space around it shows the blurred vivid
-              // background through, instead of dead white space.
               Expanded(
                 child: FadeSlideIn(
-                  child: GlassCard(
-                    padding: EdgeInsets.zero,
-                    child: _PickedImageView(
-                      image: image,
-                      imageBytes: imageBytes,
-                      isSolving: isSolving,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      width: double.infinity,
+                      color: Colors.black,
+                      child: bytes == null
+                          ? Center(
+                              child: CircularProgressIndicator(color: primary),
+                            )
+                          : Image.memory(bytes, fit: BoxFit.contain),
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 10),
-              FadeSlideIn(
-                delay: const Duration(milliseconds: 40),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      imageReady
-                          ? Icons.check_circle_rounded
-                          : Icons.hourglass_top_rounded,
-                      color: primary,
-                      size: 16,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      imageReady
-                          ? 'Photo captured'
-                          : 'Preparing image preview...',
-                      style: TextStyle(
-                        color: AppTheme.colorsOf(context).muted,
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
+              const SizedBox(height: 12),
+              Text(
+                'Cropped problem preview',
+                style: TextStyle(
+                  color: colors.muted,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 10),
-
-              // Edit crop — secondary, text-style action just above the CTAs.
-              FadeSlideIn(
-                delay: const Duration(milliseconds: 60),
-                child: TapScale(
-                  onTap: isSolving || !imageReady ? null : onEditCrop,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.crop_rounded, size: 16, color: primary),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Crop to math problem',
-                          style: TextStyle(
-                            color: primary,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
+              const SizedBox(height: 18),
+              Row(
+                children: [
+                  Expanded(
+                    child: _ActionButton(
+                      label: 'Retake',
+                      icon: Icons.refresh_rounded,
+                      onPressed: _isSolving ? null : _retake,
+                      filled: false,
                     ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 14),
-
-              FadeSlideIn(
-                delay: const Duration(milliseconds: 100),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _ScanActionButton(
-                        label: 'Retake',
-                        icon: Icons.refresh_rounded,
-                        primary: primary,
-                        filled: false,
-                        onPressed: isSolving ? null : onRetake,
-                      ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _ActionButton(
+                      label: _isSolving ? 'Solving...' : 'Solve',
+                      icon: Icons.arrow_forward_rounded,
+                      onPressed: _isSolving ? null : _solve,
+                      filled: true,
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _ScanActionButton(
-                        label: isSolving ? 'Solving…' : 'Continue',
-                        icon: Icons.arrow_forward_rounded,
-                        primary: primary,
-                        filled: true,
-                        isLoading: isSolving,
-                        onPressed: isSolving || !imageReady ? null : onContinue,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -712,170 +505,375 @@ class _PreviewStage extends StatelessWidget {
   }
 }
 
-// ── Picked image renderer ──────────────────────────────────────────────────────
+class _CoverCameraPreview extends StatelessWidget {
+  final CameraController controller;
 
-/// Renders the actual picked photo via `Image.file`. Falls back to a plain
-/// placeholder if, for whatever reason, no image is available yet (e.g. the
-/// screen is rebuilt before a pick completes) — this should be rare since
-/// the scan stage is shown until a pick succeeds, but keeps the UI from
-/// breaking instead of crashing on a null file.
-class _PickedImageView extends StatelessWidget {
-  final XFile? image;
-  final Uint8List? imageBytes;
-  final bool isSolving;
-
-  const _PickedImageView({
-    required this.image,
-    required this.imageBytes,
-    required this.isSolving,
-  });
+  const _CoverCameraPreview({required this.controller});
 
   @override
   Widget build(BuildContext context) {
-    final colors = AppTheme.colorsOf(context);
+    final size = MediaQuery.sizeOf(context);
+    final previewSize = controller.value.previewSize;
+    final previewAspect = previewSize == null
+        ? controller.value.aspectRatio
+        : previewSize.height / previewSize.width;
 
-    if (image == null) {
-      return Container(
-        color: colors.surface,
-        child: Center(
-          child: Text(
-            'No image yet',
-            style: TextStyle(color: colors.muted, fontSize: 14),
+    return ClipRect(
+      child: OverflowBox(
+        alignment: Alignment.center,
+        child: FittedBox(
+          fit: BoxFit.cover,
+          child: SizedBox(
+            width: size.width,
+            height: size.width / previewAspect,
+            child: CameraPreview(controller),
           ),
         ),
-      );
-    }
-
-    final bytes = imageBytes;
-    if (bytes == null) {
-      return Center(
-        child: CircularProgressIndicator(
-          color: AppPreferences.palette.value.primary,
-        ),
-      );
-    }
-
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        Image.memory(
-          bytes,
-          fit: BoxFit.contain,
-          width: double.infinity,
-          height: double.infinity,
-          errorBuilder: (context, error, stackTrace) {
-            return Container(
-              color: colors.surface,
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Text(
-                    'Could not load this image.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: colors.muted, fontSize: 14),
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-        if (isSolving)
-          Container(
-            color: Colors.black.withOpacity(0.46),
-            child: const Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CircularProgressIndicator(color: Colors.white),
-                  SizedBox(height: 14),
-                  Text(
-                    'Solving with Mathiva...',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    'This can take a few seconds.',
-                    style: TextStyle(color: Colors.white70, fontSize: 12),
-                  ),
-                ],
-              ),
-            ),
-          ),
-      ],
+      ),
     );
   }
 }
 
-// ── Scan Action Button ────────────────────────────────────────────────────────
+class _CropShade extends StatelessWidget {
+  final Rect crop;
 
-// Minimal outline button. No fill, no shadow — every action (primary or
-// secondary) reads the same way: a thin border with matching text/icon
-// color. `filled` is kept as a parameter (rather than removed) so call
-// sites don't need to change, but it now only controls *which color* the
-// outline uses, not whether there's a fill — `filled: true` means "this is
-// the primary action on this row", rendered with the accent color instead
-// of neutral gray.
-class _ScanActionButton extends StatelessWidget {
-  final String label;
+  const _CropShade({required this.crop});
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(painter: _CropShadePainter(crop));
+  }
+}
+
+class _CropShadePainter extends CustomPainter {
+  final Rect crop;
+
+  _CropShadePainter(this.crop);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cropRect = Rect.fromLTWH(
+      crop.left * size.width,
+      crop.top * size.height,
+      crop.width * size.width,
+      crop.height * size.height,
+    );
+    final path = Path()..addRect(Offset.zero & size);
+    final hole = Path()
+      ..addRRect(RRect.fromRectAndRadius(cropRect, const Radius.circular(12)));
+    canvas.drawPath(
+      Path.combine(PathOperation.difference, path, hole),
+      Paint()..color = Colors.black.withValues(alpha: 0.48),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _CropShadePainter oldDelegate) =>
+      oldDelegate.crop != crop;
+}
+
+class _InteractiveCropBox extends StatelessWidget {
+  final Rect crop;
+  final Color color;
+  final ValueChanged<Rect> onChanged;
+
+  const _InteractiveCropBox({
+    required this.crop,
+    required this.color,
+    required this.onChanged,
+  });
+
+  static const _minW = 0.28;
+  static const _minH = 0.12;
+
+  Rect _clamp(Rect rect) {
+    final width = rect.width.clamp(_minW, 0.96);
+    final height = rect.height.clamp(_minH, 0.86);
+    final left = rect.left.clamp(0.02, 0.98 - width);
+    final top = rect.top.clamp(0.04, 0.96 - height);
+    return Rect.fromLTWH(left, top, width, height);
+  }
+
+  void _move(DragUpdateDetails details, Size size) {
+    onChanged(_clamp(crop.translate(
+      details.delta.dx / size.width,
+      details.delta.dy / size.height,
+    )));
+  }
+
+  void _resize(DragUpdateDetails details, Size size, Alignment corner) {
+    final dx = details.delta.dx / size.width;
+    final dy = details.delta.dy / size.height;
+    var left = crop.left;
+    var top = crop.top;
+    var right = crop.right;
+    var bottom = crop.bottom;
+
+    if (corner.x < 0) left += dx;
+    if (corner.x > 0) right += dx;
+    if (corner.y < 0) top += dy;
+    if (corner.y > 0) bottom += dy;
+
+    onChanged(_clamp(Rect.fromLTRB(left, top, right, bottom)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final size = Size(constraints.maxWidth, constraints.maxHeight);
+        final rect = Rect.fromLTWH(
+          crop.left * size.width,
+          crop.top * size.height,
+          crop.width * size.width,
+          crop.height * size.height,
+        );
+        return Stack(
+          children: [
+            Positioned.fromRect(
+              rect: rect,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onPanUpdate: (details) => _move(details, size),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: color, width: 2),
+                  ),
+                  child: CustomPaint(painter: _GridPainter(color)),
+                ),
+              ),
+            ),
+            for (final corner in const [
+              Alignment.topLeft,
+              Alignment.topRight,
+              Alignment.bottomLeft,
+              Alignment.bottomRight,
+            ])
+              _Handle(
+                rect: rect,
+                corner: corner,
+                color: color,
+                onDrag: (details) => _resize(details, size, corner),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _Handle extends StatelessWidget {
+  final Rect rect;
+  final Alignment corner;
+  final Color color;
+  final ValueChanged<DragUpdateDetails> onDrag;
+
+  const _Handle({
+    required this.rect,
+    required this.corner,
+    required this.color,
+    required this.onDrag,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final left = corner.x < 0 ? rect.left - 15 : rect.right - 15;
+    final top = corner.y < 0 ? rect.top - 15 : rect.bottom - 15;
+    return Positioned(
+      left: left,
+      top: top,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onPanUpdate: onDrag,
+        child: Container(
+          width: 30,
+          height: 30,
+          alignment: Alignment.center,
+          child: Container(
+            width: 18,
+            height: 18,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 2),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GridPainter extends CustomPainter {
+  final Color color;
+
+  _GridPainter(this.color);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.38)
+      ..strokeWidth = 1;
+    for (final x in [size.width / 3, size.width * 2 / 3]) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+    for (final y in [size.height / 3, size.height * 2 / 3]) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _GridPainter oldDelegate) =>
+      oldDelegate.color != color;
+}
+
+class _CircleIconButton extends StatelessWidget {
   final IconData icon;
-  final Color primary;
-  final bool filled;
-  final bool isLoading;
-  final VoidCallback? onPressed;
+  final VoidCallback onPressed;
 
-  const _ScanActionButton({
-    required this.label,
+  const _CircleIconButton({required this.icon, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.black.withValues(alpha: 0.45),
+      shape: const CircleBorder(),
+      child: IconButton(
+        icon: Icon(icon, color: Colors.white),
+        onPressed: onPressed,
+      ),
+    );
+  }
+}
+
+class _BottomToolButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback? onTap;
+
+  const _BottomToolButton({
     required this.icon,
-    required this.primary,
-    required this.filled,
-    required this.onPressed,
-    this.isLoading = false,
+    required this.label,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final colors = AppTheme.colorsOf(context);
+    return TapScale(
+      onTap: onTap,
+      child: SizedBox(
+        width: 78,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: colors.ink, size: 22),
+            const SizedBox(height: 5),
+            Text(
+              label,
+              style: TextStyle(
+                color: colors.muted,
+                fontSize: 11.5,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
-    // Primary actions get the accent color outline/text; secondary actions
-    // get a neutral outline/text.
-    final accentColor = filled ? primary : colors.ink;
-    final outlineColor = filled ? primary : colors.border;
+class _ActionButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final VoidCallback? onPressed;
+  final bool filled;
 
+  const _ActionButton({
+    required this.label,
+    required this.icon,
+    required this.onPressed,
+    required this.filled,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppTheme.colorsOf(context);
+    final primary = AppPreferences.palette.value.primary;
+    final color = filled ? primary : colors.ink;
     return TapScale(
       onTap: onPressed,
       child: Container(
         height: 52,
         decoration: BoxDecoration(
-          color: Colors.transparent,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: outlineColor, width: 1),
+          border: Border.all(color: filled ? primary : colors.border),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            if (isLoading)
-              SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: accentColor,
-                ),
-              )
-            else
-              Icon(icon, size: 18, color: accentColor),
+            Icon(icon, color: color, size: 18),
             const SizedBox(width: 8),
             Text(
               label,
               style: TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 14.5,
-                color: accentColor,
+                color: color,
+                fontWeight: FontWeight.w700,
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CameraFallback extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+  final VoidCallback onGallery;
+
+  const _CameraFallback({
+    required this.message,
+    required this.onRetry,
+    required this.onGallery,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.camera_alt_outlined,
+                color: Colors.white70, size: 48),
+            const SizedBox(height: 16),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white, height: 1.4),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: onRetry,
+                    child: const Text('Try Again'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: onGallery,
+                    child: const Text('Gallery'),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

@@ -1,4 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Required for the in-app live camera scanner. -->
+    <uses-permission android:name="android.permission.CAMERA"/>
     <!-- Required to show notifications on Android 13+ (API 33+). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <!-- Required so a daily reminder scheduled with flutter_local_notifications
