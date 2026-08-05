@@ -14,4 +14,5 @@ cd frontend
 flutter pub get
 flutter build web --release \
   --dart-define=API_BASE_URL="${API_BASE_URL:?API_BASE_URL is required}" \
+  --dart-define=USE_MOCK_BACKEND="${USE_MOCK_BACKEND:-false}" \
   --dart-define=GOOGLE_CLIENT_ID="${GOOGLE_CLIENT_ID:-}"

@@ -69,6 +69,15 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
+    if (kUseMockBackend) {
+      final name = email.split('@').first.trim();
+      await AuthStorage.saveToken('demo-session');
+      AppPreferences.studentName.value = name.isEmpty ? 'Student' : name;
+      if (!mounted) return;
+      context.go(RouteNames.home);
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _error = null;
@@ -313,7 +322,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ] else
                     const SizedBox(height: 10),
                   AuthPrimaryButton(
-                    label: 'Log In',
+                    label: kUseMockBackend ? 'Enter Demo' : 'Log In',
                     isLoading: _isLoading,
                     onPressed: _isLoading ? null : _handleLogin,
                   ),
