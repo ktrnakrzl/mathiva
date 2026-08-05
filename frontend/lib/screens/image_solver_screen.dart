@@ -44,6 +44,7 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
   bool _isCapturing = false;
   bool _isSolving = false;
   bool _isPicking = false;
+  bool _isInitializingCamera = false;
   bool _flashOn = false;
   String? _cameraError;
 
@@ -63,6 +64,11 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    // On web, opening the browser permission prompt can trigger inactive/resumed
+    // lifecycle events. Reinitializing there makes Chrome/Edge appear to ask
+    // for camera access repeatedly even after the user approved it.
+    if (kIsWeb) return;
+
     final camera = _camera;
     if (camera == null || !camera.value.isInitialized) return;
 
@@ -77,7 +83,14 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
   }
 
   Future<void> _initializeCamera() async {
-    if (_isSolving) return;
+    final current = _camera;
+    if (_isSolving ||
+        _isInitializingCamera ||
+        (current != null && current.value.isInitialized)) {
+      return;
+    }
+
+    _isInitializingCamera = true;
     setState(() => _cameraError = null);
     try {
       _cameras = await availableCameras();
@@ -106,10 +119,14 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
       setState(() {});
     } catch (_) {
       if (!mounted) return;
+      _camera = null;
+      _cameraInit = null;
       setState(() {
         _cameraError =
             'Could not open the live camera. Check camera permission and try again.';
       });
+    } finally {
+      _isInitializingCamera = false;
     }
   }
 
