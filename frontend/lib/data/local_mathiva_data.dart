@@ -527,6 +527,69 @@ class LocalMathivaData {
             ),
           ]),
         ]),
+        _topic('equations_and_systems', 'Equations and Systems', 0, [
+          _lesson(
+              'linear_equation_review', 'Linear Equation Review', '10 min', [
+            _concept(
+              'solving_two_step_equations',
+              'Solving Two-Step Equations',
+              'A two-step equation is solved by undoing addition or subtraction first, then multiplication or division.',
+              'ax + b = c',
+              '2x + 3 = 11 gives x = 4.',
+              'Solve 3x - 4 = 11.',
+              'x = 5',
+              [
+                'Add 4 to both sides: 3x = 15.',
+                'Divide both sides by 3.',
+                'So x = 5.',
+              ],
+            ),
+            _concept(
+              'equations_with_parentheses',
+              'Equations with Parentheses',
+              'Use the distributive property before solving when an equation has parentheses.',
+              'a(b + c) = ab + ac',
+              '2(x + 3) = 14 becomes 2x + 6 = 14.',
+              'Solve 2(x + 4) = 18.',
+              'x = 5',
+              [
+                'Distribute: 2x + 8 = 18.',
+                'Subtract 8: 2x = 10.',
+                'Divide by 2 to get x = 5.',
+              ],
+            ),
+          ]),
+          _lesson('systems_review', 'Systems of Linear Equations', '12 min', [
+            _concept(
+              'substitution_systems',
+              'Substitution in Systems',
+              'Substitution solves a system by replacing one variable using an equivalent expression.',
+              'If y = mx + b, substitute into the other equation',
+              'If y = x + 2 and y = 6, then x = 4.',
+              'If y = x + 1 and y = 5, find x.',
+              'x = 4',
+              [
+                'Substitute y = 5 into y = x + 1.',
+                '5 = x + 1.',
+                'Subtract 1 to get x = 4.',
+              ],
+            ),
+            _concept(
+              'elimination_systems',
+              'Elimination in Systems',
+              'Elimination solves a system by adding or subtracting equations to remove a variable.',
+              'Add equations when opposite coefficients match',
+              'x + y = 7 and x - y = 3 add to 2x = 10.',
+              'Add x + y = 9 and x - y = 1. What is x?',
+              'x = 5',
+              [
+                'Add the equations: 2x = 10.',
+                'Divide both sides by 2.',
+                'So x = 5.',
+              ],
+            ),
+          ]),
+        ]),
         _topic('financial_mathematics', 'Financial Mathematics', 0, [
           _lesson('interest_and_value', 'Interest and Value', '12 min', [
             _concept(
@@ -1171,6 +1234,38 @@ class LocalMathivaData {
             ]),
           ]),
         ]),
+        _topic('data_displays', 'Data Displays', 0, [
+          _lesson('graphs_and_tables', 'Graphs and Tables', '9 min', [
+            _concept(
+              'reading_bar_graphs',
+              'Reading Bar Graphs',
+              'A bar graph compares quantities using bar heights.',
+              'higher bar means larger value',
+              'If Math has bar height 12 and Science has 9, Math is larger.',
+              'A bar for A is 7 and a bar for B is 11. Which is larger?',
+              'B',
+              [
+                'Compare the bar heights.',
+                '11 is greater than 7.',
+                'So B is larger.',
+              ],
+            ),
+            _concept(
+              'interpreting_line_graphs',
+              'Interpreting Line Graphs',
+              'A line graph shows how a quantity changes over an ordered scale such as time.',
+              'slope up means increasing; slope down means decreasing',
+              'A line rising from Monday to Tuesday shows an increase.',
+              'If a line graph goes from 5 to 9, did the value increase or decrease?',
+              'Increase',
+              [
+                'Compare the starting value and ending value.',
+                '9 is greater than 5.',
+                'So the value increased.',
+              ],
+            ),
+          ]),
+        ]),
         _topic('inferential_statistics', 'Inferential Statistics', 0, [
           _lesson(
               'inference_basics', 'Sampling, Intervals, and Tests', '12 min', [
@@ -1641,6 +1736,69 @@ class LocalMathivaData {
               'Parabolas have a focus property.',
               'Therefore the model is a parabola.'
             ]),
+          ]),
+        ]),
+        _topic('geometry_trig_review', 'Geometry and Trig Review', 0, [
+          _lesson('triangle_angle_review', 'Triangle Angle Review', '10 min', [
+            _concept(
+              'triangle_angle_sum',
+              'Triangle Angle Sum',
+              'The interior angles of every triangle add to 180 degrees.',
+              'A + B + C = 180 degrees',
+              'If two angles are 50 degrees and 60 degrees, the third is 70 degrees.',
+              'A triangle has angles 45 degrees and 65 degrees. Find the third angle.',
+              '70 degrees',
+              [
+                'Add the known angles: 45 + 65 = 110.',
+                'Subtract from 180.',
+                'The third angle is 70 degrees.',
+              ],
+            ),
+            _concept(
+              'area_of_triangle',
+              'Area of a Triangle',
+              'The area of a triangle is half the product of its base and height.',
+              'A = 1/2 bh',
+              'A triangle with base 10 and height 6 has area 30.',
+              'Find the area of a triangle with base 8 and height 5.',
+              '20 square units',
+              [
+                'Use A = 1/2 bh.',
+                'Compute 1/2 * 8 * 5.',
+                'The area is 20 square units.',
+              ],
+            ),
+          ]),
+          _lesson('right_triangle_trig_review', 'Right Triangle Trig Review',
+              '11 min', [
+            _concept(
+              'soh_cah_toa',
+              'SOH-CAH-TOA',
+              'The basic trigonometric ratios compare sides of a right triangle.',
+              'sin theta = opposite/hypotenuse; cos theta = adjacent/hypotenuse; tan theta = opposite/adjacent',
+              'If opposite = 3 and hypotenuse = 5, then sin theta = 3/5.',
+              'If opposite = 6 and hypotenuse = 10, find sin theta.',
+              '3/5',
+              [
+                'Use sin theta = opposite/hypotenuse.',
+                'Substitute 6/10.',
+                'Simplify to 3/5.',
+              ],
+            ),
+            _concept(
+              'degree_radian_conversion',
+              'Degree-Radian Conversion',
+              'Radians measure angles using arc length on a circle.',
+              '180 degrees = pi radians',
+              '90 degrees = pi/2 radians.',
+              'Convert 45 degrees to radians.',
+              'pi/4 radians',
+              [
+                'Use 180 degrees = pi radians.',
+                '45 degrees is one fourth of 180 degrees.',
+                'So 45 degrees = pi/4 radians.',
+              ],
+            ),
           ]),
         ]),
         _topic('sequences_and_series', 'Sequences and Series', 0, [
@@ -2143,6 +2301,56 @@ class LocalMathivaData {
               'The repeated inner expression is x + 1.',
               'Use u = x + 1.'
             ]),
+          ]),
+          _lesson('integral_applications', 'Integral Applications', '11 min', [
+            _concept(
+                'average_value_of_function',
+                'Average Value of a Function',
+                'The average value of a continuous function over an interval is found using a definite integral divided by interval length.',
+                'f_avg = (1/(b-a)) * integral from a to b of f(x) dx',
+                'For f(x)=2 on [0,4], the average value is 2.',
+                'Find the average value of f(x)=6 on [1,5].',
+                '6', [
+              'A constant function has the same value everywhere.',
+              'Its average value over any interval is that constant.',
+              'So the average value is 6.'
+            ]),
+            _concept(
+                'accumulation_functions',
+                'Accumulation Functions',
+                'An accumulation function tracks total change from a starting point using an integral.',
+                'A(x) = integral from a to x of f(t) dt',
+                'If velocity is positive, accumulated position increases.',
+                'If f(t)=3 from t=0 to t=4, what is the accumulation?',
+                '12', [
+              'The rate is constant at 3.',
+              'Multiply rate by interval length: 3 * 4.',
+              'The accumulation is 12.'
+            ]),
+          ]),
+          _lesson('basic_differential_equations',
+              'Basic Differential Equations', '11 min', [
+            _concept(
+                'differential_equations_intro',
+                'Differential Equations',
+                'A differential equation relates a function to one or more of its derivatives.',
+                'dy/dx = f(x)',
+                'dy/dx = 2x has solution y = x^2 + C.',
+                'Solve dy/dx = 4 for y.',
+                'y = 4x + C', [
+              'Integrate both sides with respect to x.',
+              'The integral of 4 is 4x.',
+              'Add C to get y = 4x + C.'
+            ]),
+            _concept(
+                'initial_value_problems',
+                'Initial Value Problems',
+                'An initial value problem uses a given point to find the constant in a general solution.',
+                'use y(x0)=y0 to solve for C',
+                'If y=x+C and y(0)=3, then C=3.',
+                'If y = 2x + C and y(1) = 5, find C.',
+                'C = 3',
+                ['Substitute x = 1 and y = 5.', '5 = 2(1) + C.', 'So C = 3.']),
           ]),
         ]),
       ],

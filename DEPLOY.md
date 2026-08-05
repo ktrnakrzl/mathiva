@@ -75,6 +75,31 @@ The image runs anywhere that accepts a container. Typical options:
 - **A VPS** — `docker build` + `docker run` behind a reverse proxy (Caddy/Nginx)
   that terminates HTTPS.
 
+### Render Blueprint
+This repo also includes `render.yaml`, which creates:
+
+- `mathiva-api` - the Dockerized FastAPI backend.
+- `mathiva-web` - the Flutter web build as a Render static site.
+- `mathiva-db` - a Render Postgres database.
+
+In Render, choose **New + > Blueprint**, connect this repo, and select
+`render.yaml`. During the first sync, Render prompts for the `sync: false`
+values:
+
+- `GEMINI_API_KEY`
+- `GOOGLE_CLIENT_ID` on both `mathiva-api` and `mathiva-web`
+
+After the first deploy, add this Google OAuth authorized JavaScript origin in
+Google Cloud Console:
+
+```text
+https://mathiva-web.onrender.com
+```
+
+If you rename either Render service, also update `API_BASE_URL`,
+`FRONTEND_URL`, and `CORS_ORIGINS` in the Render dashboard to match the final
+`onrender.com` URLs.
+
 The startup guard (`settings.validate_runtime()`) refuses to boot in production if
 the JWT secret is weak/default or `DATABASE_URL` is still SQLite — a safety net.
 
@@ -100,7 +125,7 @@ The Flutter app reads its backend URL from a compile-time define, so no code edi
 is needed:
 
 ```bash
-flutter build web --dart-define=API_BASE_URL=https://your-deployed-backend --dart-define=GOOGLE_CLIENT_ID=your-google-oauth-web-client-id.apps.googleusercontent.com --web-define=GOOGLE_CLIENT_ID=your-google-oauth-web-client-id.apps.googleusercontent.com
+flutter build web --dart-define=API_BASE_URL=https://your-deployed-backend --dart-define=GOOGLE_CLIENT_ID=your-google-oauth-web-client-id.apps.googleusercontent.com
 # or for a device build, pass the same --dart-define
 ```
 

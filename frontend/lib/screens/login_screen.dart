@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../core/constants/api_constants.dart';
@@ -36,6 +35,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool _isLoading = false;
   bool _isGoogleLoading = false;
+  bool _isFinishingGoogleLogin = false;
   bool _googleReady = false;
   String? _error;
   StreamSubscription<GoogleSignInAuthenticationEvent>? _googleSub;
@@ -135,6 +135,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _handleGoogleSignInPressed() async {
     if (!_googleReady || _isLoading || _isGoogleLoading) return;
+    if (!GoogleSignIn.instance.supportsAuthenticate()) return;
 
     setState(() {
       _isGoogleLoading = true;
@@ -160,6 +161,9 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _finishGoogleLogin(GoogleSignInAccount account) async {
+    if (_isFinishingGoogleLogin) return;
+    _isFinishingGoogleLogin = true;
+
     final idToken = account.authentication.idToken;
     if (idToken == null || idToken.isEmpty) {
       if (!mounted) return;
@@ -167,6 +171,7 @@ class _LoginScreenState extends State<LoginScreen> {
         _isGoogleLoading = false;
         _error = 'Google did not return a usable sign-in token.';
       });
+      _isFinishingGoogleLogin = false;
       return;
     }
 
@@ -186,6 +191,7 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() => _error =
           e is AuthException ? e.message : 'Could not sign in with Google.');
     } finally {
+      _isFinishingGoogleLogin = false;
       if (mounted) setState(() => _isGoogleLoading = false);
     }
   }
@@ -233,7 +239,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   FadeSlideIn(
                     child: Text(
                       'Welcome back',
-                      style: GoogleFonts.fraunces(
+                      style: AppTheme.serif(
                         color: colors.ink,
                         fontSize: 28,
                         fontWeight: FontWeight.w600,
