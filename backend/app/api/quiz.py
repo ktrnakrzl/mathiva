@@ -90,6 +90,13 @@ class NextQuestionResponse(BaseModel):
     # them until after it answers (POST /api/quiz/answer).
 
 
+class AdaptiveCandidateContext(BaseModel):
+    concept_id: str
+    subject_id: str
+    topic_id: str
+    lesson_id: str
+
+
 @router.get("/quiz/next", response_model=NextQuestionResponse)
 def next_question(
     subject_id: str,
@@ -151,6 +158,10 @@ class AdaptiveNextRequest(BaseModel):
     # lives in the app, not the backend). The server picks the best one for THIS
     # student from these; if empty, it considers every concept it can generate.
     candidate_concepts: List[str] = []
+    # Whole-app/subject practice can send each concept with its real content
+    # location. When present, the chosen question is attributed to that location
+    # instead of the placeholder subject/topic/lesson in this request.
+    candidate_contexts: List[AdaptiveCandidateContext] = []
 
 
 @router.post("/quiz/next-adaptive", response_model=NextQuestionResponse)
@@ -167,11 +178,23 @@ def next_question_adaptive(
     stores, and serves the question (minus the answer). The response reports which
     concept + difficulty were chosen so the UI can show what's being practiced.
     """
-    # Explicit candidates (e.g. the lesson's concepts) -> choose among the ones we
-    # can actually generate; if NONE of them have a template that's a content gap
-    # (422), not a reason to serve an unrelated concept. No candidates at all ->
-    # the student wants "anything", so consider every concept we can generate.
-    if request.candidate_concepts:
+    # Context candidates (e.g. whole-app practice) -> choose among the template-
+    # backed concepts, then use the chosen concept's real subject/topic/lesson
+    # for attribution. Plain concept candidates keep the older lesson-scoped
+    # behavior. No candidates at all -> consider every template-backed concept.
+    context_by_concept = {
+        c.concept_id: c
+        for c in request.candidate_contexts
+        if has_template(c.concept_id)
+    }
+    if request.candidate_contexts:
+        pool = list(context_by_concept.keys())
+        if not pool:
+            raise HTTPException(
+                status_code=422,
+                detail="No question template for these concepts yet.",
+            )
+    elif request.candidate_concepts:
         pool = [c for c in request.candidate_concepts if has_template(c)]
         if not pool:
             raise HTTPException(
@@ -185,15 +208,16 @@ def next_question_adaptive(
         db.query(QuizAttempt).filter(QuizAttempt.user_id == current_user.id).all()
     )
     concept_id, difficulty = adaptive_quiz.choose_next(attempts, pool)
+    selected_context = context_by_concept.get(concept_id)
 
     try:
         generated = generate_question(concept_id, difficulty)
 
         question = QuizQuestion(
             user_id=current_user.id,
-            subject_id=request.subject_id,
-            topic_id=request.topic_id,
-            lesson_id=request.lesson_id,
+            subject_id=selected_context.subject_id if selected_context else request.subject_id,
+            topic_id=selected_context.topic_id if selected_context else request.topic_id,
+            lesson_id=selected_context.lesson_id if selected_context else request.lesson_id,
             concept_id=concept_id,
             difficulty=difficulty,
             template_id=generated.template_id,

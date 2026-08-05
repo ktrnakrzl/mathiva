@@ -25,6 +25,7 @@ class PracticeScreen extends StatefulWidget {
   /// serve based on the student's history (weakest first). When null, practice
   /// is scoped to the single [conceptId] the student opened.
   final List<String>? candidateConcepts;
+  final List<Map<String, String>>? candidateConceptContexts;
 
   const PracticeScreen({
     super.key,
@@ -34,6 +35,7 @@ class PracticeScreen extends StatefulWidget {
     required this.conceptId,
     required this.difficulty,
     this.candidateConcepts,
+    this.candidateConceptContexts,
   });
 
   @override
@@ -86,8 +88,10 @@ class _PracticeScreenState extends State<PracticeScreen> {
         topicId: widget.topicId,
         lessonId: widget.lessonId,
         // Smart Practice passes the lesson's concepts (server picks the weakest);
-        // concept-scoped practice passes just the one concept the student opened.
+        // overall practice passes concept contexts so attribution follows the
+        // chosen concept's real lesson; concept-scoped practice passes just one.
         candidateConcepts: widget.candidateConcepts ?? [widget.conceptId],
+        candidateContexts: widget.candidateConceptContexts,
       );
       if (!mounted) return;
       setState(() {
@@ -148,7 +152,8 @@ class _PracticeScreenState extends State<PracticeScreen> {
         setState(() => _elapsedSeconds++);
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Couldn't submit your answer. Try again.")),
+        const SnackBar(
+            content: Text("Couldn't submit your answer. Try again.")),
       );
       return;
     }
@@ -216,7 +221,9 @@ class _PracticeScreenState extends State<PracticeScreen> {
       appBar: MathivaAppBar(
         // Difficulty is chosen adaptively by the server, so show what was
         // actually served once it's loaded (a neutral title until then).
-        title: _question != null ? '${_question!.difficulty} Practice' : 'Practice',
+        title: _question != null
+            ? '${_question!.difficulty} Practice'
+            : 'Practice',
         subtitle: 'Choose your answer carefully',
         icon: Icons.edit_note_rounded,
         onBack: () => context.canPop() ? context.pop() : context.go('/concept'),
@@ -384,8 +391,7 @@ class _ChoiceTile extends StatelessWidget {
           decoration: BoxDecoration(
             color: colors.surface,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-                color: selected ? primary : colors.border),
+            border: Border.all(color: selected ? primary : colors.border),
             boxShadow: [
               BoxShadow(
                 color: primary.withOpacity(selected ? .12 : .06),

@@ -170,3 +170,42 @@ def test_progress_reflects_a_correct_answer(client, auth_headers):
     assert CONCEPT["subject_id"] in subjects
     first_steps = next(a for a in body["achievements"] if a["id"] == "first_steps")
     assert first_steps["earned"] is True
+
+
+def test_adaptive_question_with_context_uses_chosen_concepts_real_lesson(
+    client, auth_headers, monkeypatch
+):
+    monkeypatch.setattr(
+        "app.api.quiz.adaptive_quiz.choose_next",
+        lambda attempts, pool: ("mean", "Easy"),
+    )
+
+    r = client.post(
+        "/api/quiz/next-adaptive",
+        json={
+            "subject_id": "placeholder_subject",
+            "topic_id": "placeholder_topic",
+            "lesson_id": "placeholder_lesson",
+            "candidate_contexts": [
+                {
+                    "concept_id": "mean",
+                    "subject_id": "statistics_probability",
+                    "topic_id": "measures_central_tendency",
+                    "lesson_id": "mean_median_mode",
+                },
+                {
+                    "concept_id": "definitely_not_template_backed",
+                    "subject_id": "general_math",
+                    "topic_id": "functions",
+                    "lesson_id": "functions_intro",
+                },
+            ],
+        },
+        headers=auth_headers,
+    )
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["concept_id"] == "mean"
+    assert body["subject_id"] == "statistics_probability"
+    assert body["topic_id"] == "measures_central_tendency"
+    assert body["lesson_id"] == "mean_median_mode"

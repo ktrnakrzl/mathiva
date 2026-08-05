@@ -72,12 +72,14 @@ class ApiProgressRepository implements ProgressRepository {
     required String topicId,
     required String lessonId,
     required List<String> candidateConcepts,
+    List<Map<String, String>>? candidateContexts,
   }) async {
     final response = await _dio.post('/api/quiz/next-adaptive', data: {
       'subject_id': subjectId,
       'topic_id': topicId,
       'lesson_id': lessonId,
       'candidate_concepts': candidateConcepts,
+      if (candidateContexts != null) 'candidate_contexts': candidateContexts,
     });
     return GeneratedQuestion.fromJson(response.data as Map<String, dynamic>);
   }

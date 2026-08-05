@@ -53,12 +53,14 @@ class ProgressService {
     required String topicId,
     required String lessonId,
     required List<String> candidateConcepts,
+    List<Map<String, String>>? candidateContexts,
   }) =>
       repository.fetchAdaptiveQuestion(
         subjectId: subjectId,
         topicId: topicId,
         lessonId: lessonId,
         candidateConcepts: candidateConcepts,
+        candidateContexts: candidateContexts,
       );
 
   static Future<ReviewTarget> fetchReviewNext(

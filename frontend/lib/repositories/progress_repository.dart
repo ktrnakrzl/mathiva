@@ -41,6 +41,7 @@ abstract class ProgressRepository {
     required String topicId,
     required String lessonId,
     required List<String> candidateConcepts,
+    List<Map<String, String>>? candidateContexts,
   });
 
   /// Asks the server which concept the student should REVIEW next -- one they've
@@ -221,8 +222,7 @@ class UserProgress {
       byTopicDifficulty:
           list('by_topic_difficulty', TopicDifficultyStat.fromJson),
       byConcept: list('by_concept', ConceptStat.fromJson),
-      bestTimeByConcept:
-          list('best_time_by_concept', ConceptBestTime.fromJson),
+      bestTimeByConcept: list('best_time_by_concept', ConceptBestTime.fromJson),
       last7Days: list('last_7_days', DayActivity.fromJson),
       achievements: list('achievements', Achievement.fromJson),
     );

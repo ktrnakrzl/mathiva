@@ -138,6 +138,13 @@ class MathivaApp extends StatelessWidget {
             candidateConcepts: (args['candidateConcepts'] as List?)
                 ?.map((e) => e as String)
                 .toList(),
+            candidateConceptContexts:
+                (args['candidateConceptContexts'] as List?)
+                    ?.map((e) => (e as Map).map(
+                          (key, value) =>
+                              MapEntry(key.toString(), value.toString()),
+                        ))
+                    .toList(),
           );
         },
       ),

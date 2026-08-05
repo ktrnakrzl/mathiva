@@ -59,7 +59,8 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (_) {
       if (!mounted) return;
       messenger.showSnackBar(const SnackBar(
-        content: Text("Couldn't start review. Check your connection and try again."),
+        content:
+            Text("Couldn't start review. Check your connection and try again."),
       ));
     }
   }
@@ -70,6 +71,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final firstSubject = subjects.first;
     final firstTopic = firstSubject.topics.first;
     final firstLesson = firstTopic.lessons.first;
+    final practiceCatalog = LocalContentService().allConceptsWithContext();
+    final firstPracticeContext = practiceCatalog.first;
     final colors = AppTheme.colorsOf(context);
 
     return Scaffold(
@@ -123,8 +126,14 @@ class _HomeScreenState extends State<HomeScreen> {
                       label: 'Practice',
                       icon: Icons.fitness_center_rounded,
                       onTap: () => context.push(
-                        RouteNames.lessons,
-                        extra: {'subjectId': firstSubject.id},
+                        RouteNames.practice,
+                        extra: {
+                          'subjectId': firstPracticeContext['subject_id'],
+                          'topicId': firstPracticeContext['topic_id'],
+                          'lessonId': firstPracticeContext['lesson_id'],
+                          'conceptId': firstPracticeContext['concept_id'],
+                          'candidateConceptContexts': practiceCatalog,
+                        },
                       ),
                     ),
                   ),
@@ -149,7 +158,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: _ActionTile(
                       label: 'Awards',
                       icon: Icons.emoji_events_rounded,
-                      onTap: () => context.push(RouteNames.progress, extra: true),
+                      onTap: () =>
+                          context.push(RouteNames.progress, extra: true),
                     ),
                   ),
                 ],
@@ -664,7 +674,8 @@ String _stripMathDelimiters(String s) {
     [r'$$', r'$$'],
     [r'$', r'$'],
   ]) {
-    if (t.startsWith(pair[0]) && t.endsWith(pair[1]) &&
+    if (t.startsWith(pair[0]) &&
+        t.endsWith(pair[1]) &&
         t.length > pair[0].length + pair[1].length) {
       t = t.substring(pair[0].length, t.length - pair[1].length).trim();
       break;
@@ -706,7 +717,8 @@ class _RecentDivider extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          Expanded(child: Divider(color: colors.border, height: 1, thickness: 1)),
+          Expanded(
+              child: Divider(color: colors.border, height: 1, thickness: 1)),
         ],
       ),
     );
@@ -761,7 +773,8 @@ class _RecentScanRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            Icon(Icons.chevron_right_rounded, color: colors.subtleMuted, size: 18),
+            Icon(Icons.chevron_right_rounded,
+                color: colors.subtleMuted, size: 18),
           ],
         ),
       ),

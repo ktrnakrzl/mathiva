@@ -47,15 +47,20 @@ class MockProgressRepository implements ProgressRepository {
     required String topicId,
     required String lessonId,
     required List<String> candidateConcepts,
+    List<Map<String, String>>? candidateContexts,
   }) async {
     await Future.delayed(const Duration(milliseconds: 300));
+    final context =
+        candidateContexts?.isNotEmpty == true ? candidateContexts!.first : null;
+    final conceptId = context?['concept_id'] ??
+        (candidateConcepts.isNotEmpty ? candidateConcepts.first : 'mean');
     // Offline: just echo the first candidate at Easy so the flow can be demoed.
     return GeneratedQuestion(
       questionId: 1,
-      subjectId: subjectId,
-      topicId: topicId,
-      lessonId: lessonId,
-      conceptId: candidateConcepts.isNotEmpty ? candidateConcepts.first : 'mean',
+      subjectId: context?['subject_id'] ?? subjectId,
+      topicId: context?['topic_id'] ?? topicId,
+      lessonId: context?['lesson_id'] ?? lessonId,
+      conceptId: conceptId,
       difficulty: 'Easy',
       question: 'What is the mean of 4, 8, and 12?',
       choices: const ['8', '6', '12', '24'],
