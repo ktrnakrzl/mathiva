@@ -23,7 +23,7 @@ services:
       - key: FRONTEND_URL
         value: https://mathiva-web.onrender.com
       - key: CORS_ORIGINS
-        value: https://mathiva-web.onrender.com
+        value: "*"
       - key: DISABLE_T5
         value: "true"
       - key: DISABLE_PIX2TEX

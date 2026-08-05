@@ -17,6 +17,8 @@ import '../presentation/widgets/auth_widgets.dart';
 import '../presentation/widgets/fade_slide_in.dart';
 import '../theme/app_theme.dart';
 
+final RegExp _emailPattern = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+
 /// Login — a graph-paper editorial brand band over a left-aligned form, per the
 /// auth-flow "mathematical notebook" design handoff.
 class LoginScreen extends StatefulWidget {
@@ -60,6 +62,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (email.isEmpty || password.isEmpty) {
       setState(() => _error = 'Please enter your email and password.');
+      return;
+    }
+    if (!_emailPattern.hasMatch(email)) {
+      setState(() => _error = 'Enter a valid email address.');
       return;
     }
 

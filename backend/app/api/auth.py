@@ -15,6 +15,7 @@ from app.services.auth_service import (
     get_current_user,
     google_sign_in_configured,
     hash_password,
+    normalize_email,
     password_reset_expires_at,
     password_reset_token_hash,
     send_password_reset_email,
@@ -53,7 +54,7 @@ class RegisterResponse(BaseModel):
 
 
 class LoginRequest(BaseModel):
-    email: str
+    email: EmailStr
     password: str
 
 
@@ -92,16 +93,17 @@ class MessageResponse(BaseModel):
 @router.post("/register", response_model=RegisterResponse)
 @limiter.limit("5/minute")
 def register(request: Request, payload: RegisterRequest, db: Session = Depends(get_db)):
-    if db.query(User).filter(User.email == payload.email).first() is not None:
+    email = normalize_email(str(payload.email))
+    if db.query(User).filter(User.email == email).first() is not None:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="An account with this email already exists",
         )
 
     user = User(
-        email=payload.email,
+        email=email,
         password_hash=hash_password(payload.password),
-        full_name=payload.full_name,
+        full_name=payload.full_name.strip(),
         section=payload.section,
     )
     db.add(user)
@@ -118,7 +120,11 @@ def register(request: Request, payload: RegisterRequest, db: Session = Depends(g
 @router.post("/login", response_model=LoginResponse)
 @limiter.limit("10/minute")
 def login(request: Request, payload: LoginRequest, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == payload.email).first()
+    user = (
+        db.query(User)
+        .filter(User.email == normalize_email(str(payload.email)))
+        .first()
+    )
 
     if user is None or not verify_password(payload.password, user.password_hash):
         raise HTTPException(
@@ -135,7 +141,11 @@ def forgot_password(
     request: Request, payload: ForgotPasswordRequest, db: Session = Depends(get_db)
 ):
     message = "If an account exists for that email, a reset link has been sent."
-    user = db.query(User).filter(User.email == payload.email.lower()).first()
+    user = (
+        db.query(User)
+        .filter(User.email == normalize_email(str(payload.email)))
+        .first()
+    )
     if user is None:
         return MessageResponse(message=message)
 
@@ -216,7 +226,7 @@ def google_login(
             detail="Google account email is not verified",
         )
 
-    email = str(claims.get("email") or "").strip().lower()
+    email = normalize_email(str(claims.get("email") or ""))
     if not email:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

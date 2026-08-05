@@ -33,6 +33,35 @@ def test_register_duplicate_email_conflicts(client):
     assert r.status_code == 409
 
 
+def test_register_normalizes_email_and_prevents_case_duplicates(client):
+    mixed = {**SAMPLE_USER, "email": "Student@Example.COM"}
+    r = client.post("/auth/register", json=mixed)
+    assert r.status_code == 200
+    assert r.json()["email"] == "student@example.com"
+
+    r = client.post(
+        "/auth/register", json={**SAMPLE_USER, "email": "student@example.com"}
+    )
+    assert r.status_code == 409
+
+
+def test_login_accepts_case_insensitive_email(client):
+    client.post("/auth/register", json=SAMPLE_USER)
+    r = client.post(
+        "/auth/login",
+        json={"email": "STUDENT@EXAMPLE.COM", "password": SAMPLE_USER["password"]},
+    )
+    assert r.status_code == 200
+
+
+def test_login_rejects_invalid_email(client):
+    r = client.post(
+        "/auth/login",
+        json={"email": "not-an-email", "password": "password123"},
+    )
+    assert r.status_code == 422
+
+
 def test_register_rejects_short_password(client):
     payload = {**SAMPLE_USER, "password": "short"}
     r = client.post("/auth/register", json=payload)
@@ -210,6 +239,25 @@ def test_forgot_password_resets_password(client, monkeypatch):
         "/auth/login",
         json={"email": SAMPLE_USER["email"], "password": "newpassword123"},
     ).status_code == 200
+
+
+def test_forgot_password_finds_mixed_case_registered_email(client, monkeypatch):
+    from app.api import auth as auth_api
+
+    sent_links = []
+    monkeypatch.setattr(
+        auth_api,
+        "send_password_reset_email",
+        lambda email, url: sent_links.append(url),
+    )
+
+    client.post(
+        "/auth/register", json={**SAMPLE_USER, "email": "Student@Example.COM"}
+    )
+    r = client.post("/auth/password/forgot", json={"email": "student@example.com"})
+
+    assert r.status_code == 200
+    assert len(sent_links) == 1
 
 
 def test_forgot_password_unknown_email_is_generic(client, monkeypatch):

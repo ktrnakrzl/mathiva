@@ -52,7 +52,9 @@ class MathivaApp extends StatelessWidget {
       if (!signedIn && !publicRoutes.contains(path)) {
         return RouteNames.login;
       }
-      if (signedIn && publicRoutes.contains(path)) {
+      if (signedIn &&
+          publicRoutes.contains(path) &&
+          path != RouteNames.resetPassword) {
         return RouteNames.home;
       }
       return null;

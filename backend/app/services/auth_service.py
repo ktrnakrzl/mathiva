@@ -27,6 +27,10 @@ PASSWORD_RESET_EXPIRE = timedelta(minutes=30)
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login", auto_error=False)
 
 
+def normalize_email(email: str) -> str:
+    return email.strip().lower()
+
+
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
@@ -47,8 +51,8 @@ def password_reset_expires_at() -> datetime:
     return datetime.now(timezone.utc).replace(tzinfo=None) + PASSWORD_RESET_EXPIRE
 
 
-def build_password_reset_url(token: str) -> str:
-    base = settings.frontend_url.rstrip("/")
+def build_password_reset_url(token: str, frontend_url: str | None = None) -> str:
+    base = (frontend_url or settings.frontend_url).rstrip("/")
     return f"{base}/reset-password?{urlencode({'token': token})}"
 
 
