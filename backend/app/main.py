@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 import sys
 import os
@@ -88,6 +88,26 @@ def warm_up_ollama():
         generate_answer("Say OK.")
     except Exception as e:
         print(f"Warning: Ollama warm-up failed (is Ollama running?): {e}")
+
+
+@app.get("/")
+def root():
+    return {
+        "name": "Mathiva API",
+        "status": "ok",
+        "health": "/health",
+        "docs": "/docs",
+    }
+
+
+@app.head("/")
+def root_head():
+    return Response(status_code=200)
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    return Response(status_code=204)
 
 
 @app.get("/health")
