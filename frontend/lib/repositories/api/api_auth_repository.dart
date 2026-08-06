@@ -15,8 +15,8 @@ class ApiAuthRepository implements AuthRepository {
   static final Dio _dio = Dio(
     BaseOptions(
       baseUrl: kBaseUrl,
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 30),
+      connectTimeout: const Duration(seconds: 90),
+      receiveTimeout: const Duration(seconds: 90),
       headers: {
         'Content-Type': 'application/json',
       },

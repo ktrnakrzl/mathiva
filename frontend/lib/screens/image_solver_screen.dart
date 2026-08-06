@@ -52,9 +52,7 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    if (!kIsWeb) {
-      unawaited(_initializeCamera());
-    }
+    unawaited(_initializeCamera());
   }
 
   @override
@@ -176,10 +174,6 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
     await _pickImage(ImageSource.gallery);
   }
 
-  Future<void> _pickFromCamera() async {
-    await _pickImage(ImageSource.camera);
-  }
-
   Future<void> _pickImage(ImageSource source) async {
     if (_isPicking || _isSolving) return;
     setState(() => _isPicking = true);
@@ -268,7 +262,7 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
       _previewBytes = null;
       _imageToSolve = null;
     });
-    if (!kIsWeb && _camera == null) unawaited(_initializeCamera());
+    if (_camera == null) unawaited(_initializeCamera());
   }
 
   Future<void> _solve() async {
@@ -326,9 +320,8 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
             ),
       body: AnimatedSwitcher(
         duration: const Duration(milliseconds: 220),
-        child: _step == _SolverStep.scan
-            ? (kIsWeb ? _buildWebScanner() : _buildLiveScanner())
-            : _buildPreview(),
+        child:
+            _step == _SolverStep.scan ? _buildLiveScanner() : _buildPreview(),
       ),
       bottomNavigationBar: _step == _SolverStep.scan
           ? const MathivaBottomNav(selected: MathivaTab.scan)
@@ -466,75 +459,6 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildWebScanner() {
-    final colors = AppTheme.colorsOf(context);
-
-    return AnimatedBackground(
-      key: const ValueKey('web-scanner'),
-      vivid: true,
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Spacer(),
-              FadeSlideIn(
-                child: Icon(
-                  Icons.document_scanner_outlined,
-                  size: 54,
-                  color: colors.accent,
-                ),
-              ),
-              const SizedBox(height: 18),
-              FadeSlideIn(
-                delay: const Duration(milliseconds: 70),
-                child: Text(
-                  'Add a math problem',
-                  textAlign: TextAlign.center,
-                  style: AppTheme.serif(
-                    color: colors.ink,
-                    fontSize: 30,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              FadeSlideIn(
-                delay: const Duration(milliseconds: 120),
-                child: Text(
-                  'Take a photo or upload one from your device.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: colors.muted,
-                    fontSize: 14,
-                    height: 1.35,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 30),
-              _WebScanButton(
-                label: _isPicking ? 'Opening...' : 'Take Photo',
-                icon: Icons.photo_camera_outlined,
-                onPressed: _isPicking ? null : _pickFromCamera,
-                filled: true,
-              ),
-              const SizedBox(height: 12),
-              _WebScanButton(
-                label: 'Upload Image',
-                icon: Icons.photo_library_outlined,
-                onPressed: _isPicking ? null : _pickFromGallery,
-                filled: false,
-              ),
-              const Spacer(flex: 2),
-            ],
-          ),
         ),
       ),
     );
@@ -884,64 +808,6 @@ class _BottomToolButton extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _WebScanButton extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final VoidCallback? onPressed;
-  final bool filled;
-
-  const _WebScanButton({
-    required this.label,
-    required this.icon,
-    required this.onPressed,
-    required this.filled,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = AppTheme.colorsOf(context);
-    return SizedBox(
-      height: 54,
-      child: filled
-          ? ElevatedButton.icon(
-              onPressed: onPressed,
-              icon: Icon(icon, size: 20),
-              label: Text(label),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: colors.accent,
-                foregroundColor: colors.onAccent,
-                disabledBackgroundColor: colors.accent.withValues(alpha: 0.55),
-                disabledForegroundColor: colors.onAccent,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                textStyle: const TextStyle(
-                  fontSize: 14.5,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            )
-          : OutlinedButton.icon(
-              onPressed: onPressed,
-              icon: Icon(icon, size: 20),
-              label: Text(label),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: colors.ink,
-                side: BorderSide(color: colors.border, width: 1),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                textStyle: const TextStyle(
-                  fontSize: 14.5,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
     );
   }
 }
