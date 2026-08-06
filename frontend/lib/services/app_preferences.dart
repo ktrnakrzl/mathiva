@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MathiviaPalette {
   final String name;
@@ -16,6 +17,21 @@ class MathiviaPalette {
 }
 
 class AppPreferences {
+  static const _studentNameKey = 'pref_student_name';
+  static const _learnerRoleKey = 'pref_learner_role';
+  static const _notificationsEnabledKey = 'pref_notifications_enabled';
+  static const _studyRemindersEnabledKey = 'pref_study_reminders_enabled';
+  static const _reminderHourKey = 'pref_reminder_hour';
+  static const _reminderMinuteKey = 'pref_reminder_minute';
+  static const _privateProfileKey = 'pref_private_profile';
+  static const _saveLearningProgressKey = 'pref_save_learning_progress';
+  static const _darkModeKey = 'pref_dark_mode';
+  static const _hapticFeedbackKey = 'pref_haptic_feedback';
+  static const _textScaleKey = 'pref_text_scale';
+  static const _paletteNameKey = 'pref_palette_name';
+
+  static bool _ready = false;
+
   static final ValueNotifier<bool> notificationsEnabled =
       ValueNotifier<bool>(true);
   static final ValueNotifier<bool> studyRemindersEnabled =
@@ -102,6 +118,82 @@ class AppPreferences {
 
   static final ValueNotifier<MathiviaPalette> palette =
       ValueNotifier<MathiviaPalette>(palettes.first);
+
+  static Future<void> init() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    notificationsEnabled.value =
+        prefs.getBool(_notificationsEnabledKey) ?? notificationsEnabled.value;
+    studyRemindersEnabled.value =
+        prefs.getBool(_studyRemindersEnabledKey) ?? studyRemindersEnabled.value;
+    reminderTime.value = TimeOfDay(
+      hour: prefs.getInt(_reminderHourKey) ?? reminderTime.value.hour,
+      minute: prefs.getInt(_reminderMinuteKey) ?? reminderTime.value.minute,
+    );
+    studentName.value = prefs.getString(_studentNameKey) ?? studentName.value;
+    learnerRole.value = prefs.getString(_learnerRoleKey) ?? learnerRole.value;
+    privateProfile.value =
+        prefs.getBool(_privateProfileKey) ?? privateProfile.value;
+    saveLearningProgress.value =
+        prefs.getBool(_saveLearningProgressKey) ?? saveLearningProgress.value;
+    darkMode.value = prefs.getBool(_darkModeKey) ?? darkMode.value;
+    hapticFeedback.value =
+        prefs.getBool(_hapticFeedbackKey) ?? hapticFeedback.value;
+    textScale.value = prefs.getDouble(_textScaleKey) ?? textScale.value;
+
+    final paletteName = prefs.getString(_paletteNameKey);
+    if (paletteName != null) {
+      palette.value = palettes.firstWhere(
+        (p) => p.name == paletteName,
+        orElse: () => palettes.first,
+      );
+    }
+
+    _ready = true;
+    notificationsEnabled.addListener(
+        () => _saveBool(_notificationsEnabledKey, notificationsEnabled.value));
+    studyRemindersEnabled.addListener(() =>
+        _saveBool(_studyRemindersEnabledKey, studyRemindersEnabled.value));
+    reminderTime.addListener(_saveReminderTime);
+    studentName
+        .addListener(() => _saveString(_studentNameKey, studentName.value));
+    learnerRole
+        .addListener(() => _saveString(_learnerRoleKey, learnerRole.value));
+    privateProfile
+        .addListener(() => _saveBool(_privateProfileKey, privateProfile.value));
+    saveLearningProgress.addListener(
+        () => _saveBool(_saveLearningProgressKey, saveLearningProgress.value));
+    darkMode.addListener(() => _saveBool(_darkModeKey, darkMode.value));
+    hapticFeedback
+        .addListener(() => _saveBool(_hapticFeedbackKey, hapticFeedback.value));
+    textScale.addListener(() => _saveDouble(_textScaleKey, textScale.value));
+    palette.addListener(() => _saveString(_paletteNameKey, palette.value.name));
+  }
+
+  static Future<void> _saveBool(String key, bool value) async {
+    if (!_ready) return;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(key, value);
+  }
+
+  static Future<void> _saveDouble(String key, double value) async {
+    if (!_ready) return;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(key, value);
+  }
+
+  static Future<void> _saveString(String key, String value) async {
+    if (!_ready) return;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(key, value);
+  }
+
+  static Future<void> _saveReminderTime() async {
+    if (!_ready) return;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_reminderHourKey, reminderTime.value.hour);
+    await prefs.setInt(_reminderMinuteKey, reminderTime.value.minute);
+  }
 
   static void setPalette(MathiviaPalette value) {
     palette.value = value;
