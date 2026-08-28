@@ -304,7 +304,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         minimumSize: Size.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        foregroundColor: colors.muted,
+                        foregroundColor: colors.accent,
                       ),
                       child: const Text(
                         'Forgot password?',
