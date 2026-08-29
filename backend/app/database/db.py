@@ -12,9 +12,23 @@ DATABASE_URL = settings.database_url
 # SQLite only allows a connection to be used by the thread that created it;
 # FastAPI may serve a request on a different thread than the one that opened
 # the connection, so this check has to be disabled for SQLite specifically.
-connect_args = {"check_same_thread": False} if settings.is_sqlite else {}
+#
+# Postgres/Supabase pooler connections can go stale after free-tier sleep,
+# redeploys, or network hiccups. `pool_pre_ping` checks a pooled connection
+# before handing it to a request; `connect_timeout` and `pool_timeout` keep auth
+# requests from hanging for a minute when the database is unreachable.
+if settings.is_sqlite:
+    connect_args = {"check_same_thread": False}
+    engine_kwargs = {}
+else:
+    connect_args = {"connect_timeout": 10}
+    engine_kwargs = {
+        "pool_pre_ping": True,
+        "pool_recycle": 1800,
+        "pool_timeout": 10,
+    }
 
-engine = create_engine(DATABASE_URL, connect_args=connect_args)
+engine = create_engine(DATABASE_URL, connect_args=connect_args, **engine_kwargs)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
