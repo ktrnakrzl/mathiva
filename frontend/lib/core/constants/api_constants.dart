@@ -1,11 +1,12 @@
 // Backend base URL -- configurable at build/run time WITHOUT editing code:
 //   flutter run  --dart-define=API_BASE_URL=http://192.168.8.35:8000   (phone/Wi-Fi)
 //   flutter build web --dart-define=API_BASE_URL=https://api.example.com  (production)
-// Defaults to localhost for desktop/web dev. On a real device over Wi-Fi pass
-// this PC's LAN IP; for the Android emulator pass http://10.0.2.2:8000.
+// Defaults to the deployed backend so installed builds don't accidentally try
+// to log in against the device's own localhost. For local dev, pass this PC's
+// LAN IP; for the Android emulator pass http://10.0.2.2:8000.
 const String kBaseUrl = String.fromEnvironment(
   'API_BASE_URL',
-  defaultValue: 'http://127.0.0.1:8000',
+  defaultValue: 'https://mathiva.onrender.com',
 );
 
 // When true, ChatService/SolverService are wired to their mock repositories
