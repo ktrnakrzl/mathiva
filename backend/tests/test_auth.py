@@ -285,6 +285,7 @@ def test_password_reset_email_uses_resend_when_configured(monkeypatch):
         status_code = 200
         text = "{}"
 
+    monkeypatch.setattr(auth_service.settings, "brevo_api_key", None)
     monkeypatch.setattr(auth_service.settings, "resend_api_key", "test-key")
     monkeypatch.setattr(auth_service.settings, "email_from", "Mathiva <test@example.com>")
     monkeypatch.setattr(
@@ -306,6 +307,42 @@ def test_password_reset_email_uses_resend_when_configured(monkeypatch):
     assert kwargs["json"]["to"] == ["student@example.com"]
     assert kwargs["json"]["subject"] == "Reset your Mathiva password"
     assert "https://app.example.com/reset-password?token=test" in kwargs["json"]["text"]
+
+
+def test_password_reset_email_uses_brevo_when_configured(monkeypatch):
+    from app.services import auth_service
+
+    requests = []
+
+    class Response:
+        status_code = 201
+        text = "{}"
+
+    monkeypatch.setattr(auth_service.settings, "brevo_api_key", "brevo-key")
+    monkeypatch.setattr(auth_service.settings, "resend_api_key", "resend-key")
+    monkeypatch.setattr(auth_service.settings, "email_from", "Mathiva <sender@example.com>")
+    monkeypatch.setattr(
+        auth_service.requests,
+        "post",
+        lambda url, **kwargs: requests.append((url, kwargs)) or Response(),
+    )
+
+    auth_service.send_password_reset_email(
+        "student@example.com",
+        "https://app.example.com/reset-password?token=test",
+    )
+
+    assert len(requests) == 1
+    url, kwargs = requests[0]
+    assert url == "https://api.brevo.com/v3/smtp/email"
+    assert kwargs["headers"]["api-key"] == "brevo-key"
+    assert kwargs["json"]["sender"] == {
+        "name": "Mathiva",
+        "email": "sender@example.com",
+    }
+    assert kwargs["json"]["to"] == [{"email": "student@example.com"}]
+    assert kwargs["json"]["subject"] == "Reset your Mathiva password"
+    assert "https://app.example.com/reset-password?token=test" in kwargs["json"]["textContent"]
 
 
 def test_reset_password_rejects_reused_token(client, monkeypatch):

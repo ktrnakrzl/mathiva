@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from email.message import EmailMessage
+from email.utils import parseaddr
 import hashlib
 import smtplib
 import secrets
@@ -59,7 +60,8 @@ def build_password_reset_url(token: str, frontend_url: str | None = None) -> str
 
 def reset_email_configured() -> bool:
     return bool(
-        settings.resend_api_key
+        settings.brevo_api_key
+        or settings.resend_api_key
         or (settings.smtp_host and settings.smtp_from_email)
     )
 
@@ -67,8 +69,8 @@ def reset_email_configured() -> bool:
 def send_password_reset_email(email: str, reset_url: str) -> None:
     """Send a password reset email.
 
-    Prefer Resend's HTTPS API because some hosts block outbound SMTP. SMTP is
-    kept as a fallback for local/dev deployments that already use it.
+    Prefer HTTPS email APIs because some hosts block outbound SMTP. SMTP is kept
+    as a fallback for local/dev deployments that already use it.
     """
     if not reset_email_configured():
         print("Password reset email skipped: email delivery is not configured.")
@@ -81,6 +83,27 @@ def send_password_reset_email(email: str, reset_url: str) -> None:
         f"{reset_url}\n\n"
         "If you did not request this, you can ignore this email."
     )
+
+    if settings.brevo_api_key:
+        sender_name, sender_email = _sender_parts()
+        response = requests.post(
+            "https://api.brevo.com/v3/smtp/email",
+            headers={
+                "accept": "application/json",
+                "api-key": settings.brevo_api_key,
+                "Content-Type": "application/json",
+            },
+            json={
+                "sender": {"name": sender_name, "email": sender_email},
+                "to": [{"email": email}],
+                "subject": subject,
+                "textContent": text,
+            },
+            timeout=15,
+        )
+        if response.status_code >= 400:
+            raise RuntimeError(f"Brevo email failed: {response.status_code} {response.text}")
+        return
 
     if settings.resend_api_key:
         sender = settings.email_from or _default_sender()
@@ -120,6 +143,11 @@ def _default_sender() -> str:
     if settings.smtp_from_email:
         return f"{settings.smtp_from_name} <{settings.smtp_from_email}>"
     return "Mathiva <onboarding@resend.dev>"
+
+
+def _sender_parts() -> tuple[str, str]:
+    name, email = parseaddr(settings.email_from or _default_sender())
+    return name or settings.smtp_from_name or "Mathiva", email
 
 
 def google_sign_in_configured() -> bool:
