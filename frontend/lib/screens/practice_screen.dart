@@ -79,20 +79,25 @@ class _PracticeScreenState extends State<PracticeScreen> {
       _selected = null;
     });
     try {
-      // Adaptive: the server picks the difficulty from THIS student's history on
-      // the concept (see /api/quiz/next-adaptive) instead of the client dictating
-      // it. The pool is the concept the student opened, so a strong student gets
-      // a harder question and a struggling one gets an easier one automatically.
-      final question = await ProgressService.fetchAdaptiveQuestion(
-        subjectId: widget.subjectId,
-        topicId: widget.topicId,
-        lessonId: widget.lessonId,
-        // Smart Practice passes the lesson's concepts (server picks the weakest);
-        // overall practice passes concept contexts so attribution follows the
-        // chosen concept's real lesson; concept-scoped practice passes just one.
-        candidateConcepts: widget.candidateConcepts ?? [widget.conceptId],
-        candidateContexts: widget.candidateConceptContexts,
-      );
+      final question = widget.candidateConcepts != null ||
+              widget.candidateConceptContexts != null
+          ? await ProgressService.fetchAdaptiveQuestion(
+              subjectId: widget.subjectId,
+              topicId: widget.topicId,
+              lessonId: widget.lessonId,
+              // Smart Practice passes the lesson's concepts (server picks
+              // the weakest); overall practice passes concept contexts so
+              // attribution follows the chosen concept's real lesson.
+              candidateConcepts: widget.candidateConcepts ?? [widget.conceptId],
+              candidateContexts: widget.candidateConceptContexts,
+            )
+          : await ProgressService.fetchNextQuestion(
+              subjectId: widget.subjectId,
+              topicId: widget.topicId,
+              lessonId: widget.lessonId,
+              conceptId: widget.conceptId,
+              difficulty: widget.difficulty,
+            );
       if (!mounted) return;
       setState(() {
         _question = question;

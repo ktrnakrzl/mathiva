@@ -68,6 +68,8 @@ class Settings(BaseSettings):
     # SMTP settings for transactional emails such as password reset. If these
     # are absent, reset emails are skipped but the public API response stays
     # generic so account existence is never leaked.
+    resend_api_key: str | None = Field(default=None, validation_alias="RESEND_API_KEY")
+    email_from: str | None = Field(default=None, validation_alias="EMAIL_FROM")
     smtp_host: str | None = Field(default=None, validation_alias="SMTP_HOST")
     smtp_port: int = Field(default=587, validation_alias="SMTP_PORT")
     smtp_username: str | None = Field(default=None, validation_alias="SMTP_USERNAME")

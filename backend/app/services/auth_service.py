@@ -7,6 +7,7 @@ from urllib.parse import urlencode
 
 import bcrypt
 import jwt
+import requests
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
@@ -57,29 +58,55 @@ def build_password_reset_url(token: str, frontend_url: str | None = None) -> str
 
 
 def reset_email_configured() -> bool:
-    return bool(settings.smtp_host and settings.smtp_from_email)
+    return bool(
+        settings.resend_api_key
+        or (settings.smtp_host and settings.smtp_from_email)
+    )
 
 
 def send_password_reset_email(email: str, reset_url: str) -> None:
-    """Send a password reset email via SMTP.
+    """Send a password reset email.
 
-    SMTP is intentionally provider-neutral; Render env vars can point this at
-    Gmail, Brevo, Mailgun, Resend SMTP, etc.
+    Prefer Resend's HTTPS API because some hosts block outbound SMTP. SMTP is
+    kept as a fallback for local/dev deployments that already use it.
     """
     if not reset_email_configured():
-        print("Password reset email skipped: SMTP is not configured.")
+        print("Password reset email skipped: email delivery is not configured.")
         return
 
-    msg = EmailMessage()
-    msg["Subject"] = "Reset your Mathiva password"
-    msg["From"] = f"{settings.smtp_from_name} <{settings.smtp_from_email}>"
-    msg["To"] = email
-    msg.set_content(
+    subject = "Reset your Mathiva password"
+    text = (
         "Use this link to reset your Mathiva password. "
         "It expires in 30 minutes.\n\n"
         f"{reset_url}\n\n"
         "If you did not request this, you can ignore this email."
     )
+
+    if settings.resend_api_key:
+        sender = settings.email_from or _default_sender()
+        response = requests.post(
+            "https://api.resend.com/emails",
+            headers={
+                "Authorization": f"Bearer {settings.resend_api_key}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "from": sender,
+                "to": [email],
+                "subject": subject,
+                "text": text,
+            },
+            timeout=15,
+        )
+        if response.status_code >= 400:
+            raise RuntimeError(f"Resend email failed: {response.status_code} {response.text}")
+        return
+
+    msg = EmailMessage()
+    msg["Subject"] = subject
+    msg["From"] = f"{settings.smtp_from_name} <{settings.smtp_from_email}>"
+    msg["To"] = email
+    msg.set_content(text)
 
     with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=20) as server:
         if settings.smtp_use_tls:
@@ -87,6 +114,12 @@ def send_password_reset_email(email: str, reset_url: str) -> None:
         if settings.smtp_username and settings.smtp_password:
             server.login(settings.smtp_username, settings.smtp_password)
         server.send_message(msg)
+
+
+def _default_sender() -> str:
+    if settings.smtp_from_email:
+        return f"{settings.smtp_from_name} <{settings.smtp_from_email}>"
+    return "Mathiva <onboarding@resend.dev>"
 
 
 def google_sign_in_configured() -> bool:

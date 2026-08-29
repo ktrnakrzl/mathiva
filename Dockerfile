@@ -1,5 +1,3 @@
-# syntax=docker/dockerfile:1
-#
 # MATHIVA backend (FastAPI + RAG). The Flutter app is built separately.
 # Ollama is NOT bundled: in a hosted deployment the /ask cascade falls back to
 # Google Gemini, so run this image with DISABLE_T5=true and a GEMINI_API_KEY

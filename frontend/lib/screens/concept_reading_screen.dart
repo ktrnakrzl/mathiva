@@ -51,7 +51,8 @@ class ConceptReadingScreen extends StatelessWidget {
               toolbarHeight: 58,
               titleSpacing: 4,
               leading: IconButton(
-                icon: Icon(Icons.arrow_back_rounded, color: colors.ink, size: 22),
+                icon:
+                    Icon(Icons.arrow_back_rounded, color: colors.ink, size: 22),
                 onPressed: () => context.canPop()
                     ? context.pop()
                     : context.go('/lesson-detail'),
@@ -261,40 +262,51 @@ class ConceptReadingScreen extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.close_rounded, color: colors.muted, size: 20),
+                  icon:
+                      Icon(Icons.close_rounded, color: colors.muted, size: 20),
                   onPressed: () => sheetContext.pop(),
                 ),
               ],
             ),
             const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 14),
-              child: Text(
-                "We'll pick the right difficulty for you based on how you've "
-                "been doing on this concept.",
-                style: TextStyle(color: colors.muted, height: 1.4),
-              ),
-            ),
             _DifficultyTile(
-              label: 'Start Practice',
+              label: 'Easy',
               primary: primary,
-              onTap: () {
-                sheetContext.pop();
-                context.push(
-                  RouteNames.practice,
-                  extra: {
-                    'subjectId': subjectId,
-                    'topicId': topicId,
-                    'lessonId': lessonId,
-                    'conceptId': conceptId,
-                    // No 'difficulty' -- the server chooses it adaptively.
-                  },
-                );
-              },
+              onTap: () => _startPractice(context, sheetContext, 'Easy'),
+            ),
+            const SizedBox(height: 10),
+            _DifficultyTile(
+              label: 'Medium',
+              primary: primary,
+              onTap: () => _startPractice(context, sheetContext, 'Medium'),
+            ),
+            const SizedBox(height: 10),
+            _DifficultyTile(
+              label: 'Hard',
+              primary: primary,
+              onTap: () => _startPractice(context, sheetContext, 'Hard'),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  void _startPractice(
+    BuildContext context,
+    BuildContext sheetContext,
+    String difficulty,
+  ) {
+    sheetContext.pop();
+    context.push(
+      RouteNames.practice,
+      extra: {
+        'subjectId': subjectId,
+        'topicId': topicId,
+        'lessonId': lessonId,
+        'conceptId': conceptId,
+        'difficulty': difficulty,
+      },
     );
   }
 }
