@@ -79,6 +79,10 @@ if settings.is_sqlite:
 
 @app.on_event("startup")
 def warm_up_ollama():
+    if settings.disable_ollama:
+        print("Ollama warm-up skipped: DISABLE_OLLAMA=true")
+        return
+
     # Pay Ollama's model-load-into-VRAM cost once at server startup instead
     # of on a real user's first /api/ask request — without this, the first
     # request after any 5+ minute gap (Ollama's default keep_alive) can take

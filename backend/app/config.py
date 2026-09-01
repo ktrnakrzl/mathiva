@@ -51,11 +51,9 @@ class Settings(BaseSettings):
     # Gemini free-tier fallback (also used by OCR). Optional: absent key just
     # disables the Gemini tier.
     gemini_api_key: str | None = Field(default=None, validation_alias="GEMINI_API_KEY")
-    # "gemini-flash-latest" is an alias that always tracks Google's current free
-    # flash model, so a specific version being retired (as gemini-2.5-flash was)
-    # never breaks the tutor/OCR. Pin a concrete version here only if you need
-    # reproducible behavior.
-    gemini_model: str = Field(default="gemini-flash-latest", validation_alias="GEMINI_MODEL")
+    # Stable Gemini model used by tutor fallback and OCR. Keep this pinned so a
+    # non-existent/latest alias cannot break the hosted demo unexpectedly.
+    gemini_model: str = Field(default="gemini-2.5-flash", validation_alias="GEMINI_MODEL")
 
     # Google Sign-In OAuth web client ID. The frontend obtains a Google ID
     # token and /auth/google verifies that its audience matches this client ID
@@ -116,6 +114,11 @@ class Settings(BaseSettings):
     # block Gemini. Leave false for local dev / the defense demo, where T5 is the
     # thesis contribution being showcased. Flip back to false once T5 is improved.
     disable_t5: bool = Field(default=False, validation_alias="DISABLE_T5")
+
+    # Skip local Ollama/Phi-3 calls in hosted deployments that do not run an
+    # Ollama sidecar. This avoids waiting on localhost:11434 before falling back
+    # to cloud APIs.
+    disable_ollama: bool = Field(default=False, validation_alias="DISABLE_OLLAMA")
 
     # Skip local pix2tex OCR fallback. Hosted deployments should normally use
     # Gemini OCR only: pix2tex downloads ~100 MB of weights on first use and is

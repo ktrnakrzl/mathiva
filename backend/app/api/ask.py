@@ -3,6 +3,7 @@ from fastapi.responses import StreamingResponse
 
 from app.database.models import User
 from app.rate_limit import limiter
+from app.config import settings
 from app.services.auth_service import get_current_user
 from app.services.rag_service import retrieve_context
 from app.services.ai_service import AIServiceError, stream_answer
@@ -64,6 +65,21 @@ def ask_stream(
     full /ask cascade (which escalates to Gemini) and deliver its answer as a
     single chunk. The client consumes the same text/plain stream either way; it
     just arrives all at once instead of token-by-token."""
+    if settings.disable_ollama:
+        try:
+            result = answer_question(question)
+        except TutorBusyError as e:
+            raise HTTPException(status_code=503, detail=str(e),
+                                headers={"Retry-After": str(e.retry_after)})
+        except AIServiceError as e:
+            raise HTTPException(status_code=503, detail=str(e))
+
+        def cascade_body():
+            print(f"ask_stream model_used={result.get('model_used', 'cascade')}")
+            yield result["answer"]
+
+        return StreamingResponse(cascade_body(), media_type="text/plain")
+
     prompt, _ = _retrieve_and_build_prompt(question)
 
     # Prime the generator so a can't-reach-Ollama failure is caught here, before
