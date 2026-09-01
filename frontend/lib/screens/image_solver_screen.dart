@@ -117,10 +117,11 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
       await _cameraInit;
       if (!mounted) return;
       setState(() {});
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
       _camera = null;
       _cameraInit = null;
+      debugPrint('Camera initialization failed: $e');
       setState(() {
         _cameraError =
             'Could not open the live camera. Check camera permission and try again.';

@@ -1,4 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Required for release builds to reach the hosted backend/API. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <!-- Required for the in-app live camera scanner. -->
     <uses-permission android:name="android.permission.CAMERA"/>
     <!-- Required to show notifications on Android 13+ (API 33+). -->
