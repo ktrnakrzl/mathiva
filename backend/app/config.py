@@ -138,7 +138,19 @@ class Settings(BaseSettings):
         raw = self.cors_origins.strip()
         if not raw or raw == "*":
             return ["*"]
-        return [origin.strip() for origin in raw.split(",") if origin.strip()]
+        origins = [origin.strip() for origin in raw.split(",") if origin.strip()]
+        # Keep local Flutter web usable even when production CORS is locked to
+        # the deployed frontend. These origins do not weaken token auth; they
+        # only let Chrome finish local-dev preflight requests.
+        for origin in (
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+            "http://localhost:5000",
+            "http://127.0.0.1:5000",
+        ):
+            if origin not in origins:
+                origins.append(origin)
+        return origins
 
     @property
     def is_production(self) -> bool:
