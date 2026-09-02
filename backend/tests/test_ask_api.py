@@ -57,6 +57,7 @@ def test_stream_falls_back_to_cascade_when_ollama_down(stream_client, monkeypatc
 
 
 def test_stream_forwards_ollama_tokens_when_available(stream_client, monkeypatch):
+    monkeypatch.setattr(ask_module.settings, "enable_ollama_stream", True)
     monkeypatch.setattr(ask_module, "stream_answer", _ollama_streams)
 
     def _must_not_run(q):

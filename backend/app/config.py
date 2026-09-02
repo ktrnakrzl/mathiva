@@ -120,6 +120,13 @@ class Settings(BaseSettings):
     # to cloud APIs.
     disable_ollama: bool = Field(default=False, validation_alias="DISABLE_OLLAMA")
 
+    # Use true streaming from local Ollama only when explicitly enabled. Hosted
+    # deployments should stream the cloud cascade as a single text chunk instead
+    # of probing localhost and risking a 503 in the web chat.
+    enable_ollama_stream: bool = Field(
+        default=False, validation_alias="ENABLE_OLLAMA_STREAM"
+    )
+
     # Skip local pix2tex OCR fallback. Hosted deployments should normally use
     # Gemini OCR only: pix2tex downloads ~100 MB of weights on first use and is
     # poor on real camera photos, which can make Render requests stall.

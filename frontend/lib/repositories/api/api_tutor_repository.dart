@@ -26,15 +26,30 @@ class ApiTutorRepository implements TutorRepository {
 
   @override
   Stream<String> ask(String question) async* {
-    final response = await _dio.post<ResponseBody>(
-      '/api/ask/stream',
-      queryParameters: {
-        'question': question,
-      },
-      // Get the raw byte stream instead of a buffered body, so we can forward
-      // each chunk to the UI as it arrives.
-      options: Options(responseType: ResponseType.stream),
-    );
+    Response<ResponseBody> response;
+    try {
+      response = await _dio.post<ResponseBody>(
+        '/api/ask/stream',
+        queryParameters: {
+          'question': question,
+        },
+        // Get the raw byte stream instead of a buffered body, so we can forward
+        // each chunk to the UI as it arrives.
+        options: Options(responseType: ResponseType.stream),
+      );
+    } on DioException {
+      final fallback = await _dio.post<Map<String, dynamic>>(
+        '/api/ask',
+        queryParameters: {
+          'question': question,
+        },
+      );
+      final answer = fallback.data?['answer']?.toString();
+      if (answer != null && answer.isNotEmpty) {
+        yield answer;
+      }
+      return;
+    }
 
     final body = response.data;
     if (body == null) return;

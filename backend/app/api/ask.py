@@ -60,12 +60,11 @@ def ask_stream(
     the chat UI can render it as it arrives (the useful answer lands in the
     first ~40 tokens, so this makes the tutor feel near-instant).
 
-    When Ollama isn't reachable -- e.g. the hosted, Gemini-backed deployment has
-    no local LLM -- true token streaming isn't possible, so we fall back to the
-    full /ask cascade (which escalates to Gemini) and deliver its answer as a
-    single chunk. The client consumes the same text/plain stream either way; it
-    just arrives all at once instead of token-by-token."""
-    if settings.disable_ollama:
+    True token streaming is only attempted when ENABLE_OLLAMA_STREAM=true and
+    Ollama is not disabled. Hosted deployments use the full /ask cascade
+    (Gemini/fallback) and deliver its answer as a single chunk; the client
+    consumes the same text/plain stream either way."""
+    if settings.disable_ollama or not settings.enable_ollama_stream:
         try:
             result = answer_question(question)
         except TutorBusyError as e:
