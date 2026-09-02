@@ -49,7 +49,7 @@ services:
     autoDeployTrigger: commit
     envVars:
       - key: API_BASE_URL
-        value: https://mathiva-api.onrender.com
+        value: https://mathiva.onrender.com
       - key: GOOGLE_CLIENT_ID
         sync: false
       - key: FLUTTER_VERSION
