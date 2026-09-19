@@ -124,6 +124,46 @@ def test_raises_when_every_tier_fails(wired):
         answer_service.answer_question("q")
 
 
+@pytest.mark.parametrize(("question", "expected"), [
+    ("Solve 2x + 5 = 13.", r"\(x = 4\)"),
+    ("What is 15 percent of 80?", r"\(15\%\) of \(80\)"),
+    ("Factor x^2 - 5x + 6.", r"\left(x - 3\right) \left(x - 2\right)"),
+    ("What is the square root of 16?", r"\(4\)"),
+    ("What is sqrt(18)?", r"\(3 \sqrt{2}\)"),
+])
+def test_symbolic_math_fallback_when_every_llm_tier_fails(wired, question, expected):
+    wired["set_phi"](None)                      # ollama down -> AIServiceError
+    wired["t5_available"] = False               # no T5 model
+    wired["gemini_available"] = False           # no Gemini key
+
+    res = answer_service.answer_question(question)
+
+    assert res["model_used"] == "symbolic"
+    assert expected in res["answer"]
+
+
+def test_symbolic_math_answer_skips_retrieval_and_llm(monkeypatch):
+    calls = {"retrieve": 0, "phi": 0}
+
+    def retrieve(_):
+        calls["retrieve"] += 1
+        raise AssertionError("symbolic questions should not use RAG")
+
+    def phi(_):
+        calls["phi"] += 1
+        raise AssertionError("symbolic questions should not call an LLM")
+
+    monkeypatch.setattr(answer_service, "_retrieve", retrieve)
+    monkeypatch.setattr(answer_service, "generate_answer", phi)
+
+    res = answer_service.answer_question("Solve 2x + 5 = 13.")
+
+    assert res["model_used"] == "symbolic"
+    assert res["answer"] == r"The answer is \(x = 4\)."
+    assert res["sources"] == []
+    assert calls == {"retrieve": 0, "phi": 0}
+
+
 def test_gemini_rate_limit_raises_tutor_busy(wired, monkeypatch):
     """When the local tiers are unavailable and Gemini is rate-limited, the cascade
     raises TutorBusyError (temporary) with the retry delay -- not a hard outage."""
@@ -158,6 +198,38 @@ def test_repeated_question_is_served_from_cache(wired, monkeypatch):
     assert r1["answer"] == r2["answer"] == "the cached answer"
     assert calls["n"] == 1                                       # second call hit the cache
     answer_service.clear_answer_cache()
+
+
+def test_cache_key_includes_history(wired, monkeypatch):
+    monkeypatch.setattr(answer_service.settings, "answer_cache_enabled", True)
+    answer_service.clear_answer_cache()
+    calls = {"n": 0}
+
+    def counting_phi(prompt):
+        calls["n"] += 1
+        return f"answer {calls['n']}"
+
+    monkeypatch.setattr(answer_service, "generate_answer", counting_phi)
+
+    r1 = answer_service.answer_question("Explain step two.", "Student: First problem")
+    r2 = answer_service.answer_question("Explain step two.", "Student: Different problem")
+
+    assert r1["answer"] == "answer 1"
+    assert r2["answer"] == "answer 2"
+    assert calls["n"] == 2
+    answer_service.clear_answer_cache()
+
+
+def test_prompt_includes_recent_conversation():
+    prompt = answer_service.build_tutor_prompt(
+        "course context",
+        "Explain step two.",
+        "Student: Solve 2x + 5 = 13.\nTutor: Step 2 subtracts 5.",
+    )
+
+    assert "Recent Conversation:" in prompt
+    assert "Student: Solve 2x + 5 = 13." in prompt
+    assert "Student Question:\nExplain step two." in prompt
 
 
 def test_response_carries_sources(wired):

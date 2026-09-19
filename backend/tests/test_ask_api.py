@@ -21,7 +21,7 @@ def stream_client(monkeypatch):
     # RAG retrieval is irrelevant to what these tests exercise; stub it so no
     # SBERT/FAISS models load and no real prompt-building happens.
     monkeypatch.setattr(
-        ask_module, "_retrieve_and_build_prompt", lambda q: ("tutor prompt", {})
+        ask_module, "_retrieve_and_build_prompt", lambda q, history="": ("tutor prompt", {})
     )
     app = FastAPI()
     app.include_router(ask_module.router)
@@ -48,8 +48,8 @@ def test_stream_falls_back_to_cascade_when_ollama_down(stream_client, monkeypatc
     monkeypatch.setattr(ask_module, "stream_answer", _ollama_down)
     monkeypatch.setattr(
         ask_module, "answer_question",
-        lambda q: {"question": q, "answer": "Gemini's answer.",
-                   "model_used": "gemini", "sources": []},
+        lambda q, history="": {"question": q, "answer": "Gemini's answer.",
+                               "model_used": "gemini", "sources": []},
     )
     r = stream_client.post("/api/ask/stream", params={"question": "hi"})
     assert r.status_code == 200
@@ -60,7 +60,7 @@ def test_stream_forwards_ollama_tokens_when_available(stream_client, monkeypatch
     monkeypatch.setattr(ask_module.settings, "enable_ollama_stream", True)
     monkeypatch.setattr(ask_module, "stream_answer", _ollama_streams)
 
-    def _must_not_run(q):
+    def _must_not_run(q, history=""):
         raise AssertionError("cascade must not run when streaming works")
 
     monkeypatch.setattr(ask_module, "answer_question", _must_not_run)
@@ -69,12 +69,59 @@ def test_stream_forwards_ollama_tokens_when_available(stream_client, monkeypatch
     assert r.text == "Phi streamed answer."
 
 
+def test_stream_uses_symbolic_solver_before_ollama(stream_client, monkeypatch):
+    monkeypatch.setattr(ask_module.settings, "enable_ollama_stream", True)
+
+    def _must_not_run(_prompt):
+        raise AssertionError("Ollama must not run for symbolic algebra")
+        yield
+
+    monkeypatch.setattr(ask_module, "stream_answer", _must_not_run)
+
+    r = stream_client.post(
+        "/api/ask/stream",
+        json={"question": "Solve 10x + 5 = 13", "history": []},
+    )
+
+    assert r.status_code == 200
+    assert r.text == r"The answer is \(x = \frac{4}{5}\)."
+
+
 def test_stream_503_when_ollama_down_and_cascade_also_fails(stream_client, monkeypatch):
     monkeypatch.setattr(ask_module, "stream_answer", _ollama_down)
 
-    def _every_tier_dead(q):
+    def _every_tier_dead(q, history=""):
         raise AIServiceError("every tier failed")
 
     monkeypatch.setattr(ask_module, "answer_question", _every_tier_dead)
     r = stream_client.post("/api/ask/stream", params={"question": "hi"})
     assert r.status_code == 503
+
+
+def test_stream_sends_json_history_to_prompt(stream_client, monkeypatch):
+    monkeypatch.setattr(ask_module.settings, "enable_ollama_stream", True)
+    seen = {}
+
+    def prompt(question, history=""):
+        seen["question"] = question
+        seen["history"] = history
+        return "prompt with history", {}
+
+    monkeypatch.setattr(ask_module, "_retrieve_and_build_prompt", prompt)
+    monkeypatch.setattr(ask_module, "stream_answer", _ollama_streams)
+
+    r = stream_client.post(
+        "/api/ask/stream",
+        json={
+            "question": "Explain step two.",
+            "history": [
+                {"role": "user", "text": "Solve 2x + 5 = 13."},
+                {"role": "assistant", "text": "Step 2 subtracts 5 from both sides."},
+            ],
+        },
+    )
+
+    assert r.status_code == 200
+    assert seen["question"] == "Explain step two."
+    assert "Student: Solve 2x + 5 = 13." in seen["history"]
+    assert "Tutor: Step 2 subtracts 5 from both sides." in seen["history"]

@@ -21,6 +21,8 @@ class ChatScreen extends ConsumerStatefulWidget {
 
 class _ChatScreenState extends ConsumerState<ChatScreen>
     with SingleTickerProviderStateMixin {
+  static const int _maxHistoryTurns = 8;
+
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   late final AnimationController _typingController;
@@ -84,6 +86,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   Future<void> _sendMessage() async {
     final question = _controller.text.trim();
     if (question.isEmpty || _isSending) return;
+    final previousMessages = _messages
+        .where((message) => message.text.trim().isNotEmpty)
+        .toList(growable: false);
+    final history = previousMessages
+        .skip((previousMessages.length - _maxHistoryTurns)
+            .clamp(0, previousMessages.length))
+        .toList(growable: false);
 
     setState(() {
       _messages.add(ChatMessage(
@@ -112,21 +121,45 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
         timestamp: DateTime.now(),
       ));
       _activeAnswerIndex = _messages.length - 1;
-      _startReveal();
+      if (mounted) _startReveal();
+    }
+
+    void persistFullAnswer() {
+      final index = _activeAnswerIndex;
+      if (index == null || index >= _messages.length) return;
+      _messages[index] = ChatMessage(
+        text: _fullAnswer,
+        isUser: false,
+        timestamp: _messages[index].timestamp,
+      );
+      ChatStore.messages.value = List<ChatMessage>.of(_messages);
     }
 
     try {
       // Streams from the real backend (/api/ask/stream) via the repository
       // pattern's swappable facade — see repositories/tutor_repository.dart.
-      await for (final chunk in ChatService.ask(question)) {
+      await for (final chunk in ChatService.ask(question, history: history)) {
         _fullAnswer += chunk;
-        if (!mounted) return;
-        if (_activeAnswerIndex == null) setState(ensureAnswerBubble);
+        if (_activeAnswerIndex == null) {
+          if (mounted) {
+            setState(ensureAnswerBubble);
+          } else {
+            ensureAnswerBubble();
+          }
+        }
+        if (!mounted) persistFullAnswer();
       }
       // Stream completed but produced nothing usable.
       if (_activeAnswerIndex == null) {
         _fullAnswer = 'Sorry, I could not get an answer.';
-        if (mounted) setState(ensureAnswerBubble);
+        if (mounted) {
+          setState(ensureAnswerBubble);
+        } else {
+          ensureAnswerBubble();
+        }
+        persistFullAnswer();
+      } else if (!mounted) {
+        persistFullAnswer();
       }
     } catch (_) {
       // Surface a real failure instead of silently faking a plausible-looking
@@ -136,10 +169,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
           'check your connection and try again.';
       if (_activeAnswerIndex == null) {
         _fullAnswer = message;
-        if (mounted) setState(ensureAnswerBubble);
+        if (mounted) {
+          setState(ensureAnswerBubble);
+        } else {
+          ensureAnswerBubble();
+        }
       } else {
         _fullAnswer += '\n\n$message';
       }
+      if (!mounted) persistFullAnswer();
     } finally {
       // Backend is done; the reveal timer keeps typing until it catches up to
       // _fullAnswer, then clears the caret and re-enables the input.
@@ -173,7 +211,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
         }
         return;
       }
-      final next = (shown + 3).clamp(0, _fullAnswer.length);
+      // While the backend is still streaming, reveal gently. Once the backend
+      // has finished, catch up quickly so the typewriter effect does not become
+      // the slowest part of the chat.
+      final step = _isSending ? 4 : 28;
+      final next = (shown + step).clamp(0, _fullAnswer.length);
       setState(() {
         _messages[index] = ChatMessage(
           text: _fullAnswer.substring(0, next),
@@ -371,12 +413,13 @@ class _ChatBubble extends StatelessWidget {
                     bottomLeft: const Radius.circular(18),
                     bottomRight: Radius.circular(isUser ? 4 : 18),
                   ),
-                  border:
-                      isUser ? null : Border.all(color: colors.border, width: 1),
+                  border: isUser
+                      ? null
+                      : Border.all(color: colors.border, width: 1),
                   boxShadow: [
                     BoxShadow(
                       color: isUser
-                          ? primary.withOpacity(0.12)
+                          ? primary.withValues(alpha: 0.12)
                           : const Color(0x08000000),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
@@ -487,9 +530,9 @@ class _Avatar extends StatelessWidget {
       width: 28,
       height: 28,
       decoration: BoxDecoration(
-        color: primary.withOpacity(0.08),
+        color: primary.withValues(alpha: 0.08),
         shape: BoxShape.circle,
-        border: Border.all(color: primary.withOpacity(0.15)),
+        border: Border.all(color: primary.withValues(alpha: 0.15)),
       ),
       child: Icon(Icons.smart_toy_rounded, color: primary, size: 14),
     );
@@ -546,9 +589,9 @@ class _InputBar extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
                   decoration: BoxDecoration(
-                    color: primary.withOpacity(0.06),
+                    color: primary.withValues(alpha: 0.06),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: primary.withOpacity(0.15)),
+                    border: Border.all(color: primary.withValues(alpha: 0.15)),
                   ),
                   child: Text(
                     suggestions[index],

@@ -150,7 +150,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     borderRadius: BorderRadius.circular(14),
                     boxShadow: [
                       BoxShadow(
-                        color: colors.accent.withOpacity(0.32),
+                        color: colors.accent.withValues(alpha: 0.32),
                         blurRadius: 22,
                         offset: const Offset(0, 8),
                       ),
@@ -205,89 +205,99 @@ class _SlidePage extends StatelessWidget {
 
     return FadeSlideIn(
       key: ValueKey(slide.title),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Illustration panel: graph paper + fig caption + diagram. Given a
-          // fixed aspect (not Expanded) so the panel + title read as one block
-          // centred vertically in the page.
-          AspectRatio(
-            aspectRatio: 1.05,
-            child: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: colors.surface,
-                borderRadius: BorderRadius.circular(28),
-                border: Border.all(color: colors.border, width: 1),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(28),
-                child: Stack(
-                  children: [
-                    Positioned.fill(
-                      child: CustomPaint(
-                        painter:
-                            GraphPaperPainter(line: graphPaperColor(context)),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final panelHeight =
+              (constraints.maxHeight * 0.56).clamp(220.0, 390.0);
+
+          return SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Illustration panel: graph paper + fig caption + diagram.
+                  SizedBox(
+                    height: panelHeight,
+                    width: double.infinity,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: colors.surface,
+                        borderRadius: BorderRadius.circular(28),
+                        border: Border.all(color: colors.border, width: 1),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(28),
+                        child: Stack(
+                          children: [
+                            Positioned.fill(
+                              child: CustomPaint(
+                                painter: GraphPaperPainter(
+                                  line: graphPaperColor(context),
+                                ),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(18),
+                              child: FigCaption(slide.fig),
+                            ),
+                            Positioned.fill(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 28,
+                                  vertical: 44,
+                                ),
+                                child: Center(child: slide.diagram),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.all(18),
-                      child: FigCaption(slide.fig),
+                  ),
+                  const SizedBox(height: 22),
+
+                  // Accent eyebrow (colored text, no pill).
+                  Text(
+                    slide.eyebrow,
+                    style: TextStyle(
+                      color: colors.accent,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.12 * 12,
                     ),
-                    // Symmetric vertical padding so the diagram sits dead-centre
-                    // in the panel (the fig caption is a top-left overlay and
-                    // doesn't shift it); Positioned.fill guarantees the Center
-                    // measures against the whole panel, not a loose box.
-                    Positioned.fill(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 28, vertical: 44),
-                        child: Center(child: slide.diagram),
-                      ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // Serif display headline.
+                  Text(
+                    slide.title,
+                    style: AppTheme.serif(
+                      color: colors.ink,
+                      fontSize: 30,
+                      height: 1.12,
+                      fontWeight: FontWeight.w600,
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // Short one-line description.
+                  Text(
+                    slide.subtitle,
+                    style: TextStyle(
+                      color: colors.muted,
+                      fontSize: 14.5,
+                      height: 1.4,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-          const SizedBox(height: 28),
-
-          // Accent eyebrow (colored text, no pill).
-          Text(
-            slide.eyebrow,
-            style: TextStyle(
-              color: colors.accent,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.12 * 12,
-            ),
-          ),
-          const SizedBox(height: 10),
-
-          // Serif display headline.
-          Text(
-            slide.title,
-            style: AppTheme.serif(
-              color: colors.ink,
-              fontSize: 30,
-              height: 1.12,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 10),
-
-          // Short one-line description.
-          Text(
-            slide.subtitle,
-            style: TextStyle(
-              color: colors.muted,
-              fontSize: 14.5,
-              height: 1.4,
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }

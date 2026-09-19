@@ -5,7 +5,10 @@ import '../tutor_repository.dart';
 /// exercised without a running backend (e.g. when Ollama isn't up locally).
 class MockTutorRepository implements TutorRepository {
   @override
-  Stream<String> ask(String question) async* {
+  Stream<String> ask(
+    String question, {
+    List<TutorChatTurn> history = const [],
+  }) async* {
     final reply = 'This is a mock tutor answer for: "$question". '
         'Switch kUseMockBackend to false in api_constants.dart to use the real backend.';
 

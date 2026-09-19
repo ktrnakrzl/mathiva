@@ -21,6 +21,9 @@ import '../widgets/mathiva_top_bar.dart';
 
 enum _SolverStep { scan, preview }
 
+const int _maxUploadDimension = 1280;
+const int _uploadJpegQuality = 82;
+
 class ImageSolverScreen extends StatefulWidget {
   const ImageSolverScreen({super.key});
 
@@ -70,15 +73,18 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
     if (kIsWeb) return;
 
     final camera = _camera;
-    if (camera == null || !camera.value.isInitialized) return;
 
     if (state == AppLifecycleState.inactive ||
         state == AppLifecycleState.paused) {
+      if (camera == null) return;
       unawaited(camera.dispose());
       _camera = null;
+      _cameraInit = null;
     } else if (state == AppLifecycleState.resumed &&
         _step == _SolverStep.scan) {
-      unawaited(_initializeCamera());
+      if (camera == null || !camera.value.isInitialized) {
+        unawaited(_initializeCamera());
+      }
     }
   }
 
@@ -111,8 +117,16 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
       );
       _camera = controller;
       _cameraInit = controller.initialize().then((_) async {
-        await controller.setFlashMode(FlashMode.off);
-        await controller.setFocusMode(FocusMode.auto);
+        try {
+          await controller.setFlashMode(FlashMode.off);
+        } catch (e) {
+          debugPrint('Flash mode is not available: $e');
+        }
+        try {
+          await controller.setFocusMode(FocusMode.auto);
+        } catch (e) {
+          debugPrint('Focus mode is not available: $e');
+        }
       });
       await _cameraInit;
       if (!mounted) return;
@@ -181,7 +195,7 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
     try {
       final file = await _picker.pickImage(
         source: source,
-        imageQuality: 92,
+        imageQuality: _uploadJpegQuality,
       );
       if (!mounted || file == null) return;
       final bytes = await file.readAsBytes();
@@ -213,7 +227,20 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
     final decoded = img.decodeImage(bytes);
     if (decoded == null) return bytes;
     return Uint8List.fromList(
-        img.encodeJpg(img.bakeOrientation(decoded), quality: 92));
+      img.encodeJpg(
+        _fitForUpload(img.bakeOrientation(decoded)),
+        quality: _uploadJpegQuality,
+      ),
+    );
+  }
+
+  img.Image _fitForUpload(img.Image source) {
+    final longest = math.max(source.width, source.height);
+    if (longest <= _maxUploadDimension) return source;
+    if (source.width >= source.height) {
+      return img.copyResize(source, width: _maxUploadDimension);
+    }
+    return img.copyResize(source, height: _maxUploadDimension);
   }
 
   Size _lastViewportSize = Size.zero;
@@ -254,7 +281,12 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
       width: right - x,
       height: bottom - y,
     );
-    return Uint8List.fromList(img.encodeJpg(cropped, quality: 94));
+    return Uint8List.fromList(
+      img.encodeJpg(
+        _fitForUpload(cropped),
+        quality: _uploadJpegQuality,
+      ),
+    );
   }
 
   void _retake() {
@@ -394,12 +426,13 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
                                     ),
                                   ),
                                 ),
-                                _CircleIconButton(
-                                  icon: _flashOn
-                                      ? Icons.flash_on_rounded
-                                      : Icons.flash_off_rounded,
-                                  onPressed: _toggleFlash,
-                                ),
+                                if (!kIsWeb)
+                                  _CircleIconButton(
+                                    icon: _flashOn
+                                        ? Icons.flash_on_rounded
+                                        : Icons.flash_off_rounded,
+                                    onPressed: _toggleFlash,
+                                  ),
                               ],
                             ),
                           ),

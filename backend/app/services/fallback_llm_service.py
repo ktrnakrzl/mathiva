@@ -15,7 +15,7 @@ import requests
 
 from app.config import settings
 
-REQUEST_TIMEOUT = 30
+REQUEST_TIMEOUT = 12
 
 
 class FallbackLLMError(RuntimeError):
@@ -50,6 +50,7 @@ def fallback_generate(prompt: str) -> str:
         # Slightly above zero, same rationale as the Gemini tier: a tutoring
         # answer benefits from a little fluency but should stay grounded.
         "temperature": 0.2,
+        "max_tokens": 384,
     }
 
     try:

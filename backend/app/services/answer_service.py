@@ -19,10 +19,14 @@ The response carries `model_used` so the UI/analysis can see which tier answered
 """
 
 import collections
+import logging
+import re
 
 from app.config import settings
 from app.services.ai_service import AIServiceError, generate_answer
 from app.services import fallback_llm_service, gemini_service, t5_service
+
+logger = logging.getLogger(__name__)
 
 # Bounded in-memory cache of successful answers, keyed by normalized question.
 # Repeated/identical questions (common in a class) are served from here instead
@@ -33,8 +37,10 @@ _ANSWER_CACHE: "collections.OrderedDict[str, dict]" = collections.OrderedDict()
 _CACHE_MAX = 256
 
 
-def _cache_key(question: str) -> str:
-    return " ".join(question.lower().split()).strip(" ?.!")
+def _cache_key(question: str, history: str = "") -> str:
+    question_key = " ".join(question.lower().split()).strip(" ?.!")
+    history_key = " ".join(history.lower().split()).strip()
+    return f"{history_key}\n---\n{question_key}" if history_key else question_key
 
 
 def clear_answer_cache() -> None:
@@ -83,21 +89,29 @@ def is_bad_answer(text) -> bool:
     return False
 
 
-def build_tutor_prompt(context: str, question: str) -> str:
+def build_tutor_prompt(context: str, question: str, history: str = "") -> str:
     """The tutor prompt shared by the cascade and the streaming endpoint, so the
     models all see the same instructions and context."""
+    history_section = (
+        f"\nRecent Conversation:\n{history}\n"
+        if history.strip()
+        else ""
+    )
     return f"""You are Mathiva, a helpful math tutor.
 
 Use the following course material to answer the student's question.
 
 Course Material:
 {context}
+{history_section}
 
 Student Question:
 {question}
 
 Instructions:
 - Answer clearly and concisely.
+- Use the recent conversation only to resolve references in the student's latest
+  question, such as "that step", "the previous answer", or "explain step two".
 - Do NOT greet the student or introduce yourself (no "Hello", no "I am Mathiva").
   Each question is a fresh request, so a greeting every time is repetitive --
   just answer the question directly.
@@ -119,17 +133,139 @@ def _sources(context_data):
     ]
 
 
-def answer_question(question: str) -> dict:
+def _strip_trailing_punctuation(text: str) -> str:
+    return text.strip().rstrip("?.! ")
+
+
+def _extract_after_keyword(question: str, keyword: str) -> str:
+    match = re.search(rf"\b{keyword}\b\s*:?\s*(.+)", question, flags=re.IGNORECASE)
+    return _strip_trailing_punctuation(match.group(1)) if match else ""
+
+
+def _try_symbolic_math_answer(question: str) -> str | None:
+    """Fast, offline fallback for common typed math questions.
+
+    This is deliberately narrow: it covers problems the existing SymPy-backed
+    solver can answer deterministically, plus basic percentage and factoring
+    prompts. It keeps the chat useful when hosted LLM tiers are busy, without
+    pretending to be a general tutor.
+    """
+    text = " ".join(question.split())
+
+    percent = re.search(
+        r"(-?\d+(?:\.\d+)?)\s*(?:%|percent)\s+of\s+(-?\d+(?:\.\d+)?)",
+        text,
+        flags=re.IGNORECASE,
+    )
+    if percent:
+        pct = float(percent.group(1))
+        whole = float(percent.group(2))
+        value = pct / 100 * whole
+        value_text = str(int(value)) if value.is_integer() else f"{value:g}"
+        return (
+            f"\\({pct:g}\\%\\) of \\({whole:g}\\) is "
+            f"\\({pct:g}/100 \\times {whole:g} = {value_text}\\)."
+        )
+
+    root = re.search(
+        r"(?:square\s+root\s+of\s+|sqrt\s*\(?\s*)(-?\d+(?:\.\d+)?)\)?",
+        text,
+        flags=re.IGNORECASE,
+    )
+    if root:
+        try:
+            from sympy import Rational, latex, simplify, sqrt
+
+            radicand = Rational(root.group(1))
+            value = simplify(sqrt(radicand))
+            return f"The square root of \\({root.group(1)}\\) is \\({latex(value)}\\)."
+        except Exception:
+            pass
+
+    factor_expr = _extract_after_keyword(text, "factor")
+    if factor_expr:
+        try:
+            from sympy import factor, latex
+            from sympy.parsing.sympy_parser import (
+                convert_xor,
+                implicit_multiplication_application,
+                parse_expr,
+                standard_transformations,
+            )
+
+            transforms = standard_transformations + (
+                implicit_multiplication_application,
+                convert_xor,
+            )
+            expr = parse_expr(factor_expr, transformations=transforms)
+            factored = factor(expr)
+            if factored != expr:
+                return f"\\({latex(expr)} = {latex(factored)}\\)."
+        except Exception:
+            pass
+
+    equation = _extract_after_keyword(text, "solve")
+    if not equation and any(op in text for op in ("=", "<", ">")):
+        equation = _strip_trailing_punctuation(text)
+    if equation:
+        try:
+            from solver.math_solver import solve_equation
+
+            result = solve_equation(equation)
+            if result.get("success") and result.get("answer"):
+                return f"The answer is {result['answer']}."
+        except Exception:
+            pass
+
+    arithmetic = re.fullmatch(r"[0-9xX+\-*/^().\s]+", _strip_trailing_punctuation(text))
+    if arithmetic:
+        try:
+            from solver.math_solver import solve_equation
+
+            result = solve_equation(_strip_trailing_punctuation(text))
+            if result.get("success") and result.get("answer"):
+                return f"The answer is {result['answer']}."
+        except Exception:
+            pass
+
+    return None
+
+
+def try_symbolic_math_answer(question: str) -> str | None:
+    """Return a deterministic local answer for simple typed math, when possible."""
+    return _try_symbolic_math_answer(question)
+
+
+def answer_question(question: str, history: str = "") -> dict:
     """Run the full cascade and return {question, answer, model_used, sources}."""
     use_cache = settings.answer_cache_enabled
-    key = _cache_key(question)
+    key = _cache_key(question, history)
     if use_cache and key in _ANSWER_CACHE:
         _ANSWER_CACHE.move_to_end(key)           # mark most-recently-used
         return dict(_ANSWER_CACHE[key])          # copy so callers can't mutate the cache
 
+    # Fast path: common typed math questions can be answered deterministically
+    # without RAG or cloud LLM calls. This keeps the APK/web chat responsive for
+    # algebra/arithmetic even when Gemini is slow, overloaded, or unavailable.
+    symbolic_answer = try_symbolic_math_answer(question)
+    if symbolic_answer:
+        result = {
+            "question": question,
+            "answer": symbolic_answer,
+            "model_used": "symbolic",
+            "sources": [],
+        }
+        logger.info("answer_question model_used=symbolic")
+        if use_cache:
+            _ANSWER_CACHE[key] = dict(result)
+            _ANSWER_CACHE.move_to_end(key)
+            while len(_ANSWER_CACHE) > _CACHE_MAX:
+                _ANSWER_CACHE.popitem(last=False)
+        return result
+
     context_data = _retrieve(question)
     context = "\n\n".join(context_data["chunks"])
-    prompt = build_tutor_prompt(context, question)
+    prompt = build_tutor_prompt(context, question, history)
 
     # --- local layer: T5 and Phi-3 both attempt the answer -------------------
     # T5 is skipped entirely when DISABLE_T5 is set (the hosted, no-Ollama
@@ -172,10 +308,10 @@ def answer_question(question: str) -> dict:
             if not is_bad_answer(gemini_answer):
                 answer, model_used = gemini_answer, "gemini"
         except gemini_service.GeminiRateLimitError as e:
-            print(f"Gemini rate limited: retry_after={e.retry_after}")
+            logger.warning("Gemini rate limited: retry_after=%s", e.retry_after)
             rate_limited_after = e.retry_after   # temporary -- tell the user to retry
         except gemini_service.GeminiServiceError as e:
-            print(f"Gemini answer fallback failed: {e}")
+            logger.warning("Gemini answer fallback failed: %s", e)
             pass  # keep the best local answer we have
 
     # --- second backstop: the fallback LLM, when Gemini couldn't rescue -------
@@ -190,7 +326,7 @@ def answer_question(question: str) -> dict:
                 answer, model_used = fallback_answer, settings.fallback_model
                 rate_limited_after = None        # rescued -- drop Gemini's 429
         except fallback_llm_service.FallbackLLMRateLimitError as e:
-            print(f"Fallback LLM rate limited: retry_after={e.retry_after}")
+            logger.warning("Fallback LLM rate limited: retry_after=%s", e.retry_after)
             # Both cloud tiers throttled: surface the shorter suggested wait.
             rate_limited_after = (
                 e.retry_after
@@ -198,12 +334,12 @@ def answer_question(question: str) -> dict:
                 else min(rate_limited_after, e.retry_after)
             )
         except fallback_llm_service.FallbackLLMError as e:
-            print(f"Fallback LLM failed: {e}")
+            logger.warning("Fallback LLM failed: %s", e)
             pass  # keep the best answer we have
 
     if answer is None or is_bad_answer(answer):
-        # Every tier failed or only produced junk. Distinguish a temporary rate
-        # limit (retry shortly) from a hard outage (generic unavailable).
+        # Every tier failed or only produced junk. Distinguish a temporary
+        # rate limit (retry shortly) from a hard outage (generic unavailable).
         if rate_limited_after is not None:
             raise TutorBusyError(rate_limited_after)
         raise AIServiceError(
@@ -216,7 +352,7 @@ def answer_question(question: str) -> dict:
         "model_used": model_used,
         "sources": _sources(context_data),
     }
-    print(f"answer_question model_used={model_used}")
+    logger.info("answer_question model_used=%s", model_used)
     if use_cache:                                # only successful answers reach here
         _ANSWER_CACHE[key] = dict(result)
         _ANSWER_CACHE.move_to_end(key)

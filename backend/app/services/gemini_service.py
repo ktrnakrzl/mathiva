@@ -15,7 +15,7 @@ GEMINI_URL = (
     "https://generativelanguage.googleapis.com/v1beta/models/"
     "{model}:generateContent"
 )
-REQUEST_TIMEOUT = 30
+REQUEST_TIMEOUT = 12
 
 
 class GeminiServiceError(RuntimeError):
@@ -60,7 +60,10 @@ def gemini_generate(prompt: str) -> str:
         "contents": [{"parts": [{"text": prompt}]}],
         # Slightly above zero: a tutoring answer benefits from a little fluency,
         # but we still want it grounded and repeatable.
-        "generationConfig": {"temperature": 0.2},
+        "generationConfig": {
+            "temperature": 0.2,
+            "maxOutputTokens": 384,
+        },
     }
 
     try:

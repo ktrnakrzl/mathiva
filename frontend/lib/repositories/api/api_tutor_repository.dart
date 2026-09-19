@@ -25,14 +25,25 @@ class ApiTutorRepository implements TutorRepository {
   )..interceptors.add(AuthInterceptor());
 
   @override
-  Stream<String> ask(String question) async* {
+  Stream<String> ask(
+    String question, {
+    List<TutorChatTurn> history = const [],
+  }) async* {
+    final requestBody = {
+      'question': question,
+      'history': history
+          .map((turn) => {
+                'role': turn.role,
+                'text': turn.text,
+              })
+          .toList(growable: false),
+    };
+
     Response<ResponseBody> response;
     try {
       response = await _dio.post<ResponseBody>(
         '/api/ask/stream',
-        queryParameters: {
-          'question': question,
-        },
+        data: requestBody,
         // Get the raw byte stream instead of a buffered body, so we can forward
         // each chunk to the UI as it arrives.
         options: Options(responseType: ResponseType.stream),
@@ -40,9 +51,7 @@ class ApiTutorRepository implements TutorRepository {
     } on DioException {
       final fallback = await _dio.post<Map<String, dynamic>>(
         '/api/ask',
-        queryParameters: {
-          'question': question,
-        },
+        data: requestBody,
       );
       final answer = fallback.data?['answer']?.toString();
       if (answer != null && answer.isNotEmpty) {
