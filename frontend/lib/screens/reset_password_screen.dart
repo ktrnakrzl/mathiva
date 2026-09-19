@@ -9,7 +9,13 @@ import '../utils/route_names.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   final String token;
-  const ResetPasswordScreen({super.key, required this.token});
+  final AuthRepository authRepository;
+
+  ResetPasswordScreen({
+    super.key,
+    required this.token,
+    AuthRepository? authRepository,
+  }) : authRepository = authRepository ?? ApiAuthRepository();
 
   @override
   State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
@@ -18,7 +24,6 @@ class ResetPasswordScreen extends StatefulWidget {
 class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmController = TextEditingController();
-  final AuthRepository _authRepository = ApiAuthRepository();
 
   bool _isLoading = false;
   bool _done = false;
@@ -53,7 +58,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     });
 
     try {
-      await _authRepository.resetPassword(
+      await widget.authRepository.resetPassword(
         token: widget.token,
         newPassword: password,
       );

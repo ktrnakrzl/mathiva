@@ -10,7 +10,10 @@ import '../utils/route_names.dart';
 final RegExp _emailPattern = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
 
 class ForgotPasswordScreen extends StatefulWidget {
-  const ForgotPasswordScreen({super.key});
+  final AuthRepository authRepository;
+
+  ForgotPasswordScreen({super.key, AuthRepository? authRepository})
+      : authRepository = authRepository ?? ApiAuthRepository();
 
   @override
   State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
@@ -18,7 +21,6 @@ class ForgotPasswordScreen extends StatefulWidget {
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final TextEditingController _emailController = TextEditingController();
-  final AuthRepository _authRepository = ApiAuthRepository();
 
   bool _isLoading = false;
   String? _error;
@@ -47,7 +49,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     });
 
     try {
-      final message = await _authRepository.requestPasswordReset(email);
+      final message = await widget.authRepository.requestPasswordReset(email);
       if (!mounted) return;
       setState(() => _message = message);
     } catch (e) {

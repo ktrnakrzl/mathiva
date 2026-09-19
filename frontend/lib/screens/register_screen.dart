@@ -5,6 +5,7 @@ import '../repositories/api/api_auth_repository.dart';
 import '../repositories/auth_repository.dart';
 import '../services/app_preferences.dart';
 import '../services/auth_storage.dart';
+import '../services/scan_history_service.dart';
 import '../presentation/widgets/auth_widgets.dart';
 import '../presentation/widgets/fade_slide_in.dart';
 import '../theme/app_theme.dart';
@@ -15,7 +16,10 @@ final RegExp _emailPattern = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
 /// Sign up — the graph-paper brand band over a left-aligned form with live
 /// password validation pills, per the auth-flow design handoff.
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+  final AuthRepository authRepository;
+
+  RegisterScreen({super.key, AuthRepository? authRepository})
+      : authRepository = authRepository ?? ApiAuthRepository();
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
@@ -29,7 +33,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
       TextEditingController();
-  final AuthRepository _authRepository = ApiAuthRepository();
 
   bool _isLoading = false;
   // Recomputed live on every keystroke to drive the validation pills.
@@ -62,7 +65,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     setState(() => _isLoading = true);
     try {
-      await _authRepository.register(
+      await widget.authRepository.register(
         email: email,
         password: password,
         fullName: name,
@@ -71,8 +74,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       // The register endpoint doesn't return a token (per the spec), so log in
       // immediately with the same credentials to get the app's session.
       final token =
-          await _authRepository.login(email: email, password: password);
+          await widget.authRepository.login(email: email, password: password);
       await AuthStorage.saveToken(token);
+      await AppPreferences.loadAccountScopedValues();
+      await ScanHistoryService.load();
       // We already have the name from the form (identical to what the server
       // stored), so set the home greeting directly -- no /auth/me round-trip
       // needed here, unlike the login path.
@@ -218,9 +223,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       textInputAction: TextInputAction.done,
                       onChanged: (v) => setState(() => _confirm = v),
                       onFieldSubmitted: (_) => _handleRegister(),
-                      validator: (v) => v != _passwordController.text
-                          ? 'Passwords do not match'
-                          : null,
+                      validator: (v) {
+                        if (v == null || v.isEmpty) {
+                          return 'Please confirm your password';
+                        }
+                        return v != _passwordController.text
+                            ? 'Passwords do not match'
+                            : null;
+                      },
                     ),
                     const SizedBox(height: 14),
 
@@ -244,8 +254,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     const SizedBox(height: 20),
 
                     Center(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      child: Wrap(
+                        alignment: WrapAlignment.center,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           Text(
                             'Already have an account? ',

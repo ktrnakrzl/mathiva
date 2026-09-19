@@ -63,13 +63,11 @@ class MathivaApp extends StatelessWidget {
       GoRoute(
           path: RouteNames.onboarding,
           builder: (_, __) => const OnboardingScreen()),
-      GoRoute(path: RouteNames.login, builder: (_, __) => const LoginScreen()),
-      GoRoute(
-          path: RouteNames.register,
-          builder: (_, __) => const RegisterScreen()),
+      GoRoute(path: RouteNames.login, builder: (_, __) => LoginScreen()),
+      GoRoute(path: RouteNames.register, builder: (_, __) => RegisterScreen()),
       GoRoute(
           path: RouteNames.forgotPassword,
-          builder: (_, __) => const ForgotPasswordScreen()),
+          builder: (_, __) => ForgotPasswordScreen()),
       GoRoute(
           path: RouteNames.resetPassword,
           builder: (_, state) => ResetPasswordScreen(
@@ -198,7 +196,7 @@ class MathivaApp extends StatelessWidget {
         },
       ),
     ],
-    errorBuilder: (_, __) => const LoginScreen(),
+    errorBuilder: (_, __) => LoginScreen(),
   );
 
   static Map<String, dynamic> _args(GoRouterState state) {
@@ -209,7 +207,7 @@ class MathivaApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ProviderScope(
-      child: ValueListenableBuilder<MathiviaPalette>(
+      child: ValueListenableBuilder<MathivaPalette>(
         valueListenable: AppPreferences.palette,
         builder: (context, palette, _) {
           return ValueListenableBuilder<bool>(

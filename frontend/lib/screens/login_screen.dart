@@ -12,6 +12,7 @@ import '../services/app_preferences.dart';
 import '../services/auth_storage.dart';
 import '../services/google_sign_in_web_button.dart'
     if (dart.library.js_util) '../services/google_sign_in_web_button_web.dart';
+import '../services/scan_history_service.dart';
 import '../utils/route_names.dart';
 import '../presentation/widgets/auth_widgets.dart';
 import '../presentation/widgets/fade_slide_in.dart';
@@ -22,7 +23,10 @@ final RegExp _emailPattern = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
 /// Login — a graph-paper editorial brand band over a left-aligned form, per the
 /// auth-flow "mathematical notebook" design handoff.
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  final AuthRepository authRepository;
+
+  LoginScreen({super.key, AuthRepository? authRepository})
+      : authRepository = authRepository ?? ApiAuthRepository();
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -33,7 +37,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final AuthRepository _authRepository = ApiAuthRepository();
 
   bool _isLoading = false;
   bool _isGoogleLoading = false;
@@ -72,6 +75,8 @@ class _LoginScreenState extends State<LoginScreen> {
     if (kUseMockBackend) {
       final name = email.split('@').first.trim();
       await AuthStorage.saveToken('demo-session');
+      await AppPreferences.loadAccountScopedValues();
+      await ScanHistoryService.load();
       AppPreferences.studentName.value = name.isEmpty ? 'Student' : name;
       if (!mounted) return;
       context.go(RouteNames.home);
@@ -84,8 +89,10 @@ class _LoginScreenState extends State<LoginScreen> {
     });
     try {
       final token =
-          await _authRepository.login(email: email, password: password);
+          await widget.authRepository.login(email: email, password: password);
       await AuthStorage.saveToken(token);
+      await AppPreferences.loadAccountScopedValues();
+      await ScanHistoryService.load();
       // Pull the student's profile so the home greeting shows their real name
       // instead of the default. Non-fatal: a /auth/me hiccup shouldn't block
       // an otherwise-successful login -- the greeting just falls back.
@@ -119,10 +126,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) setState(() => _googleReady = true);
     } catch (_) {
       if (mounted) {
-        setState(() {
-          _googleReady = false;
-          _error = 'Google sign-in is not available right now.';
-        });
+        setState(() => _googleReady = false);
       }
     }
   }
@@ -196,8 +200,10 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      final token = await _authRepository.loginWithGoogleIdToken(idToken);
+      final token = await widget.authRepository.loginWithGoogleIdToken(idToken);
       await AuthStorage.saveToken(token);
+      await AppPreferences.loadAccountScopedValues();
+      await ScanHistoryService.load();
       await _loadProfileName();
       if (!mounted) return;
       context.go(RouteNames.home);
@@ -227,7 +233,7 @@ class _LoginScreenState extends State<LoginScreen> {
   /// so it can never block navigation to home after a valid login.
   Future<void> _loadProfileName() async {
     try {
-      final profile = await _authRepository.getProfile();
+      final profile = await widget.authRepository.getProfile();
       AppPreferences.studentName.value = profile.fullName;
     } catch (_) {
       // Leave the greeting on its default name.
