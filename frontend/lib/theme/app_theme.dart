@@ -14,7 +14,7 @@ class AppColors {
 }
 
 class AppTheme {
-  static MathiviaPalette paletteOf(BuildContext context) =>
+  static MathivaPalette paletteOf(BuildContext context) =>
       AppPreferences.palette.value;
 
   /// The single accent color (cyan) — read from [SemanticColors] so the whole
@@ -54,10 +54,10 @@ class AppTheme {
         letterSpacing: letterSpacing,
       );
 
-  static ThemeData light([MathiviaPalette? palette]) =>
+  static ThemeData light([MathivaPalette? palette]) =>
       _build(Brightness.light, SemanticColors.light);
 
-  static ThemeData dark([MathiviaPalette? palette]) =>
+  static ThemeData dark([MathivaPalette? palette]) =>
       _build(Brightness.dark, SemanticColors.dark);
 
   static ThemeData _build(Brightness brightness, SemanticColors colors) {
