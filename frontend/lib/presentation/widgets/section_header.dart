@@ -45,7 +45,7 @@ class _SectionHeaderState extends State<SectionHeader>
   Widget build(BuildContext context) {
     final colors = AppTheme.colorsOf(context);
 
-    return ValueListenableBuilder<MathiviaPalette>(
+    return ValueListenableBuilder<MathivaPalette>(
       valueListenable: AppPreferences.palette,
       builder: (context, palette, _) {
         return Padding(

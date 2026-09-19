@@ -34,7 +34,7 @@ class _MathSubjectsScreenState extends State<MathSubjectsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<MathiviaPalette>(
+    return ValueListenableBuilder<MathivaPalette>(
       valueListenable: AppPreferences.palette,
       builder: (context, palette, _) {
         final primary = palette.primary;
@@ -204,8 +204,7 @@ class _SubjectCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                 decoration: BoxDecoration(
                   color: primary.withOpacity(0.07),
                   borderRadius: BorderRadius.circular(20),

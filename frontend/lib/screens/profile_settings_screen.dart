@@ -9,6 +9,7 @@ import '../services/auth_storage.dart';
 import '../services/notification_service.dart';
 import '../services/progress_service.dart';
 import '../services/progress_store.dart';
+import '../services/scan_history_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/route_names.dart';
 import '../widgets/mathiva_bottom_nav.dart';
@@ -30,6 +31,8 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
 
   Future<void> _handleLogout() async {
     await AuthStorage.clearToken();
+    await AppPreferences.loadAccountScopedValues();
+    await ScanHistoryService.load();
     AppPreferences.studentName.value = 'Learner';
     if (!mounted) return;
     context.go(RouteNames.login);
@@ -37,7 +40,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<MathiviaPalette>(
+    return ValueListenableBuilder<MathivaPalette>(
       valueListenable: AppPreferences.palette,
       builder: (context, palette, _) {
         final primary = palette.primary;
@@ -174,7 +177,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
 
                   _Tile(
                     icon: Icons.info_outline_rounded,
-                    title: 'About Mathivia',
+                    title: 'About Mathiva',
                     subtitle: 'Learn more about this app',
                     primary: primary,
                     onTap: () => _showAbout(context, primary, secondary),
@@ -302,7 +305,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
               ),
               const SizedBox(height: 14),
               Center(
-                  child: Text('Mathivia',
+                  child: Text('Mathiva',
                       style: AppTheme.serif(
                           color: colors.ink,
                           fontSize: 26,
@@ -314,11 +317,11 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                           TextStyle(color: colors.subtleMuted, fontSize: 13))),
               const SizedBox(height: 24),
               _AboutSection(
-                title: 'What is Mathivia?',
+                title: 'What is Mathiva?',
                 icon: Icons.auto_awesome_outlined,
                 primary: primary,
                 body:
-                    'Mathivia is a thoughtfully designed math learning companion built specifically for Senior High School students following the K–12 curriculum. It combines the power of AI tutoring with structured lesson content, interactive quizzes, and detailed step-by-step problem explanations — all wrapped in a clean, distraction-free interface.\n\nWhether you are a Grade 11 student tackling General Mathematics and Statistics for the first time, or a Grade 12 learner deepening your understanding of Pre-Calculus and Basic Calculus, Mathivia has the content and tools to guide you every step of the way.',
+                    'Mathiva is a thoughtfully designed math learning companion built specifically for Senior High School students following the K–12 curriculum. It combines the power of AI tutoring with structured lesson content, interactive quizzes, and detailed step-by-step problem explanations — all wrapped in a clean, distraction-free interface.\n\nWhether you are a Grade 11 student tackling General Mathematics and Statistics for the first time, or a Grade 12 learner deepening your understanding of Pre-Calculus and Basic Calculus, Mathiva has the content and tools to guide you every step of the way.',
               ),
               const SizedBox(height: 12),
               _AboutSection(
@@ -326,7 +329,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                 icon: Icons.menu_book_outlined,
                 primary: primary,
                 body:
-                    'Mathivia is organized around four core math subjects from the Philippine SHS curriculum:\n\n- General Mathematics (Grade 11) - functions, equations and systems, rational expressions, inverse functions, exponential and logarithmic functions, financial mathematics, and logic.\n\n- Statistics and Probability (Grade 11) - data collection, data displays, measures of central tendency, measures of spread, normal distribution, hypothesis testing, and probability theory.\n\n- Pre-Calculus (Grade 12) - analytic geometry, geometry and trigonometry review, conic sections, sequences and series, trigonometric identities, polar coordinates, and parametric equations.\n\n- Basic Calculus (Grade 12) - limits, derivatives, applications of derivatives, antiderivatives, definite integrals, integral applications, and basic differential equations.',
+                    'Mathiva is organized around four core math subjects from the Philippine SHS curriculum:\n\n- General Mathematics (Grade 11) - functions, equations and systems, rational expressions, inverse functions, exponential and logarithmic functions, financial mathematics, and logic.\n\n- Statistics and Probability (Grade 11) - data collection, data displays, measures of central tendency, measures of spread, normal distribution, hypothesis testing, and probability theory.\n\n- Pre-Calculus (Grade 12) - analytic geometry, geometry and trigonometry review, conic sections, sequences and series, trigonometric identities, polar coordinates, and parametric equations.\n\n- Basic Calculus (Grade 12) - limits, derivatives, applications of derivatives, antiderivatives, definite integrals, integral applications, and basic differential equations.',
               ),
               const SizedBox(height: 12),
               _AboutSection(
@@ -334,7 +337,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                 icon: Icons.star_outline_rounded,
                 primary: primary,
                 body:
-                    '📷  Scan & Solve — point your camera at any printed or handwritten math problem and Mathivia\'s AI will recognize it, break it down step by step, and explain the solution clearly.\n\n📚  Structured Lessons — every topic is broken into bite-sized lessons with definitions, formulas, worked examples, and practice problems arranged in a logical learning order.\n\n🧠  AI Math Tutor — chat with the built-in tutor to ask any math question, request alternative explanations, or explore deeper connections between concepts.\n\n📊  Progress Tracking — track mastery per topic and subject, see your accuracy over time, and earn badges for consistent practice.\n\n🎯  Practice Mode — generate unlimited practice problems across any subject or topic and receive immediate, detailed feedback with every answer.',
+                    '📷  Scan & Solve — point your camera at any printed or handwritten math problem and Mathiva\'s AI will recognize it, break it down step by step, and explain the solution clearly.\n\n📚  Structured Lessons — every topic is broken into bite-sized lessons with definitions, formulas, worked examples, and practice problems arranged in a logical learning order.\n\n🧠  AI Math Tutor — chat with the built-in tutor to ask any math question, request alternative explanations, or explore deeper connections between concepts.\n\n📊  Progress Tracking — track mastery per topic and subject, see your accuracy over time, and earn badges for consistent practice.\n\n🎯  Practice Mode — generate unlimited practice problems across any subject or topic and receive immediate, detailed feedback with every answer.',
               ),
               const SizedBox(height: 12),
               _AboutSection(
@@ -342,7 +345,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                 icon: Icons.lightbulb_outline_rounded,
                 primary: primary,
                 body:
-                    'Mathivia was built on a simple belief: every student deserves to understand math, not just memorize it. Too many students struggle not because they lack ability, but because they lack access to patient, clear, and personalized explanations.\n\nWe designed Mathivia to be the math tutor that is always available — one that never gets tired of explaining the same concept a different way, never makes you feel embarrassed for asking a basic question, and always celebrates your progress no matter how small.\n\nThe interface is intentionally minimal. No loud animations, no gamification gimmicks, no unnecessary clutter. Just clean, focused tools that put math front and center.',
+                    'Mathiva was built on a simple belief: every student deserves to understand math, not just memorize it. Too many students struggle not because they lack ability, but because they lack access to patient, clear, and personalized explanations.\n\nWe designed Mathiva to be the math tutor that is always available — one that never gets tired of explaining the same concept a different way, never makes you feel embarrassed for asking a basic question, and always celebrates your progress no matter how small.\n\nThe interface is intentionally minimal. No loud animations, no gamification gimmicks, no unnecessary clutter. Just clean, focused tools that put math front and center.',
               ),
               const SizedBox(height: 12),
               _AboutSection(
@@ -350,7 +353,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                 icon: Icons.favorite_outline_rounded,
                 primary: primary,
                 body:
-                    'Mathivia is designed and maintained with Senior High School students in the Philippines in mind. We understand the pressure of board exams, quarterly assessments, and performance tasks — and we want to be a reliable tool you can turn to when the textbook isn\'t enough.\n\nFeedback from real students shapes every update. If there is a topic you wish was covered more deeply, a feature you think would help you learn better, or a bug that got in your way, we want to hear about it. Mathivia grows with you.',
+                    'Mathiva is designed and maintained with Senior High School students in the Philippines in mind. We understand the pressure of board exams, quarterly assessments, and performance tasks — and we want to be a reliable tool you can turn to when the textbook isn\'t enough.\n\nFeedback from real students shapes every update. If there is a topic you wish was covered more deeply, a feature you think would help you learn better, or a bug that got in your way, we want to hear about it. Mathiva grows with you.',
               ),
               const SizedBox(height: 24),
               Container(
@@ -369,7 +372,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                             fontSize: 14),
                         textAlign: TextAlign.center),
                     const SizedBox(height: 6),
-                    Text('© 2026 Mathivia. All rights reserved.',
+                    Text('© 2026 Mathiva. All rights reserved.',
                         style:
                             TextStyle(color: colors.subtleMuted, fontSize: 12),
                         textAlign: TextAlign.center),
