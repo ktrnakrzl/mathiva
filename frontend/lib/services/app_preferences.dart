@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class MathiviaPalette {
+import 'auth_storage.dart';
+
+class MathivaPalette {
   final String name;
   final Color primary;
   final Color secondary;
   final List<Color> background;
 
-  const MathiviaPalette({
+  const MathivaPalette({
     required this.name,
     required this.primary,
     required this.secondary,
@@ -29,6 +31,8 @@ class AppPreferences {
   static const _hapticFeedbackKey = 'pref_haptic_feedback';
   static const _textScaleKey = 'pref_text_scale';
   static const _paletteNameKey = 'pref_palette_name';
+  static String get _studentNameStorageKey =>
+      '${_studentNameKey}_${AuthStorage.storageScope}';
 
   static bool _ready = false;
 
@@ -50,65 +54,65 @@ class AppPreferences {
   static final ValueNotifier<bool> hapticFeedback = ValueNotifier<bool>(true);
   static final ValueNotifier<double> textScale = ValueNotifier<double>(1.0);
 
-  static const List<MathiviaPalette> palettes = [
+  static const List<MathivaPalette> palettes = [
     // shadcn reskin: the single violet accent is the default. (The remaining
     // palette entries below are retained for the deferred accent-picker
     // feature but are not surfaced in the shadcn Settings screen yet.)
-    MathiviaPalette(
+    MathivaPalette(
       name: 'Violet',
       primary: Color(0xFF7C3AED),
       secondary: Color(0xFF6D28D9),
       background: [Colors.white, Colors.white, Colors.white],
     ),
-    MathiviaPalette(
+    MathivaPalette(
       name: 'Ocean Blue',
       primary: Color(0xFF1D75F0),
       secondary: Color(0xFF28C2D1),
       background: [Colors.white, Colors.white, Colors.white],
     ),
-    MathiviaPalette(
+    MathivaPalette(
       name: 'Fresh Green',
       primary: Color(0xFF2F9E44),
       secondary: Color(0xFF82C91E),
       background: [Colors.white, Colors.white, Colors.white],
     ),
-    MathiviaPalette(
+    MathivaPalette(
       name: 'Warm Peach',
       primary: Color(0xFFE8590C),
       secondary: Color(0xFFFF922B),
       background: [Colors.white, Colors.white, Colors.white],
     ),
-    MathiviaPalette(
+    MathivaPalette(
       name: 'Rose Pink',
       primary: Color(0xFFD6336C),
       secondary: Color(0xFFF06595),
       background: [Colors.white, Colors.white, Colors.white],
     ),
-    MathiviaPalette(
+    MathivaPalette(
       name: 'Midnight Teal',
       primary: Color(0xFF0B7285),
       secondary: Color(0xFF15AABF),
       background: [Colors.white, Colors.white, Colors.white],
     ),
-    MathiviaPalette(
+    MathivaPalette(
       name: 'Slate Indigo',
       primary: Color(0xFF3B5BDB),
       secondary: Color(0xFF748FFC),
       background: [Colors.white, Colors.white, Colors.white],
     ),
-    MathiviaPalette(
+    MathivaPalette(
       name: 'Golden Amber',
       primary: Color(0xFFF59F00),
       secondary: Color(0xFFFFD43B),
       background: [Colors.white, Colors.white, Colors.white],
     ),
-    MathiviaPalette(
+    MathivaPalette(
       name: 'Soft Lavender',
       primary: Color(0xFF9C36B5),
       secondary: Color(0xFFCC5DE8),
       background: [Colors.white, Colors.white, Colors.white],
     ),
-    MathiviaPalette(
+    MathivaPalette(
       name: 'Earthy Brown',
       primary: Color(0xFF8B4513),
       secondary: Color(0xFFCD853F),
@@ -116,8 +120,8 @@ class AppPreferences {
     ),
   ];
 
-  static final ValueNotifier<MathiviaPalette> palette =
-      ValueNotifier<MathiviaPalette>(palettes.first);
+  static final ValueNotifier<MathivaPalette> palette =
+      ValueNotifier<MathivaPalette>(palettes.first);
 
   static Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
@@ -130,7 +134,7 @@ class AppPreferences {
       hour: prefs.getInt(_reminderHourKey) ?? reminderTime.value.hour,
       minute: prefs.getInt(_reminderMinuteKey) ?? reminderTime.value.minute,
     );
-    studentName.value = prefs.getString(_studentNameKey) ?? studentName.value;
+    studentName.value = prefs.getString(_studentNameStorageKey) ?? 'Learner';
     learnerRole.value = prefs.getString(_learnerRoleKey) ?? learnerRole.value;
     privateProfile.value =
         prefs.getBool(_privateProfileKey) ?? privateProfile.value;
@@ -155,8 +159,8 @@ class AppPreferences {
     studyRemindersEnabled.addListener(() =>
         _saveBool(_studyRemindersEnabledKey, studyRemindersEnabled.value));
     reminderTime.addListener(_saveReminderTime);
-    studentName
-        .addListener(() => _saveString(_studentNameKey, studentName.value));
+    studentName.addListener(
+        () => _saveString(_studentNameStorageKey, studentName.value));
     learnerRole
         .addListener(() => _saveString(_learnerRoleKey, learnerRole.value));
     privateProfile
@@ -168,6 +172,11 @@ class AppPreferences {
         .addListener(() => _saveBool(_hapticFeedbackKey, hapticFeedback.value));
     textScale.addListener(() => _saveDouble(_textScaleKey, textScale.value));
     palette.addListener(() => _saveString(_paletteNameKey, palette.value.name));
+  }
+
+  static Future<void> loadAccountScopedValues() async {
+    final prefs = await SharedPreferences.getInstance();
+    studentName.value = prefs.getString(_studentNameStorageKey) ?? 'Learner';
   }
 
   static Future<void> _saveBool(String key, bool value) async {
@@ -195,7 +204,7 @@ class AppPreferences {
     await prefs.setInt(_reminderMinuteKey, reminderTime.value.minute);
   }
 
-  static void setPalette(MathiviaPalette value) {
+  static void setPalette(MathivaPalette value) {
     palette.value = value;
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
