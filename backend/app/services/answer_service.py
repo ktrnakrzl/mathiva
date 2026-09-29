@@ -152,6 +152,24 @@ def _try_symbolic_math_answer(question: str) -> str | None:
     """
     text = " ".join(question.split())
 
+    # Route keyboard math through the same parser as /solve, before the
+    # natural-language shortcuts can accidentally answer only part of it.
+    if any(c in text for c in "√×÷−·π≤≥⁰¹²³⁴⁵⁶⁷⁸⁹") or "sqrt" in text:
+        from solver.math_solver import normalize_keyboard_math, solve_equation
+
+        candidate = re.sub(
+            r"^(?:what\s+is|calculate|evaluate|simplify|solve)\s*:?\s*",
+            "", _strip_trailing_punctuation(text), flags=re.IGNORECASE,
+        )
+        try:
+            candidate = normalize_keyboard_math(candidate)
+            if re.fullmatch(r"(?:sqrt|pi|[0-9xX+\-*/^().<>=\s])+", candidate):
+                result = solve_equation(candidate)
+                if result.get("success") and result.get("answer"):
+                    return f"The answer is {result['answer']}."
+        except ValueError:
+            pass
+
     percent = re.search(
         r"(-?\d+(?:\.\d+)?)\s*(?:%|percent)\s+of\s+(-?\d+(?:\.\d+)?)",
         text,
@@ -167,9 +185,9 @@ def _try_symbolic_math_answer(question: str) -> str | None:
             f"\\({pct:g}/100 \\times {whole:g} = {value_text}\\)."
         )
 
-    root = re.search(
-        r"(?:square\s+root\s+of\s+|sqrt\s*\(?\s*)(-?\d+(?:\.\d+)?)\)?",
-        text,
+    root = re.fullmatch(
+        r"(?:what\s+is\s+)?(?:the\s+)?(?:square\s+root\s+of\s+|sqrt\s*\(?\s*)(-?\d+(?:\.\d+)?)\)?",
+        _strip_trailing_punctuation(text),
         flags=re.IGNORECASE,
     )
     if root:

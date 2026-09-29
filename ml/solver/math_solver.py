@@ -49,6 +49,42 @@ ALL_REALS_MESSAGE = "This holds for every real number."
 NO_SYSTEM_SOLUTION_MESSAGE = "This system has no solution."
 
 
+def normalize_keyboard_math(text):
+    """Translate keyboard notation; a bare radical covers the next atom.
+
+    Use parentheses for a longer radicand: √9 + 7 versus √(9 + 7).
+    """
+    text = text.translate(str.maketrans({
+        "×": "*", "÷": "/", "−": "-", "·": "*", "π": "pi",
+        "≤": "<=", "≥": ">=",
+    }))
+    superscripts = str.maketrans("⁰¹²³⁴⁵⁶⁷⁸⁹⁻⁺", "0123456789-+")
+    text = re.sub(r"[⁰¹²³⁴⁵⁶⁷⁸⁹⁻⁺]+",
+                  lambda m: "^(" + m.group().translate(superscripts) + ")", text)
+    # Work inside out so nested radicals retain their grouping.
+    while "√" in text:
+        start = text.rfind("√")
+        pos = start + 1
+        while pos < len(text) and text[pos].isspace():
+            pos += 1
+        atom = re.match(r"(?:\d+(?:\.\d*)?|\.\d+|sqrt|pi|[a-zA-Z])", text[pos:])
+        end = pos + len(atom.group()) if atom else pos
+        if end < len(text) and text[end] == "(" and (
+            end == pos or text[pos:end] == "sqrt"
+        ):
+            depth = 1
+            end += 1
+            while end < len(text) and depth:
+                depth += (text[end] == "(") - (text[end] == ")")
+                end += 1
+            if depth:
+                raise ValueError("Close the parentheses after the square root.")
+        if end == pos:
+            raise ValueError("Put a number or parenthesized expression after √.")
+        text = text[:start] + "sqrt(" + text[pos:end] + ")" + text[end:]
+    return text
+
+
 def _is_real_number(sol):
     """True only for a concrete, finite, real numeric solution (e.g. 2, -3/2).
 
@@ -369,6 +405,7 @@ def solve_equation(equation_str, variable="x"):
     or "x**2 - 4"), an inequality ("2x + 3 > 7"), and arithmetic ("89 + 82").
     """
     try:
+        equation_str = normalize_keyboard_math(equation_str)
         # System of equations: 2+ parts separated by , / newline / ;.
         parts = _split_equation_parts(equation_str, latex_breaks=False)
         if len(parts) >= 2:

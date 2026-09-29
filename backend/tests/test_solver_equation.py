@@ -21,6 +21,26 @@ def test_typed_decimals(expression, expected):
     assert float(_solve(expression)["solutions"][0]) == pytest.approx(expected)
 
 
+@pytest.mark.parametrize("expression, expected", [
+    ("√9", "3"), ("√(9 + 7)", "4"), ("√9 + 7", "10"),
+    ("2√9", "6"), ("√√16", "2"), ("√(.25)", "0.500000000000000"),
+    ("√9 + √16", "7"), ("6 × 3 ÷ 2", "9"),
+    ("5 − 8", "-3"), ("3² + 2³", "17"), ("2π", "2*pi"),
+    ("√(x + 1) = 3", "8"),
+])
+def test_keyboard_math(expression, expected):
+    assert _solve(expression)["solutions"] == [expected]
+
+
+@pytest.mark.parametrize("expression", ["√", "√(9 + 7", "√ + 2"])
+def test_incomplete_keyboard_root_is_rejected(expression):
+    assert not solve_equation(expression)["success"]
+
+
+def test_keyboard_inequality():
+    assert _solve("2x ≤ 6")["answer"] == r"\(x \leq 3\)"
+
+
 def _solve(eq):
     r = solve_equation(eq)
     assert r["success"], r

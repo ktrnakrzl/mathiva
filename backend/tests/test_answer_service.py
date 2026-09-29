@@ -164,6 +164,26 @@ def test_symbolic_math_answer_skips_retrieval_and_llm(monkeypatch):
     assert calls == {"retrieve": 0, "phi": 0}
 
 
+@pytest.mark.parametrize("question, expected", [
+    ("√9", r"\(3\)"),
+    ("What is √(9 + 7)?", r"\(4\)"),
+    ("Calculate √9 + √16", r"\(7\)"),
+    ("sqrt(9) + sqrt(16)", r"\(7\)"),
+    ("sqrt(9 + 7)", r"\(4\)"),
+    ("6 × 3 ÷ 2", r"\(9\)"),
+    ("3² + 2³", r"\(17\)"),
+    ("Solve √(x + 1) = 3", r"\(x = 8\)"),
+])
+def test_keyboard_math_uses_symbolic_answer(monkeypatch, question, expected):
+    def unexpected_retrieval(_):
+        raise AssertionError("Keyboard math should not need an LLM")
+
+    monkeypatch.setattr(answer_service, "_retrieve", unexpected_retrieval)
+    result = answer_service.answer_question(question)
+    assert result["model_used"] == "symbolic"
+    assert expected in result["answer"]
+
+
 def test_gemini_rate_limit_raises_tutor_busy(wired, monkeypatch):
     """When the local tiers are unavailable and Gemini is rate-limited, the cascade
     raises TutorBusyError (temporary) with the retry delay -- not a hard outage."""
