@@ -220,7 +220,7 @@ _FORMAT_CMDS = (
 # "\times" in an exponent would otherwise slip through as a confident wrong
 # answer. Failing safe (ask for a clearer photo) is the whole module's posture.
 _SAFE_COMMANDS = frozenset({
-    "frac", "sqrt", "cdot", "left", "right",
+    "frac", "sqrt", "cdot", "times", "div", "left", "right",
     # Inequality relations that legitimately appear in a Grade-11 problem.
     "leq", "geq", "le", "ge", "neq", "ne",
 })
@@ -237,6 +237,10 @@ def _normalize_ocr_latex(latex_str):
         for cmd in _FORMAT_CMDS:
             latex_str = re.sub(r"\\" + cmd + r"\s*\{([^{}]*)\}", r"\1", latex_str)
             latex_str = re.sub(r"\\" + cmd + r"(?![a-zA-Z])", "", latex_str)
+    # OCR can group the decimal point for typography. SymPy otherwise reads
+    # only the prefix of e.g. 1{.}5, silently returning 1.
+    latex_str = re.sub(r"\{\s*\.\s*\}(?=\s*\d)", ".", latex_str)
+    latex_str = re.sub(r"(?<![\d.])\.(?=\d)", "0.", latex_str)
     return _expand_mixed_numbers(latex_str)
 
 
@@ -294,7 +298,7 @@ def solve_latex(latex_str):
             return {"expression": latex_str, "error": UNREADABLE_MESSAGE,
                     "success": False}
         try:
-            equations = [parse_latex(p) for p in parts]
+            equations = [parse_latex(p, strict=True) for p in parts]
         except Exception:
             return {"expression": latex_str, "error": UNREADABLE_MESSAGE,
                     "success": False}
@@ -308,7 +312,7 @@ def solve_latex(latex_str):
         return {"expression": latex_str, "error": UNREADABLE_MESSAGE, "success": False}
 
     try:
-        expr = parse_latex(latex_str)
+        expr = parse_latex(latex_str, strict=True)
     except Exception:
         return {"expression": latex_str, "error": UNREADABLE_MESSAGE, "success": False}
 

@@ -22,6 +22,26 @@ if _ML_DIR not in sys.path:
 from solver.math_solver import solve_latex  # noqa: E402
 
 
+@pytest.mark.parametrize("expression, expected", [
+    ("1.5 + 2.3", 3.8),
+    (".5 + .25", .75),
+    ("-.5 + .25", -.25),
+    ("1{.}5 + 2{.}3", 3.8),
+    (r"1.5 \times 2", 3),
+    (r"1.5 \div 0.5", 3),
+    (r"\frac{.5}{.25}", 2),
+    (".5x = 1.25", 2.5),
+])
+def test_scanned_decimals(expression, expected):
+    result = solve_latex(expression)
+    assert result["success"], result
+    assert float(result["solutions"][0]) == pytest.approx(expected)
+
+
+def test_incomplete_decimal_parse_is_rejected():
+    assert not solve_latex("1.5 +")["success"]
+
+
 # --- valid equations: should solve and report success -----------------------
 
 def test_linear_equation_solves():

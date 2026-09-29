@@ -8,6 +8,18 @@ failure again.
 
 from solver.math_solver import solve_equation
 
+import pytest
+
+
+@pytest.mark.parametrize("expression, expected", [
+    ("1.5 + 2.3", 3.8),
+    (".5 + .25", .75),
+    ("1.5 / .5", 3),
+    (".5x = 1.25", 2.5),
+])
+def test_typed_decimals(expression, expected):
+    assert float(_solve(expression)["solutions"][0]) == pytest.approx(expected)
+
 
 def _solve(eq):
     r = solve_equation(eq)

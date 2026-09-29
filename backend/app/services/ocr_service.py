@@ -23,7 +23,9 @@ _OCR_PROMPT = (
     "expression or equation in this image into a single line of LaTeX. "
     "Output ONLY the LaTeX code -- no explanation, no surrounding text, no "
     "$ or \\( \\) delimiters, and no code fences. Preserve the '=' sign if the "
-    "image shows an equation."
+    "image shows an equation. Preserve every decimal point and digit; write "
+    "decimals with a leading zero (0.5, not .5) and a plain point (1.5, not "
+    "1{.}5). Do not confuse decimal points with multiplication dots."
 )
 
 _SOLVE_IMAGE_PROMPT = (
