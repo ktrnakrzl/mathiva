@@ -43,6 +43,8 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
   Rect _crop = const Rect.fromLTWH(0.08, 0.34, 0.84, 0.24);
   Uint8List? _previewBytes;
   XFile? _imageToSolve;
+  Size _imageSize = Size.zero;
+  Rect _previewCrop = const Rect.fromLTWH(0, 0, 1, 1);
 
   bool _isCapturing = false;
   bool _isSolving = false;
@@ -166,17 +168,8 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
       await _cameraInit;
       final photo = await camera.takePicture();
       final bytes = await photo.readAsBytes();
-      final cropped = _cropBytes(bytes, _lastViewportSize, _crop);
       if (!mounted) return;
-      setState(() {
-        _previewBytes = cropped;
-        _imageToSolve = XFile.fromData(
-          cropped,
-          name: 'mathiva-crop.jpg',
-          mimeType: 'image/jpeg',
-        );
-        _step = _SolverStep.preview;
-      });
+      _showPhotoPreview(bytes, cameraViewport: _lastViewportSize);
     } catch (_) {
       if (!mounted) return;
       _showMessage('Could not capture the problem. Please try again.');
@@ -199,18 +192,7 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
       );
       if (!mounted || file == null) return;
       final bytes = await file.readAsBytes();
-      final normalized = _normalizeImageBytes(bytes);
-      setState(() {
-        _previewBytes = normalized;
-        _imageToSolve = XFile.fromData(
-          normalized,
-          name: source == ImageSource.camera
-              ? 'mathiva-camera.jpg'
-              : 'mathiva-gallery.jpg',
-          mimeType: 'image/jpeg',
-        );
-        _step = _SolverStep.preview;
-      });
+      _showPhotoPreview(bytes);
     } catch (_) {
       if (!mounted) return;
       _showMessage(
@@ -232,6 +214,38 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
         quality: _uploadJpegQuality,
       ),
     );
+  }
+
+  void _showPhotoPreview(Uint8List bytes, {Size? cameraViewport}) {
+    final decoded = img.decodeImage(bytes);
+    if (decoded == null) throw const FormatException('Unsupported photo');
+    final oriented = img.bakeOrientation(decoded);
+    final imageSize =
+        Size(oriented.width.toDouble(), oriented.height.toDouble());
+    var selection = const Rect.fromLTWH(0, 0, 1, 1);
+    if (cameraViewport != null && cameraViewport != Size.zero) {
+      final scale = math.max(cameraViewport.width / imageSize.width,
+          cameraViewport.height / imageSize.height);
+      final drawn = imageSize * scale;
+      selection = Rect.fromLTWH(
+        (_crop.left * cameraViewport.width +
+                (drawn.width - cameraViewport.width) / 2) /
+            drawn.width,
+        (_crop.top * cameraViewport.height +
+                (drawn.height - cameraViewport.height) / 2) /
+            drawn.height,
+        _crop.width * cameraViewport.width / drawn.width,
+        _crop.height * cameraViewport.height / drawn.height,
+      );
+    }
+    setState(() {
+      // Keep the original so expanding the crop restores the full-resolution photo.
+      _imageToSolve = XFile.fromData(bytes, name: 'mathiva-photo.jpg');
+      _imageSize = imageSize;
+      _previewBytes = _normalizeImageBytes(bytes);
+      _previewCrop = selection;
+      _step = _SolverStep.preview;
+    });
   }
 
   img.Image _fitForUpload(img.Image source) {
@@ -304,7 +318,13 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
 
     setState(() => _isSolving = true);
     try {
-      final problem = await SolverService.solveImage(image);
+      final cropped =
+          _cropBytes(await image.readAsBytes(), _imageSize, _previewCrop);
+      final problem = await SolverService.solveImage(XFile.fromData(
+        cropped,
+        name: 'mathiva-crop.jpg',
+        mimeType: 'image/jpeg',
+      ));
       await ScanHistoryService.record(problem);
       if (!mounted) return;
       context.push(RouteNames.solution, extra: problem);
@@ -523,18 +543,54 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
                           ? Center(
                               child: CircularProgressIndicator(color: primary),
                             )
-                          : Image.memory(bytes, fit: BoxFit.contain),
+                          : LayoutBuilder(builder: (context, constraints) {
+                              final scale = math.min(
+                                constraints.maxWidth / _imageSize.width,
+                                constraints.maxHeight / _imageSize.height,
+                              );
+                              return Center(
+                                child: SizedBox(
+                                  width: _imageSize.width * scale,
+                                  height: _imageSize.height * scale,
+                                  child: Stack(fit: StackFit.expand, children: [
+                                    Image.memory(bytes, fit: BoxFit.fill),
+                                    IgnorePointer(
+                                        child: _CropShade(crop: _previewCrop)),
+                                    IgnorePointer(
+                                      ignoring: _isSolving,
+                                      child: _InteractiveCropBox(
+                                        crop: _previewCrop,
+                                        color: primary,
+                                        onChanged: (crop) =>
+                                            setState(() => _previewCrop = crop),
+                                        allowFullImage: true,
+                                      ),
+                                    ),
+                                  ]),
+                                ),
+                              );
+                            }),
                     ),
                   ),
                 ),
               ),
               const SizedBox(height: 12),
               Text(
-                'Cropped problem preview',
+                'Drag the box or its corners to crop the problem',
+                textAlign: TextAlign.center,
                 style: TextStyle(
                   color: colors.muted,
                   fontWeight: FontWeight.w600,
                 ),
+              ),
+              TextButton.icon(
+                onPressed: _isSolving
+                    ? null
+                    : () => setState(
+                          () => _previewCrop = const Rect.fromLTWH(0, 0, 1, 1),
+                        ),
+                icon: const Icon(Icons.crop_free),
+                label: const Text('Use full photo'),
               ),
               const SizedBox(height: 18),
               Row(
@@ -637,17 +693,25 @@ class _InteractiveCropBox extends StatelessWidget {
   final Rect crop;
   final Color color;
   final ValueChanged<Rect> onChanged;
+  final bool allowFullImage;
 
   const _InteractiveCropBox({
     required this.crop,
     required this.color,
     required this.onChanged,
+    this.allowFullImage = false,
   });
 
   static const _minW = 0.28;
   static const _minH = 0.12;
 
   Rect _clamp(Rect rect) {
+    if (allowFullImage) {
+      final width = rect.width.clamp(0.05, 1.0);
+      final height = rect.height.clamp(0.05, 1.0);
+      return Rect.fromLTWH(rect.left.clamp(0.0, 1.0 - width),
+          rect.top.clamp(0.0, 1.0 - height), width, height);
+    }
     final width = rect.width.clamp(_minW, 0.96);
     final height = rect.height.clamp(_minH, 0.86);
     final left = rect.left.clamp(0.02, 0.98 - width);
