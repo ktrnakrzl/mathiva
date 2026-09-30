@@ -184,6 +184,46 @@ def test_keyboard_math_uses_symbolic_answer(monkeypatch, question, expected):
     assert expected in result["answer"]
 
 
+@pytest.mark.parametrize("question", [
+    "the square root of 21",
+    "What is the square root of 21?",
+    "Find the square root of 21",
+    "Calculate the square root of 21.",
+    "Please find the square root of 21",
+    "square root of 21 please",
+])
+def test_square_root_21_is_calculated(monkeypatch, question):
+    def unexpected_retrieval(_):
+        raise AssertionError("A numeric square root must not use the language model")
+
+    monkeypatch.setattr(answer_service, "_retrieve", unexpected_retrieval)
+    result = answer_service.answer_question(question)
+    assert result["model_used"] == "symbolic"
+    assert r"\(\sqrt{21}\)" in result["answer"]
+    assert "4.582576" in result["answer"]
+
+
+def test_calculation_overrides_cached_wrong_model_answer(monkeypatch):
+    monkeypatch.setattr(answer_service.settings, "answer_cache_enabled", True)
+    question = "What is the square root of 21?"
+    answer_service.clear_answer_cache()
+    answer_service._ANSWER_CACHE[answer_service._cache_key(question)] = {
+        "answer": "21", "model_used": "gemini", "sources": [],
+    }
+    try:
+        result = answer_service.answer_question(question)
+        assert result["model_used"] == "symbolic"
+        assert "4.582576" in result["answer"]
+    finally:
+        answer_service.clear_answer_cache()
+
+
+def test_root_shortcut_does_not_drop_remaining_question():
+    assert answer_service.try_symbolic_math_answer(
+        "Find the square root of 21 plus the square root of 4"
+    ) is None
+
+
 def test_gemini_rate_limit_raises_tutor_busy(wired, monkeypatch):
     """When the local tiers are unavailable and Gemini is rate-limited, the cascade
     raises TutorBusyError (temporary) with the retry delay -- not a hard outage."""

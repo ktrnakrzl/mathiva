@@ -186,7 +186,9 @@ def _try_symbolic_math_answer(question: str) -> str | None:
         )
 
     root = re.fullmatch(
-        r"(?:what\s+is\s+)?(?:the\s+)?(?:square\s+root\s+of\s+|sqrt\s*\(?\s*)(-?\d+(?:\.\d+)?)\)?",
+        r"(?:please\s+)?(?:(?:what\s+is|find|calculate|evaluate|simplify|solve)\s+)?"
+        r"(?:the\s+)?(?:square\s+root\s+of\s+|sqrt\s*\(?\s*)"
+        r"(-?(?:\d+(?:\.\d+)?|\.\d+))\)?(?:\s+please)?",
         _strip_trailing_punctuation(text),
         flags=re.IGNORECASE,
     )
@@ -196,7 +198,10 @@ def _try_symbolic_math_answer(question: str) -> str | None:
 
             radicand = Rational(root.group(1))
             value = simplify(sqrt(radicand))
-            return f"The square root of \\({root.group(1)}\\) is \\({latex(value)}\\)."
+            answer = f"The square root of \\({root.group(1)}\\) is \\({latex(value)}\\)."
+            if value.is_real and value.is_rational is False:
+                answer += f" Approximately \\({value.evalf(7)}\\)."
+            return answer
         except Exception:
             pass
 
@@ -258,10 +263,6 @@ def answer_question(question: str, history: str = "") -> dict:
     """Run the full cascade and return {question, answer, model_used, sources}."""
     use_cache = settings.answer_cache_enabled
     key = _cache_key(question, history)
-    if use_cache and key in _ANSWER_CACHE:
-        _ANSWER_CACHE.move_to_end(key)           # mark most-recently-used
-        return dict(_ANSWER_CACHE[key])          # copy so callers can't mutate the cache
-
     # Fast path: common typed math questions can be answered deterministically
     # without RAG or cloud LLM calls. This keeps the APK/web chat responsive for
     # algebra/arithmetic even when Gemini is slow, overloaded, or unavailable.
@@ -280,6 +281,11 @@ def answer_question(question: str, history: str = "") -> dict:
             while len(_ANSWER_CACHE) > _CACHE_MAX:
                 _ANSWER_CACHE.popitem(last=False)
         return result
+
+    # A previous model response must never override a verified calculation.
+    if use_cache and key in _ANSWER_CACHE:
+        _ANSWER_CACHE.move_to_end(key)
+        return dict(_ANSWER_CACHE[key])
 
     context_data = _retrieve(question)
     context = "\n\n".join(context_data["chunks"])

@@ -87,6 +87,20 @@ def test_stream_uses_symbolic_solver_before_ollama(stream_client, monkeypatch):
     assert r.text == r"The answer is \(x = \frac{4}{5}\)."
 
 
+def test_stream_calculates_square_root_21(stream_client, monkeypatch):
+    def must_not_run(*args, **kwargs):
+        raise AssertionError("Numeric roots must bypass model answers")
+
+    monkeypatch.setattr(ask_module, "answer_question", must_not_run)
+    monkeypatch.setattr(ask_module, "stream_answer", must_not_run)
+    response = stream_client.post(
+        "/api/ask/stream", json={"question": "Find the square root of 21"},
+    )
+    assert response.status_code == 200
+    assert r"\sqrt{21}" in response.text
+    assert "4.582576" in response.text
+
+
 def test_stream_503_when_ollama_down_and_cascade_also_fails(stream_client, monkeypatch):
     monkeypatch.setattr(ask_module, "stream_answer", _ollama_down)
 
