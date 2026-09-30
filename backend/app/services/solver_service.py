@@ -106,11 +106,8 @@ def solve_image(image_bytes: bytes):
             "success": False,
             "error_code": "ocr_rate_limited" if limited else "ocr_unavailable",
             "error": (
-                "Image recognition has reached its usage limit. Please try again later "
-                "or type the problem in chat."
-                if limited else
-                "Image recognition is unavailable right now. Please try again later "
-                "or type the problem in chat."
+                "Scanning is temporarily unavailable. Please try again later "
+                "or type your problem in chat."
             ),
         }
 

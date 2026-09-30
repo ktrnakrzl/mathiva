@@ -155,7 +155,10 @@ def test_quota_failure_is_not_reported_as_bad_photo(monkeypatch):
     monkeypatch.setattr(ocr_service, "gemini_to_latex", limited)
     result = solver_service.solve_image(b"img")
     assert result["error_code"] == "ocr_rate_limited"
-    assert "usage limit" in result["error"]
+    assert result["error"] == (
+        "Scanning is temporarily unavailable. Please try again later "
+        "or type your problem in chat."
+    )
 
 
 def test_no_configured_engine_reports_service_unavailable(monkeypatch):
