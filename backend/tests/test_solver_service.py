@@ -81,7 +81,7 @@ def test_gemini_error_falls_back_to_pix2tex(monkeypatch):
 
     def boom(_):
         calls.append("gemini")
-        raise ocr_service.OCRServiceError("gemini unreachable")
+        raise ocr_service.OCRUnavailableError("gemini unreachable")
 
     monkeypatch.setattr(ocr_service, "gemini_to_latex", boom)
     monkeypatch.setattr(
@@ -145,3 +145,33 @@ def test_gemini_direct_solve_rescues_unparseable_transcription(monkeypatch):
     assert result["success"] is True
     assert result["latex"] == "2x+5=13"
     assert calls == ["gemini", "gemini-direct"]
+
+
+def test_quota_failure_is_not_reported_as_bad_photo(monkeypatch):
+    monkeypatch.setattr(ocr_service, "gemini_available", lambda: True)
+    monkeypatch.setattr(solver_service.settings, "disable_pix2tex", True)
+    def limited(_):
+        raise ocr_service.OCRRateLimitError("quota")
+    monkeypatch.setattr(ocr_service, "gemini_to_latex", limited)
+    result = solver_service.solve_image(b"img")
+    assert result["error_code"] == "ocr_rate_limited"
+    assert "usage limit" in result["error"]
+
+
+def test_no_configured_engine_reports_service_unavailable(monkeypatch):
+    monkeypatch.setattr(ocr_service, "gemini_available", lambda: False)
+    monkeypatch.setattr(solver_service.settings, "disable_pix2tex", True)
+    result = solver_service.solve_image(b"img")
+    assert result["error_code"] == "ocr_unavailable"
+
+
+def test_empty_transcription_tries_direct_image_prompt(monkeypatch):
+    monkeypatch.setattr(ocr_service, "gemini_available", lambda: True)
+    monkeypatch.setattr(solver_service.settings, "disable_pix2tex", True)
+    def empty(_):
+        raise ocr_service.OCRServiceError("empty transcription")
+    monkeypatch.setattr(ocr_service, "gemini_to_latex", empty)
+    monkeypatch.setattr(ocr_service, "gemini_solve_image", lambda _: {
+        "success": True, "latex": "2+3", "answer": "5",
+    })
+    assert solver_service.solve_image(b"img")["answer"] == "5"

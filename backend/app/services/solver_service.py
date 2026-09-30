@@ -1,7 +1,11 @@
+import logging
+
 from solver.math_solver import solve_equation, solve_latex
 from app.config import settings
 from app.services import ocr_service
 from app.services.tutor_service import explain_solution
+
+logger = logging.getLogger(__name__)
 
 # Shown when neither OCR engine could turn the photo into a solvable equation.
 _UNREADABLE_MESSAGE = (
@@ -43,43 +47,72 @@ def solve_image(image_bytes: bytes):
     """
     latex = None
     result = {"success": False, "error": _UNREADABLE_MESSAGE}
+    service_error = None
 
     # Cloud engine first -- it reads real photos and handwriting.
     if ocr_service.gemini_available():
         try:
             latex = ocr_service.gemini_to_latex(image_bytes)
-            print(f"Gemini OCR read LaTeX: {latex}")
+            logger.info("Gemini OCR read LaTeX: %s", latex)
             result = solve_problem_from_latex(latex)
             if not result.get("success"):
-                print(f"Gemini OCR solve failed: {result.get('error')}")
+                logger.info("Gemini OCR solve failed: %s", result.get("error"))
                 try:
                     result = ocr_service.gemini_solve_image(image_bytes)
                     latex = result.get("latex") or latex
-                    print("Gemini direct image solve succeeded.")
+                    logger.info("Gemini direct image solve succeeded.")
                 except ocr_service.OCRServiceError as e:
-                    print(f"Gemini direct image solve failed: {e}")
+                    if isinstance(e, ocr_service.OCRUnavailableError):
+                        service_error = e
+                    logger.warning("Gemini direct image solve failed: %s", e)
         except ocr_service.OCRServiceError as e:
-            print(f"Gemini OCR failed: {e}")
-            pass  # fall through to the local engine
+            logger.warning("Gemini OCR failed: %s", e)
+            if isinstance(e, ocr_service.OCRUnavailableError):
+                service_error = e
+            else:
+                # A missing/empty transcription can still be understood by the
+                # image-solving prompt. Do not retry an outage or quota error.
+                try:
+                    result = ocr_service.gemini_solve_image(image_bytes)
+                    latex = result.get("latex")
+                except ocr_service.OCRServiceError as retry_error:
+                    if isinstance(retry_error, ocr_service.OCRUnavailableError):
+                        service_error = retry_error
     else:
-        print("Gemini OCR skipped: GEMINI_API_KEY is not configured.")
+        logger.info("Gemini OCR skipped: GEMINI_API_KEY is not configured.")
+        service_error = ocr_service.OCRUnavailableError("Cloud OCR is not configured")
 
     # Local pix2tex as an offline fallback: no key, or Gemini didn't solve. A
     # crash here (bad image, model error) is treated the same as an unreadable
     # scan so the caller still gets an honest failure.
     if not result.get("success") and settings.disable_pix2tex:
-        print("pix2tex OCR skipped: DISABLE_PIX2TEX=true")
+        logger.info("pix2tex OCR skipped: DISABLE_PIX2TEX=true")
     elif not result.get("success"):
         try:
             pix_latex = ocr_service.pix2tex_to_latex(image_bytes)
-            print(f"pix2tex OCR read LaTeX: {pix_latex}")
+            logger.info("pix2tex OCR read LaTeX: %s", pix_latex)
             latex = pix_latex
             result = solve_problem_from_latex(pix_latex)
             if not result.get("success"):
-                print(f"pix2tex OCR solve failed: {result.get('error')}")
+                logger.info("pix2tex OCR solve failed: %s", result.get("error"))
         except Exception as e:
-            print(f"pix2tex OCR failed: {e}")
-            pass  # keep the cloud/failure result
+            logger.warning("pix2tex OCR failed: %s", e)
+            if latex is None and service_error is None:
+                service_error = ocr_service.OCRUnavailableError("Local OCR failed")
+
+    if not result.get("success") and service_error is not None and latex is None:
+        limited = isinstance(service_error, ocr_service.OCRRateLimitError)
+        result = {
+            "success": False,
+            "error_code": "ocr_rate_limited" if limited else "ocr_unavailable",
+            "error": (
+                "Image recognition has reached its usage limit. Please try again later "
+                "or type the problem in chat."
+                if limited else
+                "Image recognition is unavailable right now. Please try again later "
+                "or type the problem in chat."
+            ),
+        }
 
     if latex is not None:
         result["latex"] = latex

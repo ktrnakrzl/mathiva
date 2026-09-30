@@ -58,6 +58,22 @@ def test_no_candidates_becomes_ocr_error(monkeypatch):
         gemini_to_latex(b"imgbytes")
 
 
+def test_quota_error_is_classified(monkeypatch):
+    _patch_post(monkeypatch, _FakeResponse({"error": {
+        "code": 429, "status": "RESOURCE_EXHAUSTED", "message": "quota",
+    }}))
+    with pytest.raises(ocr_service.OCRRateLimitError):
+        gemini_to_latex(b"imgbytes")
+
+
+def test_ignores_thought_parts_and_reads_final_transcription(monkeypatch):
+    _patch_post(monkeypatch, _FakeResponse({"candidates": [{"content": {"parts": [
+        {"thought": True, "text": "Let me inspect the photo"},
+        {"text": "2x+5=13"},
+    ]}}]}))
+    assert gemini_to_latex(b"imgbytes") == "2x+5=13"
+
+
 def test_connection_error_becomes_ocr_error(monkeypatch):
     _patch_post(monkeypatch, exc=requests.ConnectionError("refused"))
     with pytest.raises(OCRServiceError):

@@ -47,6 +47,14 @@ class OCRServiceError(RuntimeError):
     surfaces this as a clear failure instead of leaking a raw error."""
 
 
+class OCRUnavailableError(OCRServiceError):
+    """The recognition service failed, rather than the photo being unreadable."""
+
+
+class OCRRateLimitError(OCRUnavailableError):
+    """Cloud recognition quota or request limit was reached."""
+
+
 def gemini_available() -> bool:
     return bool(settings.gemini_api_key)
 
@@ -119,22 +127,34 @@ def _post_gemini_image(image_bytes: bytes, prompt: str, timeout: int = 30) -> di
             timeout=timeout,
         )
     except requests.RequestException as e:
-        raise OCRServiceError(f"Could not reach the OCR service: {e}") from e
+        raise OCRUnavailableError("Could not reach the image recognition service.") from e
 
     try:
         payload = response.json()
     except ValueError as e:
-        raise OCRServiceError("OCR service returned a non-JSON response") from e
+        raise OCRUnavailableError("OCR service returned a non-JSON response") from e
 
     # Gemini reports auth/quota errors in an `error` object.
+    if not isinstance(payload, dict):
+        raise OCRUnavailableError("OCR service returned an invalid response")
     if isinstance(payload.get("error"), dict):
-        raise OCRServiceError(payload["error"].get("message", "OCR service error"))
+        err = payload["error"]
+        error_type = (OCRRateLimitError if err.get("code") == 429 or
+                      err.get("status") == "RESOURCE_EXHAUSTED" else OCRUnavailableError)
+        raise error_type(err.get("message", "OCR service error"))
+    if getattr(response, "status_code", 200) >= 400:
+        raise OCRUnavailableError("Image recognition service request failed")
     return payload
 
 
 def _extract_text(payload: dict) -> str:
     try:
-        text = payload["candidates"][0]["content"]["parts"][0]["text"]
+        parts = payload["candidates"][0]["content"]["parts"]
+        text = "\n".join(
+            part["text"] for part in parts
+            if isinstance(part, dict) and isinstance(part.get("text"), str)
+            and not part.get("thought")
+        )
     except (KeyError, IndexError, TypeError):
         # No candidate usually means the prompt/image was blocked or empty.
         raise OCRServiceError("Couldn't read an equation from that image.")
