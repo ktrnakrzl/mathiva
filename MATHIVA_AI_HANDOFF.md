@@ -7,6 +7,27 @@
 
 ---
 
+## Current update (August 2026)
+
+- Branch `theme-v2` has been pushed to `origin`.
+- The Flutter app is no longer just prototype UI. It uses the FastAPI backend for
+  auth, tutor, solver, quiz/progress, and password reset.
+- Android app state now persists correctly across restarts: JWT via
+  `AuthStorage`, display name/preferences via `AppPreferences`, and recent scans
+  via `ScanHistoryService`.
+- The scan tab uses the live Photomath-style camera scanner with a crop box.
+  This is active for Android and web; web still depends on browser camera
+  permission support and secure hosting.
+- Flutter web service-worker caching was disabled/unregistered through
+  `frontend/web/index.html` and `frontend/web/flutter_bootstrap.js` so old
+  `main.dart.js` bundles stop resurrecting stale UI after deploy.
+- The live backend URL currently used for builds is `https://mathiva.onrender.com`.
+  Render cold starts can make the first backend request slow; the Flutter app
+  mitigates this by showing cached local state first and refreshing profile/progress
+  in the background.
+
+---
+
 ## What MATHIVA is (one line)
 
 A mobile-first intelligent tutoring system for Philippine Senior High School math
@@ -93,19 +114,19 @@ Then `python ml/t5/prepare_dataset.py` rebuilds `ml/t5/data/{train,val,test}.jso
 
 ## What's pending / next steps (in priority order)
 
-1. **Push `theme-v2`** to back up the local commits + run CI.
-2. **Deployment** (backend is ready; remaining steps are the user's):
+1. **Deployment** (backend is ready; remaining steps are the user's):
    - **Rotate the Supabase DB password** (it was exposed in dev chat — real blocker).
    - Pick a host with **≥1 GB RAM** (Render/Railway; free 512 MB tiers OOM on the
      torch+SBERT load). Set secrets: `GEMINI_API_KEY`, strong `JWT_SECRET`,
      `DATABASE_URL`, `DISABLE_T5=true`. Host provides HTTPS.
    - Add `--proxy-headers` to the uvicorn CMD so rate limiting keys correctly
      behind the host's proxy.
-   - Distribute the app: **web build** (a link, instant, no install — but no camera
-     scanner) and/or **APK** (full app, sideload).
-3. **Optional T5 improvement:** grow the dataset further (more per-subject pairs) →
+   - Distribute the app: **web build** (a link, instant, no install; live camera
+     works when the browser grants permission) and/or **APK** (best mobile
+     experience, sideload).
+2. **Optional T5 improvement:** grow the dataset further (more per-subject pairs) →
    retrain flan-t5-base on Colab → re-run `eval.py`.
-4. **Optional hardening:** frontend tests, structured logging, a paid Gemini key or
+3. **Optional hardening:** frontend tests, structured logging, a paid Gemini key or
    a second provider fallback for classroom-scale load.
 
 ## Gotchas an AI should know

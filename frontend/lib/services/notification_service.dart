@@ -15,7 +15,7 @@ class NotificationService {
   static const String _channelId = 'study_reminders';
   static const String _channelName = 'Study Reminders';
   static const String _channelDescription =
-      'Daily reminders to keep your Mathivia streak alive.';
+      'Daily reminders to keep your Mathiva streak alive.';
 
   final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
@@ -107,7 +107,7 @@ class NotificationService {
     await _plugin.zonedSchedule(
       id: _streakReminderId,
       title: "Don't lose your streak!",
-      body: 'Solve a quick problem in Mathivia to keep today\'s streak going.',
+      body: 'Solve a quick problem in Mathiva to keep today\'s streak going.',
       scheduledDate: _nextInstanceOf(time),
       notificationDetails: details,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,

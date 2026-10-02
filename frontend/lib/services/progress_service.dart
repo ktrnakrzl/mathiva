@@ -3,10 +3,7 @@ import '../repositories/progress_repository.dart';
 
 export '../repositories/progress_repository.dart';
 
-/// Thin facade over [ProgressRepository], matching the ChatService /
-/// SolverService pattern. `repository` defaults to the real backend but can
-/// be swapped to `MockProgressRepository()` (see `main.dart`'s
-/// `kUseMockBackend` flag).
+/// Thin facade over the backend progress repository.
 class ProgressService {
   static ProgressRepository repository = ApiProgressRepository();
 

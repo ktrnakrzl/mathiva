@@ -60,9 +60,10 @@ personalized adaptive practice for senior-high-school mathematics.
   Mathematics**.
 - **Out of scope / delimitations:** not a replacement for a teacher; the fine-
   tuned model is trained on a small in-domain dataset (see limitations); the
-  retrieval corpus currently covers **General Mathematics only**; no live public
-  deployment at submission (runs locally / on a configured cloud database); the
-  app targets **mobile** (some features such as camera capture are mobile-only).
+  retrieval corpus currently covers **General Mathematics only**; deployment
+  depends on configured cloud services; the best experience targets mobile,
+  though the web build also supports live camera scanning when the browser grants
+  permission.
 
 ### 2.5 Significance / target users
 Primary users are **SHS students**; the system benefits self-study, homework
@@ -203,11 +204,12 @@ The backend is layered internally: **API routers** (thin request/response) →
 - **Typed:** the expression is parsed with SymPy (accepting natural student
   notation such as `2x + 3 = 13` and `x^2`), solved exactly, and a step-by-step
   explanation is produced. Because the answer is *computed*, it is trustworthy.
-- **Photo (hybrid, local-first):** the image is read by the local `pix2tex`
-  model first; if that read does not yield a *solvable* equation, the system
-  falls back to **Gemini** (which reads handwriting and photographs) and accepts
-  its output only if it, too, solves. Guards reject garbled scans instead of
-  returning confidently-wrong answers.
+- **Photo (hybrid, cloud-first):** Gemini reads the image first when configured,
+  because it handles real photos and handwriting better than local OCR. The
+  system accepts the OCR output only if SymPy can solve it; if transcription is
+  too messy, Gemini gets one direct image-solve rescue attempt. Local `pix2tex`
+  remains an optional fallback for clean printed math or offline development.
+  Guards reject garbled scans instead of returning confidently-wrong answers.
 
 ### 5.2 AI tutor — RAG + model cascade
 For a conceptual question:
@@ -332,16 +334,17 @@ For a conceptual question:
   T5-vs-Phi-3 comparison should be reported as a finding.
 - **Retrieval corpus is General-Mathematics only**, and is not yet filtered for
   front-matter/boilerplate, which propagates noise into generated QA pairs.
-- **No automated testing of the mobile app and no continuous integration** — the
-  backend suite is comprehensive but is run manually; the ~12,500-line Flutter
-  codebase is validated only by manual use.
+- **Frontend automated testing is still limited** — the backend suite is
+  comprehensive and CI exists, but the Flutter app is still mostly validated by
+  manual use.
 - **Quiz content coverage** is limited to the 11 templated concepts (the app's
   current curriculum concepts all map to these).
-- **OCR accuracy is unmeasured** and depends on photo quality; the camera/OCR
-  photo flow is **mobile-only**.
-- **No public deployment at submission** — the app runs locally against a backend;
-  the production database (Supabase PostgreSQL) and configuration are set up, and
-  the backend URL is build-time configurable, but there is no hosted public URL.
+- **OCR accuracy is unmeasured** and depends on photo quality; the live camera
+  photo flow exists on Android and web, but web behavior depends on browser
+  permission support and secure hosting.
+- **Deployment depends on configured cloud services** — the backend URL is
+  build-time configurable, and the current live backend used for app builds is
+  `https://mathiva.onrender.com`.
 - **External free services** are used within their free tiers (Google Gemini); no
   paid cloud APIs are required.
 

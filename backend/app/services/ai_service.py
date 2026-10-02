@@ -2,19 +2,13 @@ import json
 
 import requests
 
+from app.config import settings
+
 OLLAMA_URL = "http://localhost:11434/api/generate"
 
 # Model + generation options shared by the streaming and non-streaming paths so
 # the two can't drift apart (same model, same length cap).
 MODEL = "phi"
-GEN_OPTIONS = {
-    # Hard cap on generated tokens. Phi (a base-ish model) tends to answer
-    # correctly in ~40 tokens then keep rambling for hundreds more -- measured
-    # 537 tokens (~8s) for a one-line answer. A concise tutor reply fits well
-    # under this, so the cap trims the wasted tail (roughly halving latency)
-    # without truncating real answers. Tune down if replies stay long.
-    "num_predict": 300,
-}
 # Keep the model resident in VRAM between requests so sporadic testing/demo
 # usage doesn't repeatedly pay Ollama's cold-load cost (its default keep_alive
 # unloads after 5 minutes idle).
@@ -31,7 +25,15 @@ class AIServiceError(RuntimeError):
     unavailable" message instead of leaking a raw KeyError/ConnectionError."""
 
 
+def _generation_options() -> dict:
+    # Phi often gives the useful math answer early, then keeps rambling. This
+    # cap is intentionally modest and can be raised with OLLAMA_NUM_PREDICT.
+    return {"num_predict": max(32, settings.ollama_num_predict)}
+
+
 def generate_answer(prompt: str):
+    if settings.disable_ollama:
+        raise AIServiceError("Ollama is disabled by configuration")
 
     try:
         response = requests.post(
@@ -41,7 +43,7 @@ def generate_answer(prompt: str):
                 "prompt": prompt,
                 "stream": False,
                 "keep_alive": KEEP_ALIVE,
-                "options": GEN_OPTIONS,
+                "options": _generation_options(),
             },
             timeout=REQUEST_TIMEOUT,
         )
@@ -77,6 +79,9 @@ def stream_answer(prompt: str):
     Once streaming has started a mid-stream drop just ends the generator -- the
     caller keeps whatever text arrived.
     """
+    if settings.disable_ollama:
+        raise AIServiceError("Ollama is disabled by configuration")
+
     try:
         response = requests.post(
             OLLAMA_URL,
@@ -85,7 +90,7 @@ def stream_answer(prompt: str):
                 "prompt": prompt,
                 "stream": True,
                 "keep_alive": KEEP_ALIVE,
-                "options": GEN_OPTIONS,
+                "options": _generation_options(),
             },
             stream=True,
             timeout=REQUEST_TIMEOUT,

@@ -48,12 +48,13 @@ class Settings(BaseSettings):
         default=24 * 60, validation_alias="ACCESS_TOKEN_EXPIRE_MINUTES"
     )
 
-    # Gemini free-tier fallback (also used by OCR). Optional: absent key just
-    # disables the Gemini tier.
-    gemini_api_key: str | None = Field(default=None, validation_alias="GEMINI_API_KEY")
-    # Stable Gemini model used by tutor fallback and OCR. Keep this pinned so a
-    # non-existent/latest alias cannot break the hosted demo unexpectedly.
-    gemini_model: str = Field(default="gemini-2.5-flash", validation_alias="GEMINI_MODEL")
+    # OpenAI powers cloud chat and camera/image understanding. Keep the key on
+    # the backend only; the Flutter app calls our authenticated API endpoints.
+    openai_api_key: str | None = Field(default=None, validation_alias="OPENAI_API_KEY")
+    openai_model: str = Field(default="gpt-5.4-mini", validation_alias="OPENAI_MODEL")
+    openai_base_url: str = Field(
+        default="https://api.openai.com/v1", validation_alias="OPENAI_BASE_URL"
+    )
 
     # Google Sign-In OAuth web client ID. The frontend obtains a Google ID
     # token and /auth/google verifies that its audience matches this client ID
@@ -119,6 +120,11 @@ class Settings(BaseSettings):
     # Ollama sidecar. This avoids waiting on localhost:11434 before falling back
     # to cloud APIs.
     disable_ollama: bool = Field(default=False, validation_alias="DISABLE_OLLAMA")
+
+    # Local Ollama response length cap. Short tutor answers usually fit well
+    # under this; keeping it configurable lets slower laptops trade verbosity
+    # for speed without code changes.
+    ollama_num_predict: int = Field(default=180, validation_alias="OLLAMA_NUM_PREDICT")
 
     # Use true streaming from local Ollama only when explicitly enabled. Hosted
     # deployments should stream the cloud cascade as a single text chunk instead

@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
+import logging
 import sys
 import os
 
@@ -11,6 +12,7 @@ load_dotenv(os.path.join(os.path.dirname(__file__), "../.env"))
 
 # Create app FIRST
 app = FastAPI(title="Mathiva API")
+logger = logging.getLogger(__name__)
 
 # Register the shared per-IP rate limiter (slowapi) so the @limiter.limit
 # decorators on the auth + Gemini-backed routes can find it on app.state, and a
@@ -80,7 +82,7 @@ if settings.is_sqlite:
 @app.on_event("startup")
 def warm_up_ollama():
     if settings.disable_ollama:
-        print("Ollama warm-up skipped: DISABLE_OLLAMA=true")
+        logger.info("Ollama warm-up skipped: DISABLE_OLLAMA=true")
         return
 
     # Pay Ollama's model-load-into-VRAM cost once at server startup instead
@@ -91,7 +93,7 @@ def warm_up_ollama():
     try:
         generate_answer("Say OK.")
     except Exception as e:
-        print(f"Warning: Ollama warm-up failed (is Ollama running?): {e}")
+        logger.warning("Ollama warm-up failed; is Ollama running? %s", e)
 
 
 @app.get("/")

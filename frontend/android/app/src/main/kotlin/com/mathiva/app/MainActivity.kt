@@ -1,4 +1,4 @@
-package com.example.mathivia
+package com.mathiva.app
 
 import io.flutter.embedding.android.FlutterActivity
 

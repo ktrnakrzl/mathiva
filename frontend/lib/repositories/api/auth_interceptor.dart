@@ -16,6 +16,12 @@ class AuthInterceptor extends Interceptor {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
+    if (options.extra['skipAuth'] == true || _isPublicAuthPath(options.path)) {
+      options.headers.remove('Authorization');
+      handler.next(options);
+      return;
+    }
+
     final token = await AuthStorage.getToken();
     if (token != null && token.isNotEmpty) {
       options.headers['Authorization'] = 'Bearer $token';
@@ -34,5 +40,13 @@ class AuthInterceptor extends Interceptor {
       AuthStorage.clearToken();
     }
     handler.next(err);
+  }
+
+  bool _isPublicAuthPath(String path) {
+    return path == '/auth/register' ||
+        path == '/auth/login' ||
+        path == '/auth/google' ||
+        path == '/auth/password/forgot' ||
+        path == '/auth/password/reset';
   }
 }

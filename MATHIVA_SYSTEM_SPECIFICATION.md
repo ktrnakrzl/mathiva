@@ -760,7 +760,7 @@ Supabase PostgreSQL
 ```
 
 ### 9.2 Environment Configuration
-- **Development:** Windows (PowerShell), local Python venv, mock repositories
+- **Development:** Windows (PowerShell), local Python venv, API repositories
 - **Testing:** AWS EC2 staging environment
 - **Production:** AWS EC2 + Supabase (post-defense deployment)
 

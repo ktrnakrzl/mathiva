@@ -50,36 +50,36 @@ def solve_image(image_bytes: bytes):
     service_error = None
 
     # Cloud engine first -- it reads real photos and handwriting.
-    if ocr_service.gemini_available():
+    if ocr_service.openai_available():
         try:
-            latex = ocr_service.gemini_to_latex(image_bytes)
-            logger.info("Gemini OCR read LaTeX: %s", latex)
+            latex = ocr_service.openai_to_latex(image_bytes)
+            logger.info("OpenAI OCR read LaTeX: %s", latex)
             result = solve_problem_from_latex(latex)
             if not result.get("success"):
                 logger.info("Gemini OCR solve failed: %s", result.get("error"))
                 try:
-                    result = ocr_service.gemini_solve_image(image_bytes)
+                    result = ocr_service.openai_solve_image(image_bytes)
                     latex = result.get("latex") or latex
-                    logger.info("Gemini direct image solve succeeded.")
+                    logger.info("OpenAI direct image solve succeeded.")
                 except ocr_service.OCRServiceError as e:
                     if isinstance(e, ocr_service.OCRUnavailableError):
                         service_error = e
-                    logger.warning("Gemini direct image solve failed: %s", e)
+                    logger.warning("OpenAI direct image solve failed: %s", e)
         except ocr_service.OCRServiceError as e:
-            logger.warning("Gemini OCR failed: %s", e)
+            logger.warning("OpenAI OCR failed: %s", e)
             if isinstance(e, ocr_service.OCRUnavailableError):
                 service_error = e
             else:
                 # A missing/empty transcription can still be understood by the
                 # image-solving prompt. Do not retry an outage or quota error.
                 try:
-                    result = ocr_service.gemini_solve_image(image_bytes)
+                    result = ocr_service.openai_solve_image(image_bytes)
                     latex = result.get("latex")
                 except ocr_service.OCRServiceError as retry_error:
                     if isinstance(retry_error, ocr_service.OCRUnavailableError):
                         service_error = retry_error
     else:
-        logger.info("Gemini OCR skipped: GEMINI_API_KEY is not configured.")
+        logger.info("OpenAI OCR skipped: OPENAI_API_KEY is not configured.")
         service_error = ocr_service.OCRUnavailableError("Cloud OCR is not configured")
 
     # Local pix2tex as an offline fallback: no key, or Gemini didn't solve. A

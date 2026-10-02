@@ -18,14 +18,14 @@ follow so we don't end up with a third parallel structure.
 |---|---|
 | `lib/screens/` | Full-page widgets, routed via `app.dart`'s `GoRouter`. |
 | `lib/services/` | Static facade classes (e.g. `ChatService`, `SolverService`) that existing screens call directly. Internally backed by `lib/repositories/`. |
-| `lib/repositories/` | The actual API contract: an abstract `XRepository` interface, an `api/ApiXRepository` (real backend) and a `mock/MockXRepository` (offline/demo data). |
+| `lib/repositories/` | The actual API contract: an abstract `XRepository` interface, an `api/ApiXRepository` (real backend). |
 | `lib/providers/` | Riverpod `Provider<XRepository>` definitions, for screens written as `ConsumerWidget`/`ConsumerStatefulWidget` to read with `ref.read(...)`. |
 | `lib/widgets/` | Shared widgets specific to the flat stack (nav bar, app bar, buttons). |
 | `lib/presentation/widgets/` | A second shared-widget location (`AnimatedBackground`, `FadeSlideIn`, `TapScale`, `SectionHeader`, etc.) — left over from the merge, but actively used by nearly every screen. Don't move or delete these; keep using them as-is. |
 | `lib/models/mathiva_models.dart` | Domain models used by the flat stack (`PracticeProblem`, `MathSubject`, etc.). |
-| `lib/data/local_mathiva_data.dart` | Static sample/mock data (e.g. `LocalMathivaData.quadraticProblem`), reused by mock repositories and screen fallbacks. |
+| `lib/data/local_mathiva_data.dart` | Bundled lesson content and sample practice problems. |
 | `lib/theme/`, `lib/utils/route_names.dart` | App theme and route-name constants used by `app.dart`. |
-| `lib/core/constants/api_constants.dart` | `kBaseUrl` (backend host) and `kUseMockBackend` (dev/demo flag — see below). |
+| `lib/core/constants/api_constants.dart` | Backend base URL and Google OAuth client IDs. |
 
 ## Deprecated — not deleted yet, do not build on these
 
@@ -52,9 +52,44 @@ of the deprecated set — see the folder map above.
 - **Local/UI-only state** (an animation controller, a drag gesture, which
   step of a multi-step screen is showing) stays exactly as it is today:
   `StatefulWidget` + `setState`. Don't introduce Riverpod for this.
-- **Any state backed by a network call** goes through the repository
-  pattern below, and the screen reads it via Riverpod (`ConsumerWidget` or
-  `ConsumerStatefulWidget` + `ref.read`/`ref.watch`).
+- **Shared app state** currently uses small static services plus
+  `ValueNotifier`s, not a full Riverpod migration. The important examples are:
+  `AuthStorage.isAuthenticated`, `AppPreferences.*`, `ProgressStore.current`,
+  and `ScanHistoryService.recent`.
+- **Network calls** should still go through a repository interface
+  (`AuthRepository`, `TutorRepository`, `SolverRepository`,
+  `ProgressRepository`). Existing screens often reach those repositories through
+  service facades such as `ProgressService` or `SolverService`; new work can use
+  that existing style unless you are deliberately migrating a whole feature to
+  Riverpod.
+
+## Startup and persisted device state
+
+`lib/main.dart` is the startup spine:
+
+1. Initialize notifications.
+2. Load `AppPreferences` from `shared_preferences`.
+3. Load the saved JWT through `AuthStorage`.
+4. Load recent solved scans through `ScanHistoryService`.
+5. Render `MathivaApp`.
+6. If signed in, refresh progress and `/auth/me` in the background.
+
+This is why reopening the Android app should keep the user's name immediately:
+the cached name is local, while the backend profile refresh happens after the UI
+is already on screen.
+
+Local device storage:
+
+- `AuthStorage` - JWT access token only.
+- `AppPreferences` - cached display name, dark mode, haptics, reminder settings,
+  palette, and other preferences.
+- `ScanHistoryService` - recent solved scans shown on Home.
+
+Backend storage:
+
+- user account data and password hash.
+- generated quiz questions and attempts.
+- progress aggregates derived from attempts.
 
 ## Repository pattern — the convention for every feature, new or old
 
@@ -62,9 +97,8 @@ For a feature called `Foo`:
 
 1. `lib/repositories/foo_repository.dart` — `abstract class FooRepository { Future<...> doThing(); }`
 2. `lib/repositories/api/api_foo_repository.dart` — `ApiFooRepository implements FooRepository`, hits the real backend via `Dio` with `baseUrl: kBaseUrl`.
-3. `lib/repositories/mock/mock_foo_repository.dart` — `MockFooRepository implements FooRepository`, returns canned data after a short simulated delay.
-4. `lib/providers/repository_providers.dart` — add `final fooRepositoryProvider = Provider<FooRepository>((ref) => ApiFooRepository());`.
-5. The screen is a `ConsumerWidget`/`ConsumerStatefulWidget` and calls `ref.read(fooRepositoryProvider).doThing()`.
+3. `lib/providers/repository_providers.dart` — add `final fooRepositoryProvider = Provider<FooRepository>((ref) => ApiFooRepository());`.
+4. The screen is a `ConsumerWidget`/`ConsumerStatefulWidget` and calls `ref.read(fooRepositoryProvider).doThing()`.
 
 `tutor_repository.dart` and `solver_repository.dart` are the worked examples —
 copy their shape for the next feature (e.g. quiz scoring, auth, progress).
@@ -88,27 +122,48 @@ class ChatService {
 the provider directly — the facade only exists so two already-shipped
 screens didn't need to change.
 
-### Dev/demo mock switch
-
-`kUseMockBackend` in `lib/core/constants/api_constants.dart`, read in
-`main.dart` before `runApp`, swaps `ChatService`/`SolverService` over to
-their mock repositories. Flip it to `true` to develop/demo the UI without a
-running backend (no Ollama, no FastAPI server needed); leave it `false` for
-real use.
-
 ## API contract notes
 
 - Backend base URL: `kBaseUrl` in `core/constants/api_constants.dart`.
-- All backend routes are under `/api/*` (`/api/ask`, `/api/solve`,
-  `/api/solve-image`) **except** `/health` and `/quiz`, which are mounted
-  directly on the FastAPI app without the prefix.
+- Auth routes are unprefixed: `/auth/register`, `/auth/login`, `/auth/google`,
+  `/auth/me`, `/auth/password/forgot`, `/auth/password/reset`.
+- Feature routes are under `/api/*`: `/api/ask`, `/api/ask/stream`,
+  `/api/solve`, `/api/solve-image`, `/api/quiz/next`,
+  `/api/quiz/next-adaptive`, `/api/quiz/review-next`, `/api/quiz/answer`,
+  `/api/quiz/submit`, and `/api/user/progress`.
+- `/health` is unprefixed and is used by deployment health checks.
+
+## Scan & Solve flow
+
+`lib/screens/image_solver_screen.dart` is the Photomath-style scan screen:
+
+1. Opens the live camera with the `camera` plugin.
+2. Shows a draggable/resizable crop box.
+3. Captures the photo and crops the selected area locally.
+4. Uploads the cropped image through `SolverService.solveImage`.
+5. Records successful solves in `ScanHistoryService`.
+6. Navigates to `SolutionScreen`.
+
+The web build also uses the live scanner. To avoid stale Flutter web bundles,
+`web/index.html` unregisters old service workers and `web/flutter_bootstrap.js`
+loads without registering a new one.
 
 ## Style conventions already established — keep following them
 
-- Each screen file declares its own small set of design-token `Color`
-  constants at the top (`_ink`, `_muted`, `_border`, `_surface`, `_pageBg`),
-  rather than a global theme object. Match this when adding a screen.
+- Newer screens should prefer `AppTheme.colorsOf(context)` and semantic colors
+  from `lib/theme/` over hard-coded screen-local color constants. Some older
+  screens still carry local constants from earlier iterations; do not copy that
+  pattern into new work.
 - Motion/layout is composed from shared wrappers in
   `lib/presentation/widgets/`: `AnimatedBackground` (page backdrop),
   `FadeSlideIn` (entrance animation), `TapScale` (pressable scale feedback).
   Use these instead of writing new animation wrappers.
+
+### Image preparation workers
+
+`lib/services/image_processing.dart` prepares the preview and cropped upload.
+The screen calls these functions with `compute`, moving decoding and JPEG
+encoding to a worker isolate on native platforms. Flutter web still runs this
+work on its event loop. Preview preparation decodes the source once, preserving
+original dimensions and the original photo for cropping. Uploads retain the
+existing 1280-pixel maximum dimension and JPEG quality of 82.

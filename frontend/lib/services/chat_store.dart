@@ -27,7 +27,7 @@ class ChatStore {
       ValueNotifier<List<ChatMessage>>([
     ChatMessage(
       text:
-          'Hi! I\'m your Mathivia tutor. Ask me to solve, explain, or check any math problem. I\'ll include the steps and why each step works.',
+          'Hi! I\'m your Mathiva tutor. Ask me to solve, explain, or check any math problem. I\'ll include the steps and why each step works.',
       isUser: false,
       timestamp: DateTime.now(),
     ),
@@ -39,7 +39,7 @@ class ChatStore {
     messages.value = [
       ChatMessage(
         text:
-            'Hi! I\'m your Mathivia tutor. Ask me to solve, explain, or check any math problem. I\'ll include the steps and why each step works.',
+            'Hi! I\'m your Mathiva tutor. Ask me to solve, explain, or check any math problem. I\'ll include the steps and why each step works.',
         isUser: false,
         timestamp: DateTime.now(),
       ),

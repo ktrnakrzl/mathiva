@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, EmailStr, field_validator
@@ -24,6 +25,7 @@ from app.services.auth_service import (
 )
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+logger = logging.getLogger(__name__)
 
 
 class RegisterRequest(BaseModel):
@@ -161,7 +163,7 @@ def forgot_password(
     try:
         send_password_reset_email(user.email, build_password_reset_url(raw_token))
     except Exception as e:
-        print(f"Warning: password reset email failed: {e}")
+        logger.warning("Password reset email failed: %s", e)
 
     return MessageResponse(message=message)
 

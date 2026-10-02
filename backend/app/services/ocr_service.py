@@ -1,21 +1,16 @@
-import base64
 import io
 import json
 
-import requests
 from PIL import Image
 
 from app.config import settings
+from app.services import openai_service
 
 # Google's Gemini is a multimodal model with a genuinely free API tier (no card
 # needed via Google AI Studio). Unlike pix2tex -- which only reads printed math
 # and garbles real photos -- Gemini reads handwriting and photographed problems
 # and can transcribe them to LaTeX. When GEMINI_API_KEY is set we use it;
 # otherwise we fall back to the local pix2tex model so dev still works offline.
-GEMINI_URL = (
-    "https://generativelanguage.googleapis.com/v1beta/models/"
-    "{model}:generateContent"
-)
 
 # Asks for bare LaTeX only, so the result feeds straight into solve_latex.
 _OCR_PROMPT = (
@@ -55,8 +50,8 @@ class OCRRateLimitError(OCRUnavailableError):
     """Cloud recognition quota or request limit was reached."""
 
 
-def gemini_available() -> bool:
-    return bool(settings.gemini_api_key)
+def openai_available() -> bool:
+    return openai_service.openai_available()
 
 
 def _detect_mime(image_bytes: bytes) -> str:
@@ -101,91 +96,31 @@ def _clean_json(text: str) -> dict:
         return json.loads(t[start:end + 1])
 
 
-def _post_gemini_image(image_bytes: bytes, prompt: str, timeout: int = 30) -> dict:
-    body = {
-        "contents": [
-            {
-                "parts": [
-                    {"text": prompt},
-                    {
-                        "inline_data": {
-                            "mime_type": _detect_mime(image_bytes),
-                            "data": base64.b64encode(image_bytes).decode("ascii"),
-                        }
-                    },
-                ]
-            }
-        ],
-        "generationConfig": {"temperature": 0},
-    }
-
+def _post_openai_image(image_bytes: bytes, prompt: str) -> str:
     try:
-        response = requests.post(
-            GEMINI_URL.format(model=settings.gemini_model),
-            params={"key": settings.gemini_api_key},
-            json=body,
-            timeout=timeout,
-        )
-    except requests.RequestException as e:
+        return openai_service.analyze_image(image_bytes, _detect_mime(image_bytes), prompt)
+    except openai_service.OpenAIRateLimitError as e:
+        raise OCRRateLimitError(str(e)) from e
+    except openai_service.OpenAIServiceError as e:
         raise OCRUnavailableError("Could not reach the image recognition service.") from e
 
-    try:
-        payload = response.json()
-    except ValueError as e:
-        raise OCRUnavailableError("OCR service returned a non-JSON response") from e
 
-    # Gemini reports auth/quota errors in an `error` object.
-    if not isinstance(payload, dict):
-        raise OCRUnavailableError("OCR service returned an invalid response")
-    if isinstance(payload.get("error"), dict):
-        err = payload["error"]
-        error_type = (OCRRateLimitError if err.get("code") == 429 or
-                      err.get("status") == "RESOURCE_EXHAUSTED" else OCRUnavailableError)
-        raise error_type(err.get("message", "OCR service error"))
-    if getattr(response, "status_code", 200) >= 400:
-        raise OCRUnavailableError("Image recognition service request failed")
-    return payload
-
-
-def _extract_text(payload: dict) -> str:
-    try:
-        parts = payload["candidates"][0]["content"]["parts"]
-        text = "\n".join(
-            part["text"] for part in parts
-            if isinstance(part, dict) and isinstance(part.get("text"), str)
-            and not part.get("thought")
-        )
-    except (KeyError, IndexError, TypeError):
-        # No candidate usually means the prompt/image was blocked or empty.
-        raise OCRServiceError("Couldn't read an equation from that image.")
-    text = text.strip()
-    if not text:
-        raise OCRServiceError("Couldn't read an equation from that image.")
-    return text
-
-
-def gemini_to_latex(image_bytes: bytes) -> str:
-    """Send the photo to Gemini and return the recognised LaTeX equation.
-
-    Requires GEMINI_API_KEY in the environment (backend/.env); get a free key
-    from https://aistudio.google.com. temperature=0 for a deterministic
-    transcription rather than a creative one."""
-    payload = _post_gemini_image(image_bytes, _OCR_PROMPT)
-    text = _extract_text(payload)
+def openai_to_latex(image_bytes: bytes) -> str:
+    """Send a camera/gallery image to OpenAI and return recognized LaTeX."""
+    text = _post_openai_image(image_bytes, _OCR_PROMPT)
     latex = _clean_latex(text)
     if not latex:
         raise OCRServiceError("Couldn't read an equation from that image.")
     return latex
 
 
-def gemini_solve_image(image_bytes: bytes) -> dict:
-    """Let Gemini solve the photographed problem directly.
+def openai_solve_image(image_bytes: bytes) -> dict:
+    """Let OpenAI solve the photographed problem directly.
 
     This is a rescue path for real photos whose transcription is readable to a
     multimodal model but too messy for SymPy's strict parser.
     """
-    payload = _post_gemini_image(image_bytes, _SOLVE_IMAGE_PROMPT, timeout=45)
-    text = _extract_text(payload)
+    text = _post_openai_image(image_bytes, _SOLVE_IMAGE_PROMPT)
     try:
         data = _clean_json(text)
     except ValueError as e:

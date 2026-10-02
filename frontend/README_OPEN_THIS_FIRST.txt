@@ -1,4 +1,4 @@
-MATHIVIA - FIXED FRONTEND ZIP
+MATHIVA - FIXED FRONTEND ZIP
 
 What was fixed in this ZIP:
 1. Added cupertino_icons to pubspec.yaml.
@@ -10,7 +10,7 @@ What was fixed in this ZIP:
 
 How to open:
 1. Extract this ZIP.
-2. Open the extracted mathivia folder in VS Code or Android Studio.
+2. Open the extracted mathiva folder in VS Code or Android Studio.
 3. Open Terminal in the same folder where pubspec.yaml is located.
 4. Run:
    flutter clean

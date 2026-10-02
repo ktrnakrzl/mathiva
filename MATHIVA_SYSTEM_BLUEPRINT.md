@@ -25,7 +25,7 @@ Everything in Sections 1–11 below describes the **full target design**. The ta
 | Database | SQLAlchemy ORM, but only the **`users`** table exists. Defaults to local SQLite (`DATABASE_URL` env var swaps to Postgres — not yet pointed at Supabase) |
 | `POST /quiz` | Generation-only — randomly samples from `genmath_qa_pairs.json` (currently 74 raw Q&A pairs; 62 after quality-judging). No grading. |
 | Frontend (Flutter) | Two screen trees: the active `lib/screens/*` (current, theme-aware) and a legacy `lib/presentation/screens/**` tree (still live-routed at `/quiz`, `/review`, `/mastery`, `/rewards`, `/tutor`) |
-| Frontend Repository Pattern | Real, but only on the frontend (`lib/repositories/` — abstract + API/mock implementations) |
+| Frontend Repository Pattern | Real, but only on the frontend (`lib/repositories/` — abstract interfaces + API implementations) |
 | Frontend state management | Riverpod is only used in the **legacy** screen tree (7 files); the active app flow uses plain `StatefulWidget` + `ValueNotifier` |
 
 ### 📋 Planned, not yet built

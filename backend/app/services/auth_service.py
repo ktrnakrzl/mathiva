@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, timezone
 from email.message import EmailMessage
 from email.utils import parseaddr
 import hashlib
+import logging
 import smtplib
 import secrets
 from urllib.parse import urlencode
@@ -16,6 +17,8 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.database.db import get_db
 from app.database.models import User
+
+logger = logging.getLogger(__name__)
 
 # Auth config comes from the central settings (backend/.env). The JWT_SECRET
 # default is an insecure dev fallback so auth works out of the box locally;
@@ -73,7 +76,7 @@ def send_password_reset_email(email: str, reset_url: str) -> None:
     as a fallback for local/dev deployments that already use it.
     """
     if not reset_email_configured():
-        print("Password reset email skipped: email delivery is not configured.")
+        logger.info("Password reset email skipped: email delivery is not configured.")
         return
 
     subject = "Reset your Mathiva password"

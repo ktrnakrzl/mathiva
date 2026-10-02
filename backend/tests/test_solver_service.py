@@ -1,8 +1,8 @@
 """Tests for the hybrid OCR orchestration in solver_service.solve_image.
 
-The rule under test: read with Gemini (cloud) first, since it handles real
+The rule under test: read with OpenAI (cloud) first, since it handles real
 photos and handwriting, and only fall back to the local pix2tex model when
-Gemini is unavailable (no key / offline) or its read doesn't yield a *solvable*
+OpenAI is unavailable (no key / offline) or its read doesn't yield a *solvable*
 equation. The OCR engines and the solve step are mocked so no model/Ollama/
 network is touched -- what we're verifying is the routing (which engine is used,
 when), not the OCR or the math.
@@ -11,21 +11,21 @@ when), not the OCR or the math.
 from app.services import ocr_service, solver_service
 
 
-def _stub_engines(monkeypatch, pix2tex_out, gemini_out, gemini_on, calls):
+def _stub_engines(monkeypatch, pix2tex_out, openai_out, openai_on, calls):
     def pix(_):
         calls.append("pix2tex")
         return pix2tex_out
 
     def gem(_):
-        calls.append("gemini")
-        return gemini_out
+        calls.append("openai")
+        return openai_out
 
     monkeypatch.setattr(ocr_service, "pix2tex_to_latex", pix)
-    monkeypatch.setattr(ocr_service, "gemini_to_latex", gem)
-    monkeypatch.setattr(ocr_service, "gemini_available", lambda: gemini_on)
+    monkeypatch.setattr(ocr_service, "openai_to_latex", gem)
+    monkeypatch.setattr(ocr_service, "openai_available", lambda: openai_on)
     monkeypatch.setattr(
         ocr_service,
-        "gemini_solve_image",
+        "openai_solve_image",
         lambda _: (_ for _ in ()).throw(ocr_service.OCRServiceError("direct solve failed")),
     )
 
@@ -40,78 +40,78 @@ def _stub_solver(monkeypatch, solvable_latex):
     monkeypatch.setattr(solver_service, "solve_problem_from_latex", fake_solve)
 
 
-def test_gemini_read_that_solves_skips_pix2tex(monkeypatch):
+def test_openai_read_that_solves_skips_pix2tex(monkeypatch):
     calls = []
-    _stub_engines(monkeypatch, pix2tex_out="X", gemini_out="2x+5=13", gemini_on=True, calls=calls)
+    _stub_engines(monkeypatch, pix2tex_out="X", openai_out="2x+5=13", openai_on=True, calls=calls)
     _stub_solver(monkeypatch, solvable_latex="2x+5=13")
 
     result = solver_service.solve_image(b"img")
 
     assert result["success"] is True
     assert result["latex"] == "2x+5=13"
-    assert calls == ["gemini"]  # cloud read solved; the local model never ran
+    assert calls == ["openai"]  # cloud read solved; the local model never ran
 
 
-def test_falls_back_to_pix2tex_when_gemini_does_not_solve(monkeypatch):
+def test_falls_back_to_pix2tex_when_openai_does_not_solve(monkeypatch):
     calls = []
-    _stub_engines(monkeypatch, pix2tex_out="2x+5=13", gemini_out="garbled", gemini_on=True, calls=calls)
+    _stub_engines(monkeypatch, pix2tex_out="2x+5=13", openai_out="garbled", openai_on=True, calls=calls)
     _stub_solver(monkeypatch, solvable_latex="2x+5=13")
 
     result = solver_service.solve_image(b"img")
 
     assert result["success"] is True
     assert result["latex"] == "2x+5=13"
-    assert calls == ["gemini", "pix2tex"]  # tried cloud first, then local fallback
+    assert calls == ["openai", "pix2tex"]  # tried cloud first, then local fallback
 
 
-def test_no_gemini_key_uses_pix2tex_offline(monkeypatch):
+def test_no_openai_key_uses_pix2tex_offline(monkeypatch):
     calls = []
-    _stub_engines(monkeypatch, pix2tex_out="2x+5=13", gemini_out="X", gemini_on=False, calls=calls)
+    _stub_engines(monkeypatch, pix2tex_out="2x+5=13", openai_out="X", openai_on=False, calls=calls)
     _stub_solver(monkeypatch, solvable_latex="2x+5=13")
 
     result = solver_service.solve_image(b"img")
 
     assert result["success"] is True
     assert result["latex"] == "2x+5=13"
-    assert calls == ["pix2tex"]  # no key -> Gemini skipped, local engine solves
+    assert calls == ["pix2tex"]  # no key -> OpenAI skipped, local engine solves
 
 
-def test_gemini_error_falls_back_to_pix2tex(monkeypatch):
+def test_openai_error_falls_back_to_pix2tex(monkeypatch):
     calls = []
 
     def boom(_):
-        calls.append("gemini")
-        raise ocr_service.OCRUnavailableError("gemini unreachable")
+        calls.append("openai")
+        raise ocr_service.OCRUnavailableError("openai unreachable")
 
-    monkeypatch.setattr(ocr_service, "gemini_to_latex", boom)
+    monkeypatch.setattr(ocr_service, "openai_to_latex", boom)
     monkeypatch.setattr(
         ocr_service, "pix2tex_to_latex",
         lambda _: (calls.append("pix2tex"), "2x+5=13")[1],
     )
-    monkeypatch.setattr(ocr_service, "gemini_available", lambda: True)
+    monkeypatch.setattr(ocr_service, "openai_available", lambda: True)
     _stub_solver(monkeypatch, solvable_latex="2x+5=13")
 
     result = solver_service.solve_image(b"img")
 
     assert result["success"] is True
     assert result["latex"] == "2x+5=13"
-    assert calls == ["gemini", "pix2tex"]
+    assert calls == ["openai", "pix2tex"]
 
 
 def test_both_engines_fail_returns_unreadable(monkeypatch):
     calls = []
-    _stub_engines(monkeypatch, pix2tex_out="garbled", gemini_out="also junk", gemini_on=True, calls=calls)
+    _stub_engines(monkeypatch, pix2tex_out="garbled", openai_out="also junk", openai_on=True, calls=calls)
     _stub_solver(monkeypatch, solvable_latex="never")
 
     result = solver_service.solve_image(b"img")
 
     assert result["success"] is False
-    assert calls == ["gemini", "pix2tex"]  # both tried, both failed
+    assert calls == ["openai", "pix2tex"]  # both tried, both failed
 
 
-def test_disable_pix2tex_returns_gemini_failure_without_local_fallback(monkeypatch):
+def test_disable_pix2tex_returns_openai_failure_without_local_fallback(monkeypatch):
     calls = []
-    _stub_engines(monkeypatch, pix2tex_out="2x+5=13", gemini_out="garbled", gemini_on=True, calls=calls)
+    _stub_engines(monkeypatch, pix2tex_out="2x+5=13", openai_out="garbled", openai_on=True, calls=calls)
     _stub_solver(monkeypatch, solvable_latex="2x+5=13")
     monkeypatch.setattr(solver_service.settings, "disable_pix2tex", True)
 
@@ -119,16 +119,16 @@ def test_disable_pix2tex_returns_gemini_failure_without_local_fallback(monkeypat
 
     assert result["success"] is False
     assert result["latex"] == "garbled"
-    assert calls == ["gemini"]
+    assert calls == ["openai"]
 
 
-def test_gemini_direct_solve_rescues_unparseable_transcription(monkeypatch):
+def test_openai_direct_solve_rescues_unparseable_transcription(monkeypatch):
     calls = []
-    _stub_engines(monkeypatch, pix2tex_out="X", gemini_out="word problem", gemini_on=True, calls=calls)
+    _stub_engines(monkeypatch, pix2tex_out="X", openai_out="word problem", openai_on=True, calls=calls)
     _stub_solver(monkeypatch, solvable_latex="never")
 
     def direct(_):
-        calls.append("gemini-direct")
+        calls.append("openai-direct")
         return {
             "success": True,
             "problem": "2x+5=13",
@@ -138,21 +138,21 @@ def test_gemini_direct_solve_rescues_unparseable_transcription(monkeypatch):
             "explanation": "Subtract 5.\nDivide by 2.",
         }
 
-    monkeypatch.setattr(ocr_service, "gemini_solve_image", direct)
+    monkeypatch.setattr(ocr_service, "openai_solve_image", direct)
 
     result = solver_service.solve_image(b"img")
 
     assert result["success"] is True
     assert result["latex"] == "2x+5=13"
-    assert calls == ["gemini", "gemini-direct"]
+    assert calls == ["openai", "openai-direct"]
 
 
 def test_quota_failure_is_not_reported_as_bad_photo(monkeypatch):
-    monkeypatch.setattr(ocr_service, "gemini_available", lambda: True)
+    monkeypatch.setattr(ocr_service, "openai_available", lambda: True)
     monkeypatch.setattr(solver_service.settings, "disable_pix2tex", True)
     def limited(_):
         raise ocr_service.OCRRateLimitError("quota")
-    monkeypatch.setattr(ocr_service, "gemini_to_latex", limited)
+    monkeypatch.setattr(ocr_service, "openai_to_latex", limited)
     result = solver_service.solve_image(b"img")
     assert result["error_code"] == "ocr_rate_limited"
     assert result["error"] == (
@@ -162,19 +162,21 @@ def test_quota_failure_is_not_reported_as_bad_photo(monkeypatch):
 
 
 def test_no_configured_engine_reports_service_unavailable(monkeypatch):
-    monkeypatch.setattr(ocr_service, "gemini_available", lambda: False)
+    monkeypatch.setattr(ocr_service, "openai_available", lambda: False)
     monkeypatch.setattr(solver_service.settings, "disable_pix2tex", True)
     result = solver_service.solve_image(b"img")
     assert result["error_code"] == "ocr_unavailable"
 
 
 def test_empty_transcription_tries_direct_image_prompt(monkeypatch):
-    monkeypatch.setattr(ocr_service, "gemini_available", lambda: True)
+    monkeypatch.setattr(ocr_service, "openai_available", lambda: True)
     monkeypatch.setattr(solver_service.settings, "disable_pix2tex", True)
     def empty(_):
         raise ocr_service.OCRServiceError("empty transcription")
-    monkeypatch.setattr(ocr_service, "gemini_to_latex", empty)
-    monkeypatch.setattr(ocr_service, "gemini_solve_image", lambda _: {
+    monkeypatch.setattr(ocr_service, "openai_to_latex", empty)
+    monkeypatch.setattr(ocr_service, "openai_solve_image", lambda _: {
         "success": True, "latex": "2+3", "answer": "5",
     })
     assert solver_service.solve_image(b"img")["answer"] == "5"
+
+

@@ -1,8 +1,5 @@
-/// Contract for recording a practice attempt and reading back the current
-/// user's aggregated activity stats. `ApiProgressRepository` hits the real
-/// FastAPI backend (`POST /api/quiz/submit`, `GET /api/user/progress`);
-/// `MockProgressRepository` returns canned data so the UI can be developed
-/// without a backend (see `kUseMockBackend`).
+/// Contract for recording practice attempts and reading the user's progress.
+/// ApiProgressRepository persists and retrieves this data through FastAPI.
 abstract class ProgressRepository {
   /// Records one completed practice problem. Fire-and-forget at the call
   /// site -- a failed submit shouldn't block the user seeing their result.

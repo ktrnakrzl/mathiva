@@ -19,6 +19,9 @@ os.environ.setdefault("RATE_LIMIT_ENABLED", "false")
 # reuse "q" across cases -- a cached answer would leak between them.
 os.environ.setdefault("ANSWER_CACHE_ENABLED", "false")
 os.environ.setdefault("DISABLE_OLLAMA", "false")
+# Keep solver orchestration tests hermetic even when a developer's backend/.env
+# disables pix2tex for hosted/Render-style local runs. Env vars win over .env.
+os.environ.setdefault("DISABLE_PIX2TEX", "false")
 
 # The `solver` package lives under ml/, which the running app puts on sys.path
 # in app.main. Replicate that here (before any test imports app.services.*) so

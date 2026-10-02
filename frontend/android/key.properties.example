@@ -1,0 +1,13 @@
+# Copy to key.properties and fill in local release-signing values.
+# key.properties is gitignored; never commit real keystore paths or passwords.
+#
+# You can also set these in CI instead:
+#   ANDROID_KEYSTORE_PATH
+#   ANDROID_KEYSTORE_PASSWORD
+#   ANDROID_KEY_ALIAS
+#   ANDROID_KEY_PASSWORD
+
+storeFile=release/mathiva-upload-keystore.jks
+storePassword=replace-with-keystore-password
+keyAlias=mathiva-upload
+keyPassword=replace-with-key-password

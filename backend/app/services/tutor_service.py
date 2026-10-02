@@ -1,4 +1,4 @@
-from app.services import gemini_service
+from app.services import openai_service
 from app.services.ai_service import AIServiceError, generate_answer
 
 
@@ -44,10 +44,10 @@ Write the worked solution as a list of clear steps. Follow these rules exactly:
     except AIServiceError:
         pass
 
-    if gemini_service.gemini_available():
+    if openai_service.openai_available():
         try:
-            return gemini_service.gemini_generate(prompt)
-        except gemini_service.GeminiServiceError:
+            return openai_service.generate_text(prompt)
+        except openai_service.OpenAIServiceError:
             pass
 
     return _plain_explanation(problem, solution_text)

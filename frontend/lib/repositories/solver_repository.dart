@@ -14,7 +14,7 @@ class SolverServiceException implements Exception {
 
 /// Contract for turning a photographed math problem into a solved,
 /// step-by-step [PracticeProblem]. `ApiSolverRepository` hits the real
-/// OCR+SymPy backend; `MockSolverRepository` returns canned data.
+/// OCR+SymPy backend.
 abstract class SolverRepository {
   Future<PracticeProblem> solveImage(XFile image);
 }

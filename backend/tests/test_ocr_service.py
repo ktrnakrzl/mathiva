@@ -1,22 +1,23 @@
-"""Tests for the Gemini OCR engine in ocr_service.
-
-No live Gemini in the test environment, so these mock requests.post and verify
-gemini_to_latex extracts + cleans the LaTeX and turns every failure mode into a
-clean OCRServiceError. (The local-first/Gemini-fallback orchestration lives in
-solver_service; see test_solver_service.)
-"""
+"""Tests for OpenAI-backed image understanding."""
 
 import pytest
 import requests
 
-from app.services import ocr_service
-from app.services.ocr_service import OCRServiceError, gemini_solve_image, gemini_to_latex
+from app.services import openai_service
+from app.services.ocr_service import (
+    OCRRateLimitError,
+    OCRServiceError,
+    openai_solve_image,
+    openai_to_latex,
+)
 
 
 class _FakeResponse:
-    def __init__(self, json_data=None, raise_on_json=False):
+    def __init__(self, json_data=None, status_code=200, raise_on_json=False, headers=None):
         self._json_data = json_data
+        self.status_code = status_code
         self._raise_on_json = raise_on_json
+        self.headers = headers or {}
 
     def json(self):
         if self._raise_on_json:
@@ -24,83 +25,87 @@ class _FakeResponse:
         return self._json_data
 
 
+def _response(text):
+    return {"output": [{"type": "message", "content": [
+        {"type": "output_text", "text": text}
+    ]}]}
+
+
 def _patch_post(monkeypatch, response=None, exc=None):
     def fake_post(*args, **kwargs):
         if exc is not None:
             raise exc
         return response
-    monkeypatch.setattr(ocr_service.requests, "post", fake_post)
-
-
-def _gemini_reply(text):
-    return {"candidates": [{"content": {"parts": [{"text": text}]}}]}
+    monkeypatch.setattr(openai_service.requests, "post", fake_post)
+    monkeypatch.setattr(openai_service.settings, "openai_api_key", "test-key")
 
 
 def test_returns_latex(monkeypatch):
-    _patch_post(monkeypatch, _FakeResponse(_gemini_reply("2x + 5 = 13")))
-    assert gemini_to_latex(b"imgbytes") == "2x + 5 = 13"
+    _patch_post(monkeypatch, _FakeResponse(_response("2x + 5 = 13")))
+    assert openai_to_latex(b"imgbytes") == "2x + 5 = 13"
 
 
-def test_output_is_cleaned_of_fences_and_delimiters(monkeypatch):
-    _patch_post(monkeypatch, _FakeResponse(_gemini_reply("```latex\n\\(x^2 - 4 = 0\\)\n```")))
-    assert gemini_to_latex(b"imgbytes") == "x^2 - 4 = 0"
+def test_sends_image_as_data_url(monkeypatch):
+    captured = {}
+    def fake_post(*args, **kwargs):
+        captured.update(kwargs)
+        return _FakeResponse(_response("x=1"))
+    monkeypatch.setattr(openai_service.requests, "post", fake_post)
+    monkeypatch.setattr(openai_service.settings, "openai_api_key", "test-key")
+    openai_to_latex(b"image")
+    image = captured["json"]["input"][0]["content"][1]
+    assert image["type"] == "input_image"
+    assert image["image_url"].startswith("data:image/jpeg;base64,")
+    assert captured["headers"]["Authorization"] == "Bearer test-key"
+    assert captured["json"]["model"] == "gpt-5.4-mini"
+    assert captured["json"]["reasoning"] == {"effort": "low"}
+    assert "temperature" not in captured["json"]
 
 
-def test_error_object_becomes_ocr_error(monkeypatch):
-    _patch_post(monkeypatch, _FakeResponse({"error": {"message": "API key not valid"}}))
-    with pytest.raises(OCRServiceError, match="API key not valid"):
-        gemini_to_latex(b"imgbytes")
+def test_output_delimiters_are_cleaned(monkeypatch):
+    _patch_post(monkeypatch, _FakeResponse(_response(r"\(x^2 - 4 = 0\)")))
+    assert openai_to_latex(b"imgbytes") == "x^2 - 4 = 0"
 
 
-def test_no_candidates_becomes_ocr_error(monkeypatch):
-    _patch_post(monkeypatch, _FakeResponse({"candidates": []}))
+def test_api_error_becomes_ocr_error(monkeypatch):
+    _patch_post(monkeypatch, _FakeResponse(
+        {"error": {"message": "API key not valid"}}, status_code=401))
     with pytest.raises(OCRServiceError):
-        gemini_to_latex(b"imgbytes")
+        openai_to_latex(b"imgbytes")
 
 
 def test_quota_error_is_classified(monkeypatch):
-    _patch_post(monkeypatch, _FakeResponse({"error": {
-        "code": 429, "status": "RESOURCE_EXHAUSTED", "message": "quota",
-    }}))
-    with pytest.raises(ocr_service.OCRRateLimitError):
-        gemini_to_latex(b"imgbytes")
-
-
-def test_ignores_thought_parts_and_reads_final_transcription(monkeypatch):
-    _patch_post(monkeypatch, _FakeResponse({"candidates": [{"content": {"parts": [
-        {"thought": True, "text": "Let me inspect the photo"},
-        {"text": "2x+5=13"},
-    ]}}]}))
-    assert gemini_to_latex(b"imgbytes") == "2x+5=13"
+    _patch_post(monkeypatch, _FakeResponse(
+        {"error": {"message": "quota"}}, status_code=429,
+        headers={"retry-after": "12"}))
+    with pytest.raises(OCRRateLimitError):
+        openai_to_latex(b"imgbytes")
 
 
 def test_connection_error_becomes_ocr_error(monkeypatch):
     _patch_post(monkeypatch, exc=requests.ConnectionError("refused"))
     with pytest.raises(OCRServiceError):
-        gemini_to_latex(b"imgbytes")
+        openai_to_latex(b"imgbytes")
 
 
-def test_gemini_solve_image_returns_problem_answer_and_steps(monkeypatch):
+def test_openai_solve_image_returns_problem_answer_and_steps(monkeypatch):
     payload = {
         "problem_latex": "2x + 5 = 13",
         "answer_latex": "x = 4",
         "steps": ["Subtract 5 from both sides.", "Divide by 2."],
     }
-    _patch_post(monkeypatch, _FakeResponse(_gemini_reply(f"```json\n{payload}\n```".replace("'", '"'))))
-
-    result = gemini_solve_image(b"imgbytes")
-
+    import json
+    _patch_post(monkeypatch, _FakeResponse(_response(json.dumps(payload))))
+    result = openai_solve_image(b"imgbytes")
     assert result["success"] is True
     assert result["latex"] == "2x + 5 = 13"
     assert result["answer"] == r"\(x = 4\)"
     assert "Subtract 5" in result["explanation"]
 
 
-def test_gemini_solve_image_rejects_empty_problem(monkeypatch):
-    _patch_post(
-        monkeypatch,
-        _FakeResponse(_gemini_reply('{"problem_latex":"","answer_latex":"","steps":[]}')),
-    )
-
+def test_openai_solve_image_rejects_empty_problem(monkeypatch):
+    _patch_post(monkeypatch, _FakeResponse(_response(
+        '{"problem_latex":"","answer_latex":"","steps":[]}')))
     with pytest.raises(OCRServiceError):
-        gemini_solve_image(b"imgbytes")
+        openai_solve_image(b"imgbytes")
+

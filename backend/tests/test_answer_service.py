@@ -1,14 +1,15 @@
 """Tests for the /ask answer cascade (answer_service).
 
 Two things matter here: the cheap "is this answer bad?" guard, and the cascade's
-selection logic -- Phi-3 preferred, T5 backup, Gemini as a bounded escalation
+selection logic -- Phi-3 preferred, T5 backup, OpenAI as a bounded escalation
 only when the local answer is still bad. All generators and retrieval are mocked
-so the tests never touch Ollama, the T5 weights, the Gemini API, or the RAG
+so the tests never touch Ollama, the T5 weights, the OpenAI API, or the RAG
 models.
 """
 
 import pytest
 
+from app.config import settings
 from app.services import answer_service
 from app.services.ai_service import AIServiceError
 
@@ -47,16 +48,16 @@ def wired(monkeypatch):
                    "all_chunks": [{"content": "some source chunk"}]},
     )
     # The T5 tier is enabled by default here regardless of the local .env's
-    # DISABLE_T5 (which a dev may have set for a Gemini-only deployment) -- the
+    # DISABLE_T5 (which a dev may have set for a OpenAI-only deployment) -- the
     # test that exercises the disabled path sets it True explicitly.
     monkeypatch.setattr(answer_service.settings, "disable_t5", False)
 
-    state = {"phi": None, "t5": None, "gemini": None,
-             "t5_available": True, "gemini_available": True}
+    state = {"phi": None, "t5": None, "openai": None,
+             "t5_available": True, "openai_available": True}
 
     def set_phi(v): state["phi"] = v
     def set_t5(v): state["t5"] = v
-    def set_gemini(v): state["gemini"] = v
+    def set_openai(v): state["openai"] = v
 
     def fake_phi(prompt):
         if state["phi"] is None:
@@ -68,12 +69,12 @@ def wired(monkeypatch):
                         lambda: state["t5_available"])
     monkeypatch.setattr(answer_service.t5_service, "t5_generate",
                         lambda ctx, q: state["t5"])
-    monkeypatch.setattr(answer_service.gemini_service, "gemini_available",
-                        lambda: state["gemini_available"])
-    monkeypatch.setattr(answer_service.gemini_service, "gemini_generate",
-                        lambda prompt: state["gemini"])
+    monkeypatch.setattr(answer_service.openai_service, "openai_available",
+                        lambda: state["openai_available"])
+    monkeypatch.setattr(answer_service.openai_service, "generate_text",
+                        lambda prompt: state["openai"])
 
-    state.update(set_phi=set_phi, set_t5=set_t5, set_gemini=set_gemini)
+    state.update(set_phi=set_phi, set_t5=set_t5, set_openai=set_openai)
     return state
 
 
@@ -93,23 +94,23 @@ def test_falls_back_to_t5_when_phi_is_bad(wired):
     assert res["answer"] == "T5's good answer here."
 
 
-def test_escalates_to_gemini_when_both_local_are_bad(wired):
+def test_escalates_to_openai_when_both_local_are_bad(wired):
     wired["set_phi"]("")                        # both local weak
     wired["set_t5"]("x x x x x x x x x x")      # degenerate loop
-    wired["set_gemini"]("Gemini's rescue answer.")
+    wired["set_openai"]("OpenAI's rescue answer.")
     res = answer_service.answer_question("q")
-    assert res["model_used"] == "gemini"
-    assert res["answer"] == "Gemini's rescue answer."
+    assert res["model_used"] == settings.openai_model
+    assert res["answer"] == "OpenAI's rescue answer."
 
 
-def test_gemini_not_called_when_local_answer_is_good(wired, monkeypatch):
+def test_openai_not_called_when_local_answer_is_good(wired, monkeypatch):
     calls = {"n": 0}
 
     def spy(prompt):
         calls["n"] += 1
         return "should not be used"
 
-    monkeypatch.setattr(answer_service.gemini_service, "gemini_generate", spy)
+    monkeypatch.setattr(answer_service.openai_service, "generate_text", spy)
     wired["set_phi"]("A perfectly good local answer.")
     res = answer_service.answer_question("q")
     assert res["model_used"] == "phi3"
@@ -119,7 +120,7 @@ def test_gemini_not_called_when_local_answer_is_good(wired, monkeypatch):
 def test_raises_when_every_tier_fails(wired):
     wired["set_phi"](None)                      # ollama down -> AIServiceError
     wired["t5_available"] = False               # no T5 model
-    wired["gemini_available"] = False           # no Gemini key
+    wired["openai_available"] = False           # no OpenAI key
     with pytest.raises(AIServiceError):
         answer_service.answer_question("q")
 
@@ -134,7 +135,7 @@ def test_raises_when_every_tier_fails(wired):
 def test_symbolic_math_fallback_when_every_llm_tier_fails(wired, question, expected):
     wired["set_phi"](None)                      # ollama down -> AIServiceError
     wired["t5_available"] = False               # no T5 model
-    wired["gemini_available"] = False           # no Gemini key
+    wired["openai_available"] = False           # no OpenAI key
 
     res = answer_service.answer_question(question)
 
@@ -208,7 +209,7 @@ def test_calculation_overrides_cached_wrong_model_answer(monkeypatch):
     question = "What is the square root of 21?"
     answer_service.clear_answer_cache()
     answer_service._ANSWER_CACHE[answer_service._cache_key(question)] = {
-        "answer": "21", "model_used": "gemini", "sources": [],
+        "answer": "21", "model_used": "openai", "sources": [],
     }
     try:
         result = answer_service.answer_question(question)
@@ -224,16 +225,16 @@ def test_root_shortcut_does_not_drop_remaining_question():
     ) is None
 
 
-def test_gemini_rate_limit_raises_tutor_busy(wired, monkeypatch):
-    """When the local tiers are unavailable and Gemini is rate-limited, the cascade
+def test_openai_rate_limit_raises_tutor_busy(wired, monkeypatch):
+    """When the local tiers are unavailable and OpenAI is rate-limited, the cascade
     raises TutorBusyError (temporary) with the retry delay -- not a hard outage."""
     wired["set_phi"](None)                       # Ollama down (hosted no-Phi-3)
     wired["t5_available"] = False                # no T5
 
     def rate_limited(prompt):
-        raise answer_service.gemini_service.GeminiRateLimitError("quota", retry_after=42)
+        raise answer_service.openai_service.OpenAIRateLimitError("quota", retry_after=42)
 
-    monkeypatch.setattr(answer_service.gemini_service, "gemini_generate", rate_limited)
+    monkeypatch.setattr(answer_service.openai_service, "generate_text", rate_limited)
 
     with pytest.raises(answer_service.TutorBusyError) as exc:
         answer_service.answer_question("q")
@@ -300,8 +301,8 @@ def test_response_carries_sources(wired):
 
 def test_t5_skipped_when_disabled(wired, monkeypatch):
     """With DISABLE_T5 set (the hosted no-Ollama deploy), T5 must not answer even
-    when a model is available -- the cascade escalates to Gemini instead. Guards
-    against the degenerate T5 blocking Gemini in production."""
+    when a model is available -- the cascade escalates to OpenAI instead. Guards
+    against the degenerate T5 blocking OpenAI in production."""
     monkeypatch.setattr(answer_service.settings, "disable_t5", True)
 
     called = {"t5": False}
@@ -313,9 +314,10 @@ def test_t5_skipped_when_disabled(wired, monkeypatch):
     monkeypatch.setattr(answer_service.t5_service, "t5_generate", spy_t5)
 
     wired["set_phi"](None)                       # Ollama down (prod has no Phi-3)
-    wired["set_gemini"]("Gemini's answer.")
+    wired["set_openai"]("OpenAI's answer.")
     res = answer_service.answer_question("q")
 
     assert called["t5"] is False                 # T5 never invoked
-    assert res["model_used"] == "gemini"
-    assert res["answer"] == "Gemini's answer."
+    assert res["model_used"] == settings.openai_model
+    assert res["answer"] == "OpenAI's answer."
+

@@ -6,10 +6,7 @@ import '../repositories/solver_repository.dart';
 
 export '../repositories/solver_repository.dart' show SolverServiceException;
 
-/// Thin facade kept so existing call sites (e.g. `image_solver_screen.dart`)
-/// didn't need to change when the solving logic moved to the repository
-/// pattern. `repository` defaults to the real backend but can be swapped
-/// (e.g. to `MockSolverRepository()`, see `main.dart`'s `kUseMockBackend` flag).
+/// Thin facade over the backend solver repository.
 class SolverService {
   static SolverRepository repository = ApiSolverRepository();
 

@@ -5,7 +5,6 @@
 [build.environment]
   API_BASE_URL = "https://mathiva.onrender.com"
   FLUTTER_VERSION = "stable"
-  USE_MOCK_BACKEND = "false"
 
 [[redirects]]
   from = "/*"

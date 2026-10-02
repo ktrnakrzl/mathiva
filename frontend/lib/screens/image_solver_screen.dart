@@ -5,7 +5,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image/image.dart' as img;
+import '../services/image_processing.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../presentation/widgets/animated_background.dart';
@@ -21,7 +21,6 @@ import '../widgets/mathiva_top_bar.dart';
 
 enum _SolverStep { scan, preview }
 
-const int _maxUploadDimension = 1280;
 const int _uploadJpegQuality = 82;
 
 class ImageSolverScreen extends StatefulWidget {
@@ -169,7 +168,7 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
       final photo = await camera.takePicture();
       final bytes = await photo.readAsBytes();
       if (!mounted) return;
-      _showPhotoPreview(bytes, cameraViewport: _lastViewportSize);
+      await _showPhotoPreview(bytes, cameraViewport: _lastViewportSize);
     } catch (_) {
       if (!mounted) return;
       _showMessage('Could not capture the problem. Please try again.');
@@ -192,7 +191,7 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
       );
       if (!mounted || file == null) return;
       final bytes = await file.readAsBytes();
-      _showPhotoPreview(bytes);
+      await _showPhotoPreview(bytes);
     } catch (_) {
       if (!mounted) return;
       _showMessage(
@@ -205,23 +204,10 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
     }
   }
 
-  Uint8List _normalizeImageBytes(Uint8List bytes) {
-    final decoded = img.decodeImage(bytes);
-    if (decoded == null) return bytes;
-    return Uint8List.fromList(
-      img.encodeJpg(
-        _fitForUpload(img.bakeOrientation(decoded)),
-        quality: _uploadJpegQuality,
-      ),
-    );
-  }
-
-  void _showPhotoPreview(Uint8List bytes, {Size? cameraViewport}) {
-    final decoded = img.decodeImage(bytes);
-    if (decoded == null) throw const FormatException('Unsupported photo');
-    final oriented = img.bakeOrientation(decoded);
-    final imageSize =
-        Size(oriented.width.toDouble(), oriented.height.toDouble());
+  Future<void> _showPhotoPreview(Uint8List bytes,
+      {Size? cameraViewport}) async {
+    final (previewBytes, imageSize) = await compute(preparePhotoPreview, bytes);
+    if (!mounted) return;
     var selection = const Rect.fromLTWH(0, 0, 1, 1);
     if (cameraViewport != null && cameraViewport != Size.zero) {
       final scale = math.max(cameraViewport.width / imageSize.width,
@@ -242,66 +228,13 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
       // Keep the original so expanding the crop restores the full-resolution photo.
       _imageToSolve = XFile.fromData(bytes, name: 'mathiva-photo.jpg');
       _imageSize = imageSize;
-      _previewBytes = _normalizeImageBytes(bytes);
+      _previewBytes = previewBytes;
       _previewCrop = selection;
       _step = _SolverStep.preview;
     });
   }
 
-  img.Image _fitForUpload(img.Image source) {
-    final longest = math.max(source.width, source.height);
-    if (longest <= _maxUploadDimension) return source;
-    if (source.width >= source.height) {
-      return img.copyResize(source, width: _maxUploadDimension);
-    }
-    return img.copyResize(source, height: _maxUploadDimension);
-  }
-
   Size _lastViewportSize = Size.zero;
-
-  Uint8List _cropBytes(
-      Uint8List bytes, Size viewportSize, Rect normalizedCrop) {
-    final decoded = img.decodeImage(bytes);
-    if (decoded == null || viewportSize == Size.zero) return bytes;
-
-    final oriented = img.bakeOrientation(decoded);
-    final imageW = oriented.width.toDouble();
-    final imageH = oriented.height.toDouble();
-    final scale = math.max(
-      viewportSize.width / imageW,
-      viewportSize.height / imageH,
-    );
-    final drawnW = imageW * scale;
-    final drawnH = imageH * scale;
-    final offsetX = (viewportSize.width - drawnW) / 2;
-    final offsetY = (viewportSize.height - drawnH) / 2;
-
-    final cropPx = Rect.fromLTWH(
-      ((normalizedCrop.left * viewportSize.width) - offsetX) / scale,
-      ((normalizedCrop.top * viewportSize.height) - offsetY) / scale,
-      (normalizedCrop.width * viewportSize.width) / scale,
-      (normalizedCrop.height * viewportSize.height) / scale,
-    );
-
-    final x = cropPx.left.floor().clamp(0, oriented.width - 1);
-    final y = cropPx.top.floor().clamp(0, oriented.height - 1);
-    final right = cropPx.right.ceil().clamp(x + 1, oriented.width);
-    final bottom = cropPx.bottom.ceil().clamp(y + 1, oriented.height);
-
-    final cropped = img.copyCrop(
-      oriented,
-      x: x,
-      y: y,
-      width: right - x,
-      height: bottom - y,
-    );
-    return Uint8List.fromList(
-      img.encodeJpg(
-        _fitForUpload(cropped),
-        quality: _uploadJpegQuality,
-      ),
-    );
-  }
 
   void _retake() {
     setState(() {
@@ -318,8 +251,8 @@ class _ImageSolverScreenState extends State<ImageSolverScreen>
 
     setState(() => _isSolving = true);
     try {
-      final cropped =
-          _cropBytes(await image.readAsBytes(), _imageSize, _previewCrop);
+      final cropped = await compute(
+          cropPhoto, (await image.readAsBytes(), _imageSize, _previewCrop));
       final problem = await SolverService.solveImage(XFile.fromData(
         cropped,
         name: 'mathiva-crop.jpg',

@@ -1,7 +1,8 @@
 name: CI
 
-# CI: run the backend test suite and prove the Docker image builds on every push
-# and PR. CD: publish the backend image to GHCR on pushes to main.
+# CI: run backend/frontend checks, audit dependency changes, and prove the
+# Docker image builds on every push and PR. CD: publish the backend image to
+# GHCR on pushes to main.
 on:
   push:
     branches: [main, theme-v2]
@@ -10,7 +11,7 @@ on:
 
 jobs:
   backend-tests:
-    name: Backend tests (pytest)
+    name: Backend tests, audit, smoke
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,7 +22,9 @@ jobs:
           # deployment target, not just the 3.14 dev machine.
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: backend/requirements.txt
+          cache-dependency-path: |
+            backend/requirements.txt
+            backend/requirements-dev.txt
 
       - name: Install dependencies
         run: |
@@ -35,12 +38,59 @@ jobs:
           # out of the runtime image; install them for the test run.
           pip install -r backend/requirements-dev.txt
 
+      - name: Audit Python dependencies
+        run: |
+          # Baseline the vulnerabilities already present in the pinned ML/image
+          # stack so new/unreviewed advisories still fail CI. Remove these
+          # ignores as the pins are upgraded.
+          pip-audit -r backend/requirements.txt -r backend/requirements-dev.txt --strict \
+            --ignore-vuln GHSA-xrqw-3rrv-vx5w \
+            --ignore-vuln PYSEC-2026-2253 \
+            --ignore-vuln PYSEC-2026-2255 \
+            --ignore-vuln PYSEC-2026-2257 \
+            --ignore-vuln PYSEC-2026-2256 \
+            --ignore-vuln PYSEC-2026-2254 \
+            --ignore-vuln PYSEC-2026-3453 \
+            --ignore-vuln PYSEC-2026-3451 \
+            --ignore-vuln PYSEC-2026-3452 \
+            --ignore-vuln PYSEC-2026-3454 \
+            --ignore-vuln PYSEC-2026-3495 \
+            --ignore-vuln PYSEC-2026-3496 \
+            --ignore-vuln PYSEC-2026-3494 \
+            --ignore-vuln PYSEC-2026-3493 \
+            --ignore-vuln GHSA-rrmf-rvhw-rf47 \
+            --ignore-vuln PYSEC-2026-3447
+
       - name: Run pytest
         working-directory: backend
+        env:
+          DISABLE_PIX2TEX: "false"
         run: pytest
 
-  flutter-analyze:
-    name: Flutter analyze
+      - name: Production app smoke test
+        working-directory: backend
+        env:
+          ENVIRONMENT: production
+          DATABASE_URL: postgresql://ci_user:ci_pass@localhost:5432/mathiva
+          JWT_SECRET: ci-production-smoke-secret-32-plus-bytes
+          DISABLE_T5: "true"
+          DISABLE_OLLAMA: "true"
+          DISABLE_PIX2TEX: "true"
+          RATE_LIMIT_ENABLED: "false"
+          CORS_ORIGINS: https://app.example.com
+        run: |
+          python - <<'PY'
+          from fastapi.testclient import TestClient
+          from app.main import app
+
+          with TestClient(app) as client:
+              response = client.get("/health")
+              assert response.status_code == 200
+              assert response.json() == {"status": "ok"}
+          PY
+
+  flutter-checks:
+    name: Flutter analyze & tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -48,6 +98,7 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          cache: true
 
       - name: Resolve packages
         working-directory: frontend
@@ -60,6 +111,23 @@ jobs:
         # fail only on real *errors* (undefined names, type mismatches) in the
         # untested Dart layer, not on that pre-existing deprecation debt.
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: Run widget tests
+        working-directory: frontend
+        run: flutter test
+
+  dependency-review:
+    name: Dependency review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Review dependency changes
+        uses: actions/dependency-review-action@v4
 
   docker:
     name: Build & publish backend image

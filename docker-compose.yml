@@ -2,9 +2,9 @@
 #   docker compose up --build
 #
 # Configuration is read from backend/.env (DATABASE_URL, JWT_SECRET,
-# GEMINI_API_KEY, ENVIRONMENT, DISABLE_T5). For a real deployment set those to
+# OPENAI_API_KEY, ENVIRONMENT, DISABLE_T5). For a real deployment set those to
 # production values (ENVIRONMENT=production, the Supabase DATABASE_URL, a strong
-# JWT_SECRET, DISABLE_T5=true) -- see DEPLOY.md.
+# JWT_SECRET, DISABLE_T5=true, DISABLE_OLLAMA=true) -- see DEPLOY.md.
 
 services:
   backend:
@@ -21,6 +21,8 @@ services:
       # cascade uses Gemini, and the degenerate T5 tier is skipped. These win
       # over env_file if both set the key.
       DISABLE_T5: "true"
+      DISABLE_OLLAMA: "true"
+      ENABLE_OLLAMA_STREAM: "false"
     restart: unless-stopped
     # Hit /health so an orchestrator (and `restart: unless-stopped`) can tell a
     # hung-but-alive process from a healthy one. Uses python (always present in

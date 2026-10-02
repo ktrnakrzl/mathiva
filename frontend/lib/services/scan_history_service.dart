@@ -4,12 +4,14 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/mathiva_models.dart';
+import 'auth_storage.dart';
 
 /// One solved scan, shown under "Recent" on the home screen.
 class ScanHistoryEntry {
   final String question; // detected equation/expression, e.g. "\(2x + 3 = 13\)"
   final String answer; //   e.g. "\(x = 5\)"
-  final List<String> steps; // the worked steps, so the row can reopen the solution
+  final List<String>
+      steps; // the worked steps, so the row can reopen the solution
   final DateTime solvedAt;
 
   const ScanHistoryEntry({
@@ -46,7 +48,8 @@ class ScanHistoryEntry {
 /// activity instead of hardcoded samples. The backend has no solve-history
 /// endpoint, so this is the local equivalent -- same approach as [AuthStorage].
 class ScanHistoryService {
-  static const _key = 'scan_history_v1';
+  static const _legacyKey = 'scan_history_v1';
+  static String get _key => 'scan_history_v1_${AuthStorage.storageScope}';
   static const _maxEntries = 5;
 
   /// Reactive view for the home screen; refreshed by [load] and [record].
@@ -56,6 +59,10 @@ class ScanHistoryService {
   /// Load persisted history into [recent]. Call once at startup.
   static Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
+    // Old builds stored one shared device-wide recent list. Drop it so one
+    // account can never see another account's scan history on the same phone.
+    await prefs.remove(_legacyKey);
+
     final raw = prefs.getString(_key);
     if (raw == null || raw.isEmpty) {
       recent.value = const [];

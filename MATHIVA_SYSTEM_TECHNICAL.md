@@ -26,6 +26,56 @@ math tutoring. (See §9 for the honest state of the fine-tune.)
 
 ---
 
+## 1.1 Read this first: how the current app works
+
+If you vibe-coded the project and need the mental model, think of Mathiva as two
+programs:
+
+1. **Flutter app** - what the learner installs/opens. It owns screens, navigation,
+   local preferences, cached display name, recent scans, and the live camera UI.
+2. **FastAPI backend** - the source of truth for accounts, auth, solving, tutor
+   answers, quiz generation/grading, and progress history.
+
+The app talks to the backend over HTTP using `Dio`. The backend URL is baked into
+the Flutter build with `--dart-define=API_BASE_URL=...`; the app does not discover
+the backend automatically.
+
+### User data boundary
+
+**Local on the user's device:**
+
+- JWT token, so closing/reopening the app does not log the user out.
+- cached display name and preferences (`AppPreferences`), so the home screen
+  does not reset to "Learner" while the server wakes.
+- recent solved scan history.
+
+**Backend database:**
+
+- account email, bcrypt password hash, full name, section/status.
+- generated quiz questions and quiz attempts.
+- progress data derived from attempts: streak, points, accuracy, mastery.
+
+This means the app should not auto-logout on exit. It should keep the token until
+the user taps Log Out or the backend rejects the token.
+
+### Why it can feel slow
+
+The live backend is hosted on Render. If the service sleeps, the first request
+after inactivity can take tens of seconds while the container wakes. Login,
+profile refresh, progress, scan solving, and tutor chat all depend on the backend
+being awake. The Flutter app mitigates this by loading local preferences first
+and refreshing profile/progress in the background.
+
+### Scan flow today
+
+The scan tab opens a live Photomath-style camera screen with a draggable crop box.
+The app captures and crops locally, uploads the cropped image to
+`POST /api/solve-image`, then the backend tries Gemini OCR/direct solve first and
+pix2tex only as an optional fallback. SymPy is still the exact solver whenever
+the problem can be parsed symbolically.
+
+---
+
 ## 2. Architecture (three tiers)
 
 ```
@@ -300,9 +350,10 @@ JWT secret or a SQLite DB.
   behind a proxy, run uvicorn with `--proxy-headers` for correct rate-limit keying;
   TLS is provided by the host (Render/Railway).
 - **Frontend:** built separately; backend URL via
-  `flutter build … --dart-define=API_BASE_URL=https://<backend>`. Distribute as an
-  APK, or a hosted **web build** (a link, no install — but the camera scanner is
-  mobile-only).
+  `flutter build ... --dart-define=API_BASE_URL=https://<backend>`. Distribute as an
+  Android APK or a hosted web build. The scan screen uses a live camera view with
+  a crop box; web builds also use the live scanner, but browser camera permission
+  and HTTPS rules still apply.
 
 ---
 
@@ -337,7 +388,8 @@ Test-to-code ratio ~50%. **The Flutter app has no automated tests** (one placeho
 - **RAG corpus is General-Mathematics only**; other subjects lack a PDF corpus.
 - **Quiz content** covers 11 templated concepts.
 - **OCR accuracy is unmeasured**; pix2tex is effectively a no-op on real photos
-  (Gemini does the real work). Camera/scan is **mobile-only**.
+  (Gemini does the real work). The live camera UI exists on Android and web, but
+  web camera behavior depends on browser permission support and secure hosting.
 - **Gemini free tier** ≈ 10 solves/min shared across all users (2 calls per solve);
   mitigated by caching + graceful handling; a paid key lifts it.
 - **No frontend tests, no public deployment yet**; the DB password exposed in

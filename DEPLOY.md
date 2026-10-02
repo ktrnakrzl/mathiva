@@ -1,7 +1,7 @@
 # Deploying MATHIVA
 
 This repo ships a **Dockerfile** for the FastAPI backend. The Flutter app is
-built and distributed separately (see the last section).
+built and distributed separately as either an Android APK or a web build.
 
 ## What the image contains
 - The FastAPI backend + its RAG retrieval (SBERT + FAISS) and SymPy solver.
@@ -10,7 +10,7 @@ built and distributed separately (see the last section).
 
 **Not** in the image (by design): Ollama/Phi-3 and the ~1 GB fine-tuned T5 model.
 In a hosted deployment the `/ask` cascade automatically uses **Google Gemini**, so
-run with `DISABLE_T5=true` and a `GEMINI_API_KEY`.
+run with `DISABLE_T5=true`, `DISABLE_OLLAMA=true`, and an `OPENAI_API_KEY`.
 
 > The image is inherently large (~2–3 GB) because RAG needs PyTorch + Transformers.
 > That's expected for this stack.
@@ -27,8 +27,11 @@ Create `backend/.env` with production values:
 ENVIRONMENT=production
 DATABASE_URL=postgresql://postgres:<password>@<host>:5432/postgres
 JWT_SECRET=<python -c "import secrets; print(secrets.token_hex(32))">
-GEMINI_API_KEY=<your key>
+OPENAI_API_KEY=<your key>
+OPENAI_MODEL=gpt-5.4-mini
 DISABLE_T5=true
+DISABLE_OLLAMA=true
+ENABLE_OLLAMA_STREAM=false
 DISABLE_PIX2TEX=true
 GOOGLE_CLIENT_ID=your-google-oauth-web-client-id.apps.googleusercontent.com
 FRONTEND_URL=https://your-frontend-domain
@@ -86,7 +89,7 @@ In Render, choose **New + > Blueprint**, connect this repo, and select
 `render.yaml`. During the first sync, Render prompts for the `sync: false`
 values:
 
-- `GEMINI_API_KEY`
+- `OPENAI_API_KEY`
 - `GOOGLE_CLIENT_ID` on both `mathiva-api` and `mathiva-web`
 
 After the first deploy, add this Google OAuth authorized JavaScript origin in
@@ -125,9 +128,71 @@ The Flutter app reads its backend URL from a compile-time define, so no code edi
 is needed:
 
 ```bash
-flutter build web --dart-define=API_BASE_URL=https://your-deployed-backend --dart-define=GOOGLE_CLIENT_ID=your-google-oauth-web-client-id.apps.googleusercontent.com
-# or for a device build, pass the same --dart-define
+flutter build web --release --dart-define=API_BASE_URL=https://your-deployed-backend --dart-define=GOOGLE_CLIENT_ID=your-google-oauth-web-client-id.apps.googleusercontent.com
+flutter build apk --release --dart-define=API_BASE_URL=https://your-deployed-backend
 ```
+
+For the current Mathiva deployment, the live backend URL used by the app is:
+
+```text
+https://mathiva.onrender.com
+```
+
+If you create a new Render blueprint service named `mathiva-api`, update
+Netlify/Flutter `API_BASE_URL` to that new URL. The app does not discover the
+backend at runtime; the URL is baked into the build by `--dart-define`.
+
+## 5. Netlify web deployment notes
+
+`netlify.toml` builds `frontend/build/web` through
+`scripts/render_build_frontend.sh`. The Flutter web shell has two cache-related
+customizations:
+
+- `frontend/web/index.html` unregisters older Flutter service workers already
+  installed in users' browsers.
+- `frontend/web/flutter_bootstrap.js` calls `_flutter.loader.load()` without
+  service worker settings, so new web builds do not register another Flutter
+  service worker.
+
+This was added because stale `main.dart.js` bundles can make the deployed app
+look unchanged even after the source code is fixed.
+
+When Netlify appears stuck or keeps serving an old UI:
+
+1. Cancel the stuck deploy.
+2. Trigger **Clear cache and deploy site**.
+3. Test in an incognito window once, which bypasses any old browser service
+   worker state.
+
+## 6. Android APK notes
+
+Current test/distribution APK command:
+
+```bash
+cd frontend
+flutter build apk --release --dart-define=API_BASE_URL=https://mathiva.onrender.com
+```
+
+Output:
+
+```text
+frontend/build/app/outputs/flutter-apk/app-release.apk
+```
+
+The current release APK uses the debug signing config in
+`frontend/android/app/build.gradle.kts`, which is okay for installing/testing but
+not for Play Store publishing. Before Play Store release, add a real keystore
+and release signing config.
+
+## 7. Why the hosted app can feel slow
+
+On Render, the backend may cold start after inactivity. The first login, profile,
+progress, tutor, or scan request can wait while the container wakes, loads Python
+dependencies, connects to the database, and initializes model-related services.
+
+The Flutter app mitigates this by persisting the JWT, cached display name, app
+preferences, and recent scans locally. Reopening the app should not look logged
+out, but backend-backed data can still be delayed until Render is awake.
 
 ## Security checklist before going live
 - [ ] **Rotate the Supabase database password** if it was ever shared, and update

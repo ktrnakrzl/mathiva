@@ -24,7 +24,7 @@ import re
 
 from app.config import settings
 from app.services.ai_service import AIServiceError, generate_answer
-from app.services import fallback_llm_service, gemini_service, t5_service
+from app.services import fallback_llm_service, openai_service, t5_service
 
 logger = logging.getLogger(__name__)
 
@@ -326,16 +326,16 @@ def answer_question(question: str, history: str = "") -> dict:
 
     # --- bounded escalation: Gemini only if the local answer is still weak ----
     rate_limited_after = None
-    if is_bad_answer(answer) and gemini_service.gemini_available():
+    if is_bad_answer(answer) and openai_service.openai_available():
         try:
-            gemini_answer = gemini_service.gemini_generate(prompt)
-            if not is_bad_answer(gemini_answer):
-                answer, model_used = gemini_answer, "gemini"
-        except gemini_service.GeminiRateLimitError as e:
-            logger.warning("Gemini rate limited: retry_after=%s", e.retry_after)
+            openai_answer = openai_service.generate_text(prompt)
+            if not is_bad_answer(openai_answer):
+                answer, model_used = openai_answer, settings.openai_model
+        except openai_service.OpenAIRateLimitError as e:
+            logger.warning("OpenAI rate limited: retry_after=%s", e.retry_after)
             rate_limited_after = e.retry_after   # temporary -- tell the user to retry
-        except gemini_service.GeminiServiceError as e:
-            logger.warning("Gemini answer fallback failed: %s", e)
+        except openai_service.OpenAIServiceError as e:
+            logger.warning("OpenAI answer fallback failed: %s", e)
             pass  # keep the best local answer we have
 
     # --- second backstop: the fallback LLM, when Gemini couldn't rescue -------

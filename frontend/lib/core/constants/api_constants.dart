@@ -9,14 +9,6 @@ const String kBaseUrl = String.fromEnvironment(
   defaultValue: 'https://mathiva.onrender.com',
 );
 
-// When true, ChatService/SolverService are wired to their mock repositories
-// instead of the real backend (see main.dart) — useful for developing or
-// demoing the UI when the FastAPI/Ollama backend isn't running locally.
-const bool kUseMockBackend = bool.fromEnvironment(
-  'USE_MOCK_BACKEND',
-  defaultValue: false,
-);
-
 // Google OAuth client IDs. For web and backend verification this should be the
 // Web application client ID from Google Cloud Console.
 const String kGoogleClientId = String.fromEnvironment(

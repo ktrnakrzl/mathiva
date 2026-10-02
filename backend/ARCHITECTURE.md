@@ -49,6 +49,29 @@ everything sits on. When you add a feature, that's the order you build it in.
 
 ---
 
+## 1.1 Where user data lives
+
+This boundary matters when debugging "the app forgot my data" reports.
+
+**On the user's device** (Flutter `shared_preferences`):
+
+- JWT access token, via `AuthStorage`.
+- cached display name and app preferences, via `AppPreferences`.
+- recent solved scan history, via `ScanHistoryService`.
+
+**In the backend database**:
+
+- account records: email, bcrypt password hash, full name, section, enrollment status.
+- generated quiz questions and their hidden correct answers.
+- quiz attempts, which are the source of progress, streaks, points, accuracy,
+  mastery, and adaptive quiz choices.
+
+The backend is the source of truth for accounts and progress. The device cache
+exists so the app reopens quickly and does not look logged out while Render is
+waking up.
+
+---
+
 ## 2. Startup: what `main.py` does, in order
 
 The order in [`app/main.py`](./app/main.py) is deliberate — each step depends on the
@@ -101,18 +124,27 @@ fast and exact.
 
 ### 3.3 Solve a photo — `api/ocr.py` → `services/solver_service.solve_image()`
 
+> Current code note: image solving is Gemini-first, not pix2tex-first. Gemini
+> transcribes real photos/handwriting when `GEMINI_API_KEY` is configured; its
+> result is accepted only if SymPy can solve it. If transcription fails, Gemini
+> gets one direct image-solve rescue attempt. pix2tex is only an optional local
+> fallback when Gemini is unavailable or cannot produce a solvable read.
+
 `POST /api/solve-image` (image upload) reads the picture into an equation, then
-solves it exactly like §3.2. The read is **hybrid, local-first**:
+solves it exactly like section 3.2. The read is **hybrid, cloud-first**:
 
-1. **pix2tex** (local, free, offline) tries first.
-2. Whether the read was "good enough" is decided by *the solver itself* — if SymPy
-   can turn it into a real answer, we're done and **no API is called**.
-3. Only if the local read fails do we fall back to **Gemini** (reads handwriting /
-   photos), and we accept Gemini's result *only if it actually solves*.
+1. **Gemini OCR** tries first when a key is configured, because it handles real
+   photos and handwriting better than local OCR.
+2. Whether the read was "good enough" is decided by *the solver itself* — if
+   SymPy can turn it into a real answer, we accept it.
+3. If the transcription is readable to Gemini but too messy for SymPy, Gemini
+   gets one direct image-solve rescue attempt and returns structured JSON.
+4. **pix2tex** is the local fallback when Gemini is unavailable or cannot solve
+   the image. It works best on clean printed math and is weak on real photos.
 
-This "cheap engine first, cloud only on failure" shape appears twice in the backend
-(here and in the `/ask` cascade). It keeps the free-tier quota for the cases that
-truly need it.
+This is intentionally different from the `/ask` cascade. Tutor questions try
+local/cheap tiers before Gemini; image solving uses Gemini first because OCR
+quality matters more than saving one cloud call.
 
 ### 3.4 Ask the tutor — `api/ask.py` → `services/answer_service.py`
 
@@ -306,7 +338,7 @@ backend/
 │  │  └─ quiz.py         generated quiz flow + legacy submit + progress
 │  ├─ services/          ② Logic
 │  │  ├─ auth_service.py     bcrypt + JWT + get_current_user gate
-│  │  ├─ solver_service.py   SymPy solve; hybrid OCR (pix2tex→Gemini)
+│  │  ├─ solver_service.py   SymPy solve; hybrid OCR (Gemini→pix2tex fallback)
 │  │  ├─ rag_service.py      SBERT + FAISS retrieval (loaded once)
 │  │  ├─ answer_service.py   the /ask cascade + is_bad_answer gate (§5)
 │  │  ├─ ai_service.py       Ollama (phi) client: generate + stream
@@ -342,3 +374,18 @@ backend/
   the cascade prefers Phi-3 today and the preference flips once the training set
   grows. See `ml/t5/README.md` and the improvement backlog.
 ```
+
+## Progress query performance
+
+`app/services/progress_service.py` owns progress response models and aggregation.
+The route delegates to it. The query filters by the indexed user ID, selects only
+seven statistic fields, and reads batches of 500 rows. Aggregation consumes the
+rows once, retaining grouped counters rather than full ORM attempt objects.
+The computation remains linear in attempt count; grouped SQL aggregation is a
+future option if real production histories warrant it.
+
+Local SQLite benchmark (10,000 synthetic attempts, five timed runs, median;
+peak Python allocations measured separately with tracemalloc): previous full
+ORM loading took 185 ms / 15.21 MiB; projected batched loading took 62 ms /
+0.35 MiB. Full JSON responses matched. These are local measurements, not
+production latency guarantees.
