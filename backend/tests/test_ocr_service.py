@@ -109,3 +109,35 @@ def test_openai_solve_image_rejects_empty_problem(monkeypatch):
     with pytest.raises(OCRServiceError):
         openai_solve_image(b"imgbytes")
 
+
+def test_standalone_quadratic_is_solved_instead_of_repeated(monkeypatch):
+    payload = {
+        "problem_latex": "f(x)=3x^2+5x-4",
+        "answer_latex": r"x=\\frac{-5\\pm\\sqrt{73}}{6}",
+        "steps": [
+            "Set the quadratic equal to zero.",
+            "Apply the quadratic formula.",
+        ],
+    }
+    import json
+    _patch_post(monkeypatch, _FakeResponse(_response(json.dumps(payload))))
+
+    result = openai_solve_image(b"imgbytes")
+
+    assert result["success"] is True
+    assert result["answer"] == r"\(x=\\frac{-5\\pm\\sqrt{73}}{6}\)"
+    assert "quadratic formula" in result["explanation"].lower()
+
+
+def test_repeated_transcription_is_not_accepted_as_final_answer(monkeypatch):
+    payload = {
+        "problem_latex": "f(x)=3x^2+5x-4",
+        "answer_latex": "f(x)=3x^2+5x-4",
+        "steps": ["The image shows a function definition."],
+    }
+    import json
+    _patch_post(monkeypatch, _FakeResponse(_response(json.dumps(payload))))
+
+    with pytest.raises(OCRServiceError, match="without solving"):
+        openai_solve_image(b"imgbytes")
+

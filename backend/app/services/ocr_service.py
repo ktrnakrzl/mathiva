@@ -24,13 +24,25 @@ _OCR_PROMPT = (
 )
 
 _SOLVE_IMAGE_PROMPT = (
-    "You are Mathiva, a careful math tutor. Read the math problem in this image "
-    "and solve it. Return ONLY valid JSON with these keys: problem_latex, "
-    "answer_latex, steps. problem_latex is the problem as a single LaTeX line. "
-    "answer_latex is the final answer as LaTeX without dollar signs. steps is "
-    "an array of short step-by-step explanation strings. If no math problem is "
-    "visible, return problem_latex and answer_latex as empty strings and steps "
-    "as an empty array."
+    "You are Mathiva, a careful math tutor. Read and solve the math shown in "
+    "the image. Never use the unchanged transcription as the final answer. "
+    "Follow this decision order: "
+    "(1) If an explicit instruction is visible, perform exactly that task. "
+    "(2) If only an equation is visible, solve it for its variable. "
+    "(3) If only a function definition is visible, provide a useful default "
+    "analysis: for a quadratic, set f(x)=0 and find its exact zeros; for another "
+    "function, simplify it and state its most important directly derivable "
+    "property. (4) If only a numerical expression is visible, evaluate or "
+    "simplify it. Do not say that no problem statement is visible and do not "
+    "merely transcribe the input. "
+    "Return ONLY valid JSON with exactly these keys: problem_latex, "
+    "answer_latex, steps. problem_latex is the visible math as one LaTeX line. "
+    "answer_latex is the computed final result as LaTeX without dollar signs. "
+    "steps is an array of short, student-friendly solution steps. For example, "
+    "if the image only shows f(x)=3x^2+5x-4, solve 3x^2+5x-4=0 and return "
+    "the two exact zeros in answer_latex. If no mathematical content is visible, "
+    "return empty strings and an empty steps array. After the JSON, output "
+    "nothing further."
 )
 
 _model = None
@@ -131,6 +143,14 @@ def openai_solve_image(image_bytes: bytes) -> dict:
     steps = data.get("steps")
     if not problem or not answer or not isinstance(steps, list):
         raise OCRServiceError("Couldn't solve a math problem from that image.")
+
+    # A transcription presented as its own answer is not a solution. Keep this
+    # contract enforced in code as well as in the prompt so the UI never labels
+    # an unchanged function/expression as the final answer.
+    compact_problem = "".join(problem.split()).lower()
+    compact_answer = "".join(answer.split()).lower()
+    if compact_answer == compact_problem:
+        raise OCRServiceError("Image solver returned a transcription without solving it.")
 
     clean_steps = [str(step).strip() for step in steps if str(step).strip()]
     if not clean_steps:
