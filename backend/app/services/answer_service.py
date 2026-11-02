@@ -110,6 +110,12 @@ Student Question:
 
 Instructions:
 - Answer clearly and concisely.
+- For mathematical solutions, show the key steps in order and explain why each
+  operation or transformation is valid and useful (for example, doing the same
+  operation to both sides preserves equality, while dividing isolates the
+  variable). Do not give unexplained jumps or claim a rule without applying it.
+- Keep each explanation tied to the current problem, verify the result when
+  practical, and state the final answer clearly.
 - Use the recent conversation only to resolve references in the student's latest
   question, such as "that step", "the previous answer", or "explain step two".
 - Do NOT greet the student or introduce yourself (no "Hello", no "I am Mathiva").

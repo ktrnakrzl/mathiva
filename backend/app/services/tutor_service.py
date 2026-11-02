@@ -26,8 +26,11 @@ Write the worked solution as a list of clear steps. Follow these rules exactly:
 - Output ONLY the steps. No greeting, no introduction, and no closing remark.
 - Put each step on its OWN line. Do not number the steps yourself -- they are
   numbered automatically in the app.
-- Each line is one step that states, in plain language, what you do AND why you
-  do it (e.g. "Subtract 3 from both sides to isolate the term with x").
+- Each line is one step that states, in plain language, what you do AND why it
+  is valid or useful (e.g. "Subtract 3 from both sides to keep the equation
+  balanced and isolate the term with x").
+- Show the result after each important operation; do not skip algebra steps or
+  assume the student already knows why a transformation is allowed.
 - Show the math for the step and wrap every math expression in \\( and \\),
   e.g. \\(2x + 5 = 13\\).
 - Make the LAST line state the final answer.
